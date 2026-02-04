@@ -1,0 +1,63 @@
+import { getAssignmentById, getAllAssignments } from "@/lib/db";
+import { SidebarLayout } from "@/app/components/SidebarLayout";
+import { Breadcrumbs } from "@/app/components/Breadcrumbs";
+import { EditAssignmentForm } from "../components/EditAssignmentForm";
+import Link from "next/link";
+import { DeleteAssignmentButton } from "./components/DeleteAssignmentButton";
+import { ArchiveAssignmentForm } from "./components/ArchiveAssignmentForm";
+
+type PageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export default async function EditAssignmentPage({ params }: PageProps) {
+  const { id: idStr } = await params;
+  const id = Number(idStr);
+  const assignment = getAssignmentById(id);
+  const allAssignments = getAllAssignments({ includeArchived: true });
+
+  if (!assignment) {
+    return (
+      <SidebarLayout title="Assignment not found" current="assignments">
+        <p className="text-sm text-slate-700">Assignment not found.</p>
+      </SidebarLayout>
+    );
+  }
+
+  const projectAssignments = allAssignments.filter((a) => a.id !== id);
+
+  return (
+    <SidebarLayout title="Edit fielder assignment" current="assignments" backLink={{ href: "/assignments", label: "Fielders" }}>
+      <div className="flex flex-1 flex-col gap-6">
+        <Breadcrumbs
+          items={[
+            { label: "Fielders", href: "/assignments" },
+            { label: `${assignment.project.projectCode} – ${assignment.fielderName}` },
+          ]}
+        />
+        <section className="card p-6">
+          <div className="mb-4">
+            <p className="text-sm text-slate-600">
+              Project:{" "}
+              <span className="font-medium text-slate-900">
+                {assignment.project.projectCode} – {assignment.project.clientName}
+              </span>
+            </p>
+          </div>
+          <EditAssignmentForm
+            assignment={assignment}
+            projectAssignments={projectAssignments}
+          />
+
+          <div className="mt-6 flex flex-wrap items-center gap-3 border-t pt-5">
+            <DeleteAssignmentButton assignmentId={assignment.id} />
+            <ArchiveAssignmentForm assignmentId={assignment.id} archivedAt={assignment.archivedAt} />
+          </div>
+        </section>
+      </div>
+    </SidebarLayout>
+  );
+}
+

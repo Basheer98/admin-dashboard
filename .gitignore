@@ -20,6 +20,11 @@
 # production
 /build
 
+# local data (use volume/env in production)
+data.json
+*.sqlite
+*.sqlite3
+
 # misc
 .DS_Store
 *.pem
