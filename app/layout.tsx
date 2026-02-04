@@ -10,6 +10,8 @@ const plusJakarta = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700"],
 });
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Internal Admin Dashboard",
   description: "Single-user internal dashboard for project finances",
