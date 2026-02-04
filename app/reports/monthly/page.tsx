@@ -19,10 +19,12 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {};
   const monthParam = typeof sp.month === "string" ? sp.month : "";
 
-  const allProjects = getAllProjects();
-  const allPayments = getAllPayments();
-  const paymentsWithDetails = getPaymentsWithDetails();
-  const settings = getSettings();
+  const [allProjects, allPayments, paymentsWithDetails, settings] = await Promise.all([
+    getAllProjects(),
+    getAllPayments(),
+    getPaymentsWithDetails(),
+    getSettings(),
+  ]);
   const showInr = settings.usdToInrRate != null;
 
   const now = new Date();

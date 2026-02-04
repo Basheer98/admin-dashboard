@@ -11,9 +11,9 @@ export async function POST(request: Request, { params }: Params) {
   if (!id) {
     return NextResponse.redirect(new URL("/assignments", request.url));
   }
-  unarchiveAssignment(id);
-  const assignment = getAssignmentById(id);
+  const assignment = await getAssignmentById(id);
   const projectId = assignment?.projectId;
+  await unarchiveAssignment(id);
   const url = new URL("/assignments", request.url);
   url.searchParams.set("unarchived", "1");
   if (projectId) url.searchParams.set("projectId", String(projectId));

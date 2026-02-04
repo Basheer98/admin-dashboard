@@ -13,7 +13,7 @@ function escapeCsvCell(value: string | number | null | undefined): string {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const archived = searchParams.get("archived") === "1";
-  const projects = getAllProjects({ includeArchived: archived });
+  const projects = await getAllProjects({ includeArchived: archived });
 
   const headers = [
     "Project ID",

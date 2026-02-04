@@ -49,7 +49,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.redirect(url);
   }
 
-  updateAssignment(id, {
+  await updateAssignment(id, {
     ratePerSqft: parsed.data.ratePerSqft,
     commissionPercentage: parsed.data.commissionPercentage,
     isInternal: parsed.data.isInternal,
@@ -59,7 +59,7 @@ export async function POST(request: Request, { params }: Params) {
     dueDate: parsed.data.dueDate,
   });
 
-  const assignment = getAssignmentById(id);
+  const assignment = await getAssignmentById(id);
   const projectId = assignment?.projectId ?? id;
   const url = new URL("/assignments", request.url);
   url.searchParams.set("saved", "1");

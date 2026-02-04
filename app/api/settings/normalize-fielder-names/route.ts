@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { normalizeAllFielderNames, insertActivity } from "@/lib/db";
 
 export async function POST(request: Request) {
-  const count = normalizeAllFielderNames();
+  const count = await normalizeAllFielderNames();
   if (count > 0) {
-    insertActivity({
+    await insertActivity({
       type: "settings_changed",
       description: `Normalized ${count} fielder name(s) to uppercase.`,
       metadata: { action: "normalize_fielder_names", count },

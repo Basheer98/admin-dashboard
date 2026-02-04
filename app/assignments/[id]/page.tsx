@@ -15,8 +15,10 @@ type PageProps = {
 export default async function EditAssignmentPage({ params }: PageProps) {
   const { id: idStr } = await params;
   const id = Number(idStr);
-  const assignment = getAssignmentById(id);
-  const allAssignments = getAllAssignments({ includeArchived: true });
+  const [assignment, allAssignments] = await Promise.all([
+    getAssignmentById(id),
+    getAllAssignments({ includeArchived: true }),
+  ]);
 
   if (!assignment) {
     return (

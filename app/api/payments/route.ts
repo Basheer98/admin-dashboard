@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const paymentDate = new Date(paymentDateStrValid);
 
   // Ensure the assignment belongs to the project
-  const assignment = getAssignmentById(parsed.data.fielderAssignmentId);
+  const assignment = await getAssignmentById(parsed.data.fielderAssignmentId);
 
   if (!assignment || assignment.projectId !== parsed.data.projectId) {
     const url = new URL("/payments", request.url);
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(url);
   }
 
-  const paymentId = insertPayment({
+  const paymentId = await insertPayment({
     projectId: parsed.data.projectId,
     fielderAssignmentId: parsed.data.fielderAssignmentId,
     amount: parsed.data.amount,
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  insertActivity({
+  await insertActivity({
     type: "payment_logged",
     description: `Logged payment of ${parsed.data.currency} ${amountFormatted} to ${assignment.fielderName}`,
     metadata: { paymentId, projectId: parsed.data.projectId, fielderAssignmentId: parsed.data.fielderAssignmentId },

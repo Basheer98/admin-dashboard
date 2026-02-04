@@ -15,7 +15,7 @@ export default async function FielderReportPage({ params }: PageProps) {
   const fielderNameFromUrl = decodeURIComponent(encodedName);
   const fielderNameNormalized = fielderNameFromUrl.trim().toUpperCase();
 
-  const assignments = getAssignmentsWithDetails({ includeArchived: true });
+  const assignments = await getAssignmentsWithDetails({ includeArchived: true });
   const fielderAssignments = assignments.filter(
     (a) => a.fielderName.trim().toUpperCase() === fielderNameNormalized,
   );

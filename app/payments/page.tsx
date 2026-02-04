@@ -27,9 +27,11 @@ type PageProps = {
 };
 
 export default async function PaymentsPage({ searchParams }: PageProps) {
-  const projects = getAllProjects();
-  const assignments = getAssignmentsWithDetails();
-  const allPayments = getPaymentsWithDetails({ includeVoided: true });
+  const [projects, assignments, allPayments] = await Promise.all([
+    getAllProjects(),
+    getAssignmentsWithDetails(),
+    getPaymentsWithDetails({ includeVoided: true }),
+  ]);
 
   const sp = searchParams ? await searchParams : {};
   const prefillProjectId = typeof sp.projectId === "string" ? sp.projectId : "";

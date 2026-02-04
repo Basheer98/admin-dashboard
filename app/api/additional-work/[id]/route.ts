@@ -11,7 +11,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.redirect(new URL("/additional-work", request.url));
   }
 
-  const existing = getAdditionalWorkById(id);
+  const existing = await getAdditionalWorkById(id);
   if (!existing) {
     return NextResponse.redirect(new URL("/additional-work", request.url));
   }
@@ -44,10 +44,10 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.redirect(url);
   }
 
-  const ourProject = getProjectByCode(projectNumber);
+  const ourProject = await getProjectByCode(projectNumber);
   const ourProjectId = ourProject?.id ?? null;
 
-  updateAdditionalWork(id, {
+  await updateAdditionalWork(id, {
     type: type === "CORRECTION" ? "CORRECTION" : "ADDITIONAL_FIELDING",
     projectNumber,
     ourProjectId,

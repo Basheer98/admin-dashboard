@@ -7,11 +7,11 @@ export async function GET(request: Request) {
   if (!code) {
     return NextResponse.json({ project: null, assignments: [] });
   }
-  const project = getProjectByCode(code);
+  const project = await getProjectByCode(code);
   if (!project) {
     return NextResponse.json({ project: null, assignments: [] });
   }
-  const assignments = getAssignmentsByProjectId(project.id);
+  const assignments = await getAssignmentsByProjectId(project.id);
   return NextResponse.json({
     project: {
       id: project.id,

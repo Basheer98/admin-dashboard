@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs";
-import { getDataPath } from "@/lib/dataPath";
+import { restoreBackup, type BackupPayload } from "@/lib/db";
 
-function isValidDbShape(obj: unknown): obj is Record<string, unknown> {
+function isValidBackupShape(obj: unknown): obj is BackupPayload {
   if (!obj || typeof obj !== "object") return false;
   const o = obj as Record<string, unknown>;
+  if (o.version !== 1) return false;
+  if (!o.settings || typeof o.settings !== "object") return false;
   if (!Array.isArray(o.projects)) return false;
   if (!Array.isArray(o.assignments)) return false;
   if (!Array.isArray(o.payments)) return false;
-  if (typeof o.nextProjectId !== "number" && o.nextProjectId !== undefined) return false;
-  if (typeof o.nextAssignmentId !== "number" && o.nextAssignmentId !== undefined) return false;
-  if (typeof o.nextPaymentId !== "number" && o.nextPaymentId !== undefined) return false;
+  if (!Array.isArray(o.additionalWork)) return false;
+  if (!Array.isArray(o.activityLog)) return false;
+  if (o.fielderLogins !== undefined && !Array.isArray(o.fielderLogins)) return false;
   return true;
 }
 
@@ -41,15 +42,16 @@ export async function POST(request: Request) {
     url.searchParams.set("message", "invalid-json");
     return NextResponse.redirect(url);
   }
-  if (!isValidDbShape(parsed)) {
+  if (!isValidBackupShape(parsed)) {
     const url = new URL("/settings", request.url);
     url.searchParams.set("restore", "error");
     url.searchParams.set("message", "invalid-shape");
     return NextResponse.redirect(url);
   }
   try {
-    fs.writeFileSync(getDataPath(), JSON.stringify(parsed, null, 2), "utf8");
-  } catch {
+    await restoreBackup(parsed);
+  } catch (e) {
+    console.error("Restore failed:", e);
     const url = new URL("/settings", request.url);
     url.searchParams.set("restore", "error");
     url.searchParams.set("message", "write");

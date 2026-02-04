@@ -44,10 +44,10 @@ export async function POST(request: Request) {
     return NextResponse.redirect(url);
   }
 
-  const ourProject = getProjectByCode(parsed.data.projectNumber);
+  const ourProject = await getProjectByCode(parsed.data.projectNumber);
   const ourProjectId = ourProject?.id ?? null;
 
-  insertAdditionalWork({
+  await insertAdditionalWork({
     type: parsed.data.type,
     projectNumber: parsed.data.projectNumber,
     ourProjectId,

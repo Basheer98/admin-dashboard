@@ -98,15 +98,20 @@ export default async function Home({ searchParams }: PageProps) {
     typeof sp.to === "string" && sp.to ? sp.to : null;
   const hasDateFilter = Boolean(from || to);
 
-  const allProjects = getAllProjects();
-  const allPayments = getAllPayments();
+  const [allProjects, allPayments, assignments, assignmentsWithDetails, settings, paymentsWithDetails] = await Promise.all([
+    getAllProjects(),
+    getAllPayments(),
+    getAllAssignments(),
+    getAssignmentsWithDetails(),
+    getSettings(),
+    getPaymentsWithDetails(),
+  ]);
   const projects = hasDateFilter
     ? allProjects.filter((p) => inDateRange(p.createdAt, from, to))
     : allProjects;
   const payments = hasDateFilter
     ? allPayments.filter((p) => inDateRange(p.paymentDate, from, to))
     : allPayments;
-  const assignments = getAllAssignments();
 
   const totalRevenue = projects.reduce((sum, p) => {
     const projectRevenue = p.totalSqft * Number(p.companyRatePerSqft);
@@ -301,16 +306,12 @@ export default async function Home({ searchParams }: PageProps) {
     }))
     .sort((a, b) => (a.monthKey < b.monthKey ? -1 : 1));
 
-  const assignmentsWithDetails = getAssignmentsWithDetails();
   const dueSoonOrOverdue = assignmentsWithDetails.filter((a) => {
     const status = getDueDateStatus(a.dueDate ?? null);
     return status === "overdue" || status === "due-soon";
   });
 
-  const settings = getSettings();
   const showInr = settings.usdToInrRate != null;
-
-  const paymentsWithDetails = getPaymentsWithDetails();
   const payoutsByFielderMap = new Map<string, number>();
   paymentsWithDetails.forEach((p) => {
     const name = p.assignment.fielderName;
@@ -364,7 +365,7 @@ export default async function Home({ searchParams }: PageProps) {
               <span aria-hidden>💰</span> Total revenue
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
-              {showInr ? formatWithInr(totalRevenue, { showInr: true }) : `$${formatCurrency(totalRevenue)}`}
+              {showInr ? formatWithInr(totalRevenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalRevenue)}`}
             </p>
           </div>
           <div className="card-highlight p-7">
@@ -372,7 +373,7 @@ export default async function Home({ searchParams }: PageProps) {
               <span aria-hidden>📤</span> Total payouts (base + commissions)
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
-              {showInr ? formatWithInr(totalRequiredPayouts, { showInr: true }) : `$${formatCurrency(totalRequiredPayouts)}`}
+              {showInr ? formatWithInr(totalRequiredPayouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalRequiredPayouts)}`}
             </p>
           </div>
           <div className="card-highlight p-7">
@@ -380,7 +381,7 @@ export default async function Home({ searchParams }: PageProps) {
               <span aria-hidden>📈</span> Company profit
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
-              {showInr ? formatWithInr(totalCompanyProfit, { showInr: true }) : `$${formatCurrency(totalCompanyProfit)}`}
+              {showInr ? formatWithInr(totalCompanyProfit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalCompanyProfit)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
@@ -388,7 +389,7 @@ export default async function Home({ searchParams }: PageProps) {
               <span aria-hidden>👤</span> Manager commissions (net)
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
-              {showInr ? formatWithInr(totalManagerCommissions, { showInr: true }) : `$${formatCurrency(totalManagerCommissions)}`}
+              {showInr ? formatWithInr(totalManagerCommissions, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalManagerCommissions)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
@@ -396,7 +397,7 @@ export default async function Home({ searchParams }: PageProps) {
               <span aria-hidden>🏢</span> Company share from managers
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
-              {showInr ? formatWithInr(totalCompanyShareOfManagerCommissions, { showInr: true }) : `$${formatCurrency(totalCompanyShareOfManagerCommissions)}`}
+              {showInr ? formatWithInr(totalCompanyShareOfManagerCommissions, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalCompanyShareOfManagerCommissions)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
@@ -404,7 +405,7 @@ export default async function Home({ searchParams }: PageProps) {
               <span aria-hidden>✅</span> Total paid
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
-              {showInr ? formatWithInr(totalPaid, { showInr: true }) : `$${formatCurrency(totalPaid)}`}
+              {showInr ? formatWithInr(totalPaid, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalPaid)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
@@ -412,7 +413,7 @@ export default async function Home({ searchParams }: PageProps) {
               <span aria-hidden>⏳</span> Total pending payments
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
-              {showInr ? formatWithInr(totalPending, { showInr: true }) : `$${formatCurrency(totalPending)}`}
+              {showInr ? formatWithInr(totalPending, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalPending)}`}
             </p>
           </div>
           {totalInternalWorkValue > 0 && (
@@ -421,7 +422,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <span aria-hidden>👔</span> Owner / internal work value
               </p>
               <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
-                {showInr ? formatWithInr(totalInternalWorkValue, { showInr: true }) : `$${formatCurrency(totalInternalWorkValue)}`}
+                {showInr ? formatWithInr(totalInternalWorkValue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalInternalWorkValue)}`}
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Value of owner/internal work (not payouts)

@@ -14,10 +14,10 @@ export async function POST(request: Request) {
     return NextResponse.redirect(url);
   }
 
-  const oldSettings = getSettings();
-  updateSettings({ usdToInrRate: parsed.data.usdToInrRate });
+  const oldSettings = await getSettings();
+  await updateSettings({ usdToInrRate: parsed.data.usdToInrRate });
   if (oldSettings.usdToInrRate !== parsed.data.usdToInrRate) {
-    insertActivity({
+    await insertActivity({
       type: "settings_changed",
       description: `Changed settings: USD→INR rate ${oldSettings.usdToInrRate ?? "—"} → ${parsed.data.usdToInrRate ?? "—"}`,
       metadata: { usdToInrRate: { old: oldSettings.usdToInrRate, new: parsed.data.usdToInrRate } },

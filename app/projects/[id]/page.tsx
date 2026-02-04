@@ -14,8 +14,10 @@ type PageProps = {
 export default async function EditProjectPage({ params }: PageProps) {
   const { id: idStr } = await params;
   const id = Number(idStr);
-  const project = getProjectById(id);
-  const allProjects = getAllProjects({ includeArchived: true });
+  const [project, allProjects] = await Promise.all([
+    getProjectById(id),
+    getAllProjects({ includeArchived: true }),
+  ]);
   const uniqueClientNames = Array.from(
     new Set(allProjects.map((p) => p.clientName).filter(Boolean))
   );

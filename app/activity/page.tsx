@@ -3,7 +3,7 @@ import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { PrintButton } from "@/app/components/PrintButton";
 
 export default async function ActivityPage() {
-  const activities = getAllActivity(200);
+  const activities = await getAllActivity(200);
 
   return (
     <SidebarLayout title="Activity log" current="activity" headerAction={<PrintButton />}>

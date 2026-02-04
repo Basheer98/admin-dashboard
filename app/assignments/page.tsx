@@ -20,10 +20,10 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
   const filterName = typeof sp.name === "string" ? sp.name.trim() : "";
   const filterProject = typeof sp.project === "string" ? sp.project : "";
 
-  const projects = getAllProjects();
-  const assignments = getAssignmentsWithDetails({
-    includeArchived: showArchived,
-  });
+  const [projects, assignments] = await Promise.all([
+    getAllProjects(),
+    getAssignmentsWithDetails({ includeArchived: showArchived }),
+  ]);
   let assignmentsFiltered = showArchived
     ? assignments.filter((a) => a.archivedAt)
     : assignments;

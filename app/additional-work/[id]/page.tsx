@@ -12,7 +12,7 @@ type PageProps = {
 export default async function EditAdditionalWorkPage({ params, searchParams }: PageProps) {
   const { id: idStr } = await params;
   const id = Number(idStr);
-  const row = getAdditionalWorkById(id);
+  const row = await getAdditionalWorkById(id);
   const sp = searchParams ? await searchParams : {};
   const saved = sp.saved === "1";
   const error = sp.error === "missing";
@@ -39,12 +39,13 @@ export default async function EditAdditionalWorkPage({ params, searchParams }: P
         ecd: row.project.ecd,
       }
     : null;
-  const prefetchedAssignments = row.ourProjectId
-    ? getAssignmentsByProjectId(row.ourProjectId, { includeArchived: true }).map((a) => ({
-        id: a.id,
-        fielderName: a.fielderName,
-      }))
+  const projectAssignments = row.ourProjectId
+    ? await getAssignmentsByProjectId(row.ourProjectId, { includeArchived: true })
     : [];
+  const prefetchedAssignments = projectAssignments.map((a) => ({
+    id: a.id,
+    fielderName: a.fielderName,
+  }));
 
   return (
     <SidebarLayout title="Edit additional work" current="additional" backLink={{ href: "/additional-work", label: "Additional work" }}>

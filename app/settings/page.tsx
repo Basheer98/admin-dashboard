@@ -13,8 +13,8 @@ const RESTORE_MESSAGES: Record<string, string> = {
   "no-file": "No file selected.",
   read: "Could not read file.",
   "invalid-json": "File is not valid JSON.",
-  "invalid-shape": "File does not have the expected backup format (projects, assignments, payments).",
-  write: "Could not write to data file.",
+  "invalid-shape": "File does not have the expected backup format (version 1 with projects, assignments, payments).",
+  write: "Could not restore to database.",
   error: "Restore failed.",
 };
 
@@ -26,7 +26,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const restoreMessage = typeof sp.message === "string" ? RESTORE_MESSAGES[sp.message] ?? RESTORE_MESSAGES.error : RESTORE_MESSAGES[restoreStatus] ?? "";
   const normalized = sp.normalized === "1";
   const normalizedCount = typeof sp.count === "string" ? Number(sp.count) : 0;
-  const settings = getSettings();
+  const settings = await getSettings();
 
   const cookieStore = await cookies();
   const lastBackupAtRaw = cookieStore.get(LAST_BACKUP_COOKIE)?.value;
@@ -115,7 +115,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             Backup &amp; restore
           </h2>
           <p className="mb-4 text-sm text-slate-600">
-            Download a copy of all data (data.json including settings) for disaster recovery. Restore from a previously downloaded backup file.
+            Download a copy of all data from the database (including settings) for disaster recovery. Restore from a previously downloaded backup file.
           </p>
           {lastBackupLabel && (
             <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">

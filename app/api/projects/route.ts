@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(url);
   }
 
-  const project = insertProject({
+  const project = await insertProject({
     projectCode: parsed.data.projectCode,
     clientName: parsed.data.clientName,
     location: parsed.data.location,
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       ? Number(managerShareStr) / 100
       : null;
 
-    insertAssignment({
+    await insertAssignment({
       projectId: project.id,
       fielderName: name,
       ratePerSqft,

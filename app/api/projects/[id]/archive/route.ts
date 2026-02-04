@@ -11,7 +11,7 @@ export async function POST(request: Request, { params }: Params) {
   if (!id) {
     return NextResponse.redirect(new URL("/projects", request.url));
   }
-  archiveProject(id);
+  await archiveProject(id);
   const url = new URL("/projects", request.url);
   url.searchParams.set("archived", "1");
   return NextResponse.redirect(url);

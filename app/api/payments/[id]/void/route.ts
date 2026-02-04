@@ -11,7 +11,7 @@ export async function POST(request: Request, { params }: Params) {
   if (!id) {
     return NextResponse.redirect(new URL("/payments", request.url));
   }
-  const payment = getPaymentById(id);
+  const payment = await getPaymentById(id);
   if (!payment) {
     const url = new URL("/payments", request.url);
     url.searchParams.set("void", "notfound");
@@ -22,7 +22,7 @@ export async function POST(request: Request, { params }: Params) {
     url.searchParams.set("void", "already");
     return NextResponse.redirect(url);
   }
-  const ok = voidPayment(id);
+  const ok = await voidPayment(id);
   if (!ok) {
     const url = new URL("/payments", request.url);
     url.searchParams.set("void", "error");
@@ -32,7 +32,7 @@ export async function POST(request: Request, { params }: Params) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  insertActivity({
+  await insertActivity({
     type: "payment_voided",
     description: `Voided payment of ${payment.currency} ${amountFormatted} to ${payment.assignment.fielderName}`,
     metadata: { paymentId: id, amount: payment.amount, currency: payment.currency, fielderName: payment.assignment.fielderName },

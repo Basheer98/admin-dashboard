@@ -25,7 +25,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const pageSize = Math.min(100, Math.max(10, Number(sp.pageSize) || 20));
   const page = Math.max(1, Number(sp.page) || 1);
 
-  const allProjects = getAllProjects({ includeArchived: true });
+  const allProjects = await getAllProjects({ includeArchived: true });
   let projects = showArchived
     ? allProjects.filter((p) => p.archivedAt)
     : allProjects.filter((p) => !p.archivedAt);
@@ -83,10 +83,10 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const paginatedProjects = projects.slice((page - 1) * pageSize, page * pageSize);
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  const assignments = getAllAssignments({ includeArchived: showArchived });
-  const assignmentsWithDetails = getAssignmentsWithDetails({
-    includeArchived: showArchived,
-  });
+  const [assignments, assignmentsWithDetails] = await Promise.all([
+    getAllAssignments({ includeArchived: showArchived }),
+    getAssignmentsWithDetails({ includeArchived: showArchived }),
+  ]);
   const uniqueFielderNames = Array.from(
     new Set(assignments.map((a) => a.fielderName).filter(Boolean)),
   ).sort((a, b) => a.localeCompare(b));

@@ -1,5 +1,3 @@
-import { getSettings } from "./db";
-
 export function formatCurrency(amount: number, currency: "USD" | "INR" = "USD") {
   const locale = currency === "INR" ? "en-IN" : undefined;
   return amount.toLocaleString(locale, {
@@ -15,15 +13,13 @@ export function formatRate(rate: number) {
   });
 }
 
-/** Format amount in USD; if settings have usdToInrRate, optionally append INR equivalent. */
+/** Format amount in USD; if options.usdToInrRate is set and showInr, append INR equivalent. */
 export function formatWithInr(
   amountUsd: number,
-  options?: { showInr?: boolean },
+  options?: { showInr?: boolean; usdToInrRate?: number | null },
 ): string {
   const usdStr = `$${formatCurrency(amountUsd)}`;
-  if (!options?.showInr) return usdStr;
-  const settings = getSettings();
-  if (settings.usdToInrRate == null) return usdStr;
-  const inr = amountUsd * settings.usdToInrRate;
+  if (!options?.showInr || options.usdToInrRate == null) return usdStr;
+  const inr = amountUsd * options.usdToInrRate;
   return `${usdStr} (₹${formatCurrency(inr, "INR")})`;
 }

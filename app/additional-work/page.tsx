@@ -13,8 +13,10 @@ export default async function AdditionalWorkPage({ searchParams }: PageProps) {
   const filterType = typeof sp.type === "string" ? sp.type : "";
   const success = sp.success === "1";
 
-  const all = getAllAdditionalWork();
-  const assignments = getAllAssignments({ includeArchived: true });
+  const [all, assignments] = await Promise.all([
+    getAllAdditionalWork(),
+    getAllAssignments({ includeArchived: true }),
+  ]);
   const assignmentNameById = Object.fromEntries(
     assignments.map((a) => [a.id, a.fielderName]),
   );

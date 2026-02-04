@@ -46,8 +46,8 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.redirect(url);
   }
 
-  const oldProject = getProjectById(id);
-  updateProject(id, {
+  const oldProject = await getProjectById(id);
+  await updateProject(id, {
     projectCode: parsed.data.projectCode,
     clientName: parsed.data.clientName,
     location: parsed.data.location,
@@ -78,7 +78,7 @@ export async function POST(request: Request, { params }: Params) {
       meta.ecd = { old: oldProject.ecd, new: parsed.data.ecd };
     }
     if (Object.keys(meta).length > 0) {
-      insertActivity({
+      await insertActivity({
         type: "project_edited",
         description: `Edited project ${projectCode} (${clientName})${changes.length ? ": " + changes.join("; ") : ""}`,
         metadata: { projectId: id, changes: meta },

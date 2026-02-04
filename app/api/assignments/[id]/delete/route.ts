@@ -14,7 +14,7 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.redirect(new URL("/assignments", request.url));
   }
 
-  deleteAssignment(id);
+  await deleteAssignment(id);
 
   const url = new URL("/assignments", request.url);
   url.searchParams.set("deleted", "1");

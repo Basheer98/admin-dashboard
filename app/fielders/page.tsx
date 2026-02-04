@@ -14,7 +14,7 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
   const minSqftParam = typeof sp.minSqft === "string" ? sp.minSqft.trim() : "";
   const minSqft = minSqftParam !== "" ? Number(minSqftParam) : NaN;
   const hasMinSqft = !Number.isNaN(minSqft) && minSqft > 0;
-  const assignments = getAssignmentsWithDetails();
+  const assignments = await getAssignmentsWithDetails();
 
   const byFielder = new Map<
     string,

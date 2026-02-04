@@ -13,7 +13,7 @@ function escapeCsvCell(value: string | number | null | undefined): string {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const voided = searchParams.get("voided") === "1";
-  const payments = getPaymentsWithDetails({ includeVoided: voided });
+  const payments = await getPaymentsWithDetails({ includeVoided: voided });
 
   const headers = [
     "Date",
