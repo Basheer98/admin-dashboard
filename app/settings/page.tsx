@@ -13,7 +13,7 @@ const RESTORE_MESSAGES: Record<string, string> = {
   "no-file": "No file selected.",
   read: "Could not read file.",
   "invalid-json": "File is not valid JSON.",
-  "invalid-shape": "File does not have the expected backup format (version 1 with projects, assignments, payments).",
+  "invalid-shape": "File does not have the expected format (current backup or old data.json with projects, assignments, payments).",
   write: "Could not restore to database.",
   error: "Restore failed.",
 };
@@ -115,7 +115,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             Backup &amp; restore
           </h2>
           <p className="mb-4 text-sm text-slate-600">
-            Download a copy of all data from the database (including settings) for disaster recovery. Restore from a previously downloaded backup file.
+            Download a copy of all data from the database (including settings) for disaster recovery. Restore from a current backup (Download backup) or from an old data.json file from before Postgres.
           </p>
           {lastBackupLabel && (
             <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">

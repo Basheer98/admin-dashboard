@@ -683,6 +683,84 @@ export type BackupPayload = {
   fielderLogins?: Array<{ id: number; email: string; passwordHash: string; fielderName: string }>;
 };
 
+/** Old data.json shape (before Postgres). Used to import legacy backups into Postgres. */
+export type LegacyJsonShape = {
+  projects: Array<Record<string, unknown>>;
+  assignments: Array<Record<string, unknown>>;
+  payments: Array<Record<string, unknown>>;
+  settings?: { usdToInrRate?: number | null };
+};
+
+export function isLegacyJsonShape(obj: unknown): obj is LegacyJsonShape {
+  if (!obj || typeof obj !== "object") return false;
+  const o = obj as Record<string, unknown>;
+  return Array.isArray(o.projects) && Array.isArray(o.assignments) && Array.isArray(o.payments);
+}
+
+/** Convert legacy data.json content to BackupPayload so restoreBackup can import it. */
+export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayload {
+  const now = new Date().toISOString();
+  const projects: ProjectRow[] = legacy.projects.map((p, i) => {
+    const row = p as Record<string, unknown>;
+    return {
+      id: Number(row.id ?? i + 1),
+      projectCode: String(row.projectCode ?? row.project_code ?? ""),
+      clientName: String(row.clientName ?? row.client_name ?? ""),
+      location: String(row.location ?? ""),
+      totalSqft: Number(row.totalSqft ?? row.total_sqft ?? 0),
+      companyRatePerSqft: Number(row.companyRatePerSqft ?? row.company_rate_per_sqft ?? 0),
+      status: String(row.status ?? "NOT_STARTED"),
+      ecd: row.ecd != null ? String(row.ecd) : null,
+      notes: row.notes != null ? String(row.notes) : null,
+      createdAt: String(row.createdAt ?? now),
+      updatedAt: String(row.updatedAt ?? now),
+      archivedAt: row.archivedAt != null ? String(row.archivedAt) : null,
+    };
+  });
+  const assignments: FielderAssignmentRow[] = legacy.assignments.map((a, i) => {
+    const row = a as Record<string, unknown>;
+    return {
+      id: Number(row.id ?? i + 1),
+      projectId: Number(row.projectId ?? row.project_id ?? 0),
+      fielderName: String(row.fielderName ?? row.fielder_name ?? ""),
+      ratePerSqft: Number(row.ratePerSqft ?? row.rate_per_sqft ?? 0),
+      commissionPercentage: row.commissionPercentage != null ? Number(row.commissionPercentage) : row.commission_percentage != null ? Number(row.commission_percentage) : null,
+      isInternal: Boolean(row.isInternal ?? row.is_internal ?? false),
+      managedByFielderId: row.managedByFielderId != null ? Number(row.managedByFielderId) : row.managed_by_fielder_id != null ? Number(row.managed_by_fielder_id) : null,
+      managerRatePerSqft: row.managerRatePerSqft != null ? Number(row.managerRatePerSqft) : row.manager_rate_per_sqft != null ? Number(row.manager_rate_per_sqft) : null,
+      managerCommissionShare: row.managerCommissionShare != null ? Number(row.managerCommissionShare) : row.manager_commission_share != null ? Number(row.manager_commission_share) : null,
+      dueDate: row.dueDate != null ? String(row.dueDate) : row.due_date != null ? String(row.due_date) : null,
+      archivedAt: row.archivedAt != null ? String(row.archivedAt) : row.archived_at != null ? String(row.archived_at) : null,
+      createdAt: row.createdAt != null ? String(row.createdAt) : row.created_at != null ? String(row.created_at) : now,
+    };
+  });
+  const payments: PaymentRow[] = legacy.payments.map((p, i) => {
+    const row = p as Record<string, unknown>;
+    return {
+      id: Number(row.id ?? i + 1),
+      projectId: Number(row.projectId ?? row.project_id ?? 0),
+      fielderAssignmentId: Number(row.fielderAssignmentId ?? row.fielder_assignment_id ?? 0),
+      amount: Number(row.amount ?? 0),
+      currency: String(row.currency ?? "USD"),
+      method: String(row.method ?? ""),
+      paymentDate: String(row.paymentDate ?? row.payment_date ?? ""),
+      notes: row.notes != null ? String(row.notes) : null,
+      createdAt: String(row.createdAt ?? row.created_at ?? now),
+      voidedAt: row.voidedAt != null ? String(row.voidedAt) : row.voided_at != null ? String(row.voided_at) : null,
+    };
+  });
+  return {
+    version: 1,
+    exportedAt: now,
+    settings: { usdToInrRate: legacy.settings?.usdToInrRate ?? null },
+    projects,
+    assignments,
+    payments,
+    additionalWork: [],
+    activityLog: [],
+  };
+}
+
 /** Restore database from a backup payload. Deletes existing data and inserts backup data. */
 export async function restoreBackup(backup: BackupPayload): Promise<void> {
   await runSchema();

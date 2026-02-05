@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { restoreBackup, type BackupPayload } from "@/lib/db";
+import {
+  restoreBackup,
+  type BackupPayload,
+  isLegacyJsonShape,
+  legacyJsonToBackupPayload,
+} from "@/lib/db";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 
 function isValidBackupShape(obj: unknown): obj is BackupPayload {
@@ -34,11 +39,16 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "error", message: "invalid-json" }));
   }
-  if (!isValidBackupShape(parsed)) {
+  let payload: BackupPayload;
+  if (isValidBackupShape(parsed)) {
+    payload = parsed;
+  } else if (isLegacyJsonShape(parsed)) {
+    payload = legacyJsonToBackupPayload(parsed);
+  } else {
     return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "error", message: "invalid-shape" }));
   }
   try {
-    await restoreBackup(parsed);
+    await restoreBackup(payload);
   } catch (e) {
     console.error("Restore failed:", e);
     return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "error", message: "write" }));
