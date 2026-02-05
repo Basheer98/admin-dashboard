@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { sessionCookieName } from "@/lib/auth";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 
 export async function POST(request: Request) {
-  const response = NextResponse.redirect(new URL("/login", request.url));
+  const response = NextResponse.redirect(getRedirectUrl(request, "/login"));
 
   response.cookies.set(sessionCookieName, "", {
     httpOnly: true,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sessionCookieName, verifySession } from "@/lib/auth";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 
 const PUBLIC_PATHS = ["/login", "/api/auth/login"];
 
@@ -18,8 +19,7 @@ export async function middleware(request: NextRequest) {
   const session = await verifySession(token);
 
   if (!session) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirectTo", pathname);
+    const loginUrl = getRedirectUrl(request, "/login", { redirectTo: pathname });
     return NextResponse.redirect(loginUrl);
   }
 

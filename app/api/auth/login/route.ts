@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSession, sessionCookieName } from "@/lib/auth";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -11,15 +12,14 @@ export async function POST(request: Request) {
   const adminPassword = process.env.ADMIN_PASSWORD ?? "";
 
   if (!email || !password || email !== adminEmail || password !== adminPassword) {
-    const url = new URL("/login", request.url);
-    url.searchParams.set("error", "invalid");
-    url.searchParams.set("email", email);
+    const url = getRedirectUrl(request, "/login", { error: "invalid", email });
     return NextResponse.redirect(url);
   }
 
   const token = await createSession(email);
 
-  const response = NextResponse.redirect(new URL(redirectTo || "/", request.url));
+  const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/");
+  const response = NextResponse.redirect(getRedirectUrl(request, path));
 
   response.cookies.set(sessionCookieName, token, {
     httpOnly: true,

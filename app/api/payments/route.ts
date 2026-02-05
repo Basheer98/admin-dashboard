@@ -4,6 +4,7 @@ import {
   insertPayment,
   insertActivity,
 } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate, paymentPostSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
@@ -29,9 +30,7 @@ export async function POST(request: Request) {
     notes,
   });
   if (!parsed.success) {
-    const url = new URL("/payments", request.url);
-    url.searchParams.set("error", "invalid");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/payments", { error: "invalid" }));
   }
 
   const { amount, paymentDate: paymentDateStrValid } = parsed.data;
@@ -41,9 +40,7 @@ export async function POST(request: Request) {
   const assignment = await getAssignmentById(parsed.data.fielderAssignmentId);
 
   if (!assignment || assignment.projectId !== parsed.data.projectId) {
-    const url = new URL("/payments", request.url);
-    url.searchParams.set("error", "invalid-assignment");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/payments", { error: "invalid-assignment" }));
   }
 
   const paymentId = await insertPayment({
@@ -66,8 +63,7 @@ export async function POST(request: Request) {
     metadata: { paymentId, projectId: parsed.data.projectId, fielderAssignmentId: parsed.data.fielderAssignmentId },
   });
 
-  const url = new URL(redirectTo || "/payments", request.url);
-  url.searchParams.set("success", "1");
-  return NextResponse.redirect(url);
+  const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/payments");
+  return NextResponse.redirect(getRedirectUrl(request, path, { success: "1" }));
 }
 

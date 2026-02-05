@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { restoreBackup, type BackupPayload } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 
 function isValidBackupShape(obj: unknown): obj is BackupPayload {
   if (!obj || typeof obj !== "object") return false;
@@ -19,45 +20,28 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   if (!file || typeof file === "string") {
-    const url = new URL("/settings", request.url);
-    url.searchParams.set("restore", "error");
-    url.searchParams.set("message", "no-file");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "error", message: "no-file" }));
   }
   let text: string;
   try {
     text = await file.text();
   } catch {
-    const url = new URL("/settings", request.url);
-    url.searchParams.set("restore", "error");
-    url.searchParams.set("message", "read");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "error", message: "read" }));
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
-    const url = new URL("/settings", request.url);
-    url.searchParams.set("restore", "error");
-    url.searchParams.set("message", "invalid-json");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "error", message: "invalid-json" }));
   }
   if (!isValidBackupShape(parsed)) {
-    const url = new URL("/settings", request.url);
-    url.searchParams.set("restore", "error");
-    url.searchParams.set("message", "invalid-shape");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "error", message: "invalid-shape" }));
   }
   try {
     await restoreBackup(parsed);
   } catch (e) {
     console.error("Restore failed:", e);
-    const url = new URL("/settings", request.url);
-    url.searchParams.set("restore", "error");
-    url.searchParams.set("message", "write");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "error", message: "write" }));
   }
-  const url = new URL("/settings", request.url);
-  url.searchParams.set("restore", "ok");
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "ok" }));
 }

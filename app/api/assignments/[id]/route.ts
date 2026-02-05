@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAssignmentById, updateAssignment } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate, assignmentPatchSchema } from "@/lib/validations";
 
 type Params = {
@@ -12,7 +13,7 @@ export async function POST(request: Request, { params }: Params) {
   const { id: idStr } = await params;
   const id = Number(idStr);
   if (!id) {
-    return NextResponse.redirect(new URL("/assignments", request.url));
+    return NextResponse.redirect(getRedirectUrl(request, "/assignments"));
   }
 
   const formData = await request.formData();
@@ -44,9 +45,7 @@ export async function POST(request: Request, { params }: Params) {
     dueDate,
   });
   if (!parsed.success) {
-    const url = new URL(`/assignments/${id}`, request.url);
-    url.searchParams.set("error", "invalid");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, `/assignments/${id}`, { error: "invalid" }));
   }
 
   await updateAssignment(id, {
@@ -61,10 +60,10 @@ export async function POST(request: Request, { params }: Params) {
 
   const assignment = await getAssignmentById(id);
   const projectId = assignment?.projectId ?? id;
-  const url = new URL("/assignments", request.url);
-  url.searchParams.set("saved", "1");
-  url.searchParams.set("assignmentId", String(id));
-  url.searchParams.set("projectId", String(projectId));
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(getRedirectUrl(request, "/assignments", {
+    saved: "1",
+    assignmentId: String(id),
+    projectId: String(projectId),
+  }));
 }
 

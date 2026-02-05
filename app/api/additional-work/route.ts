@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProjectByCode, insertAdditionalWork } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode } from "@/lib/normalize";
 import { validate, additionalWorkPostSchema } from "@/lib/validations";
 
@@ -39,9 +40,7 @@ export async function POST(request: Request) {
     notes,
   });
   if (!parsed.success) {
-    const url = new URL("/additional-work", request.url);
-    url.searchParams.set("error", "invalid");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/additional-work", { error: "invalid" }));
   }
 
   const ourProject = await getProjectByCode(parsed.data.projectNumber);
@@ -61,7 +60,5 @@ export async function POST(request: Request) {
     notes: parsed.data.notes,
   });
 
-  const url = new URL("/additional-work", request.url);
-  url.searchParams.set("success", "1");
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(getRedirectUrl(request, "/additional-work", { success: "1" }));
 }

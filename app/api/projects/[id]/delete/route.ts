@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { deleteProject } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 
 type Params = {
   params: Promise<{
@@ -11,13 +12,11 @@ export async function POST(request: Request, { params }: Params) {
   const { id: idStr } = await params;
   const id = Number(idStr);
   if (!id) {
-    return NextResponse.redirect(new URL("/projects", request.url));
+    return NextResponse.redirect(getRedirectUrl(request, "/projects"));
   }
 
   await deleteProject(id);
 
-  const url = new URL("/projects", request.url);
-  url.searchParams.set("deleted", "1");
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(getRedirectUrl(request, "/projects", { deleted: "1" }));
 }
 

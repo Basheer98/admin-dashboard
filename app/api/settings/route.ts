@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSettings, updateSettings, insertActivity } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate, settingsPostSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
@@ -9,9 +10,7 @@ export async function POST(request: Request) {
 
   const parsed = validate(settingsPostSchema, { usdToInrRate });
   if (!parsed.success) {
-    const url = new URL("/settings", request.url);
-    url.searchParams.set("error", "invalid");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/settings", { error: "invalid" }));
   }
 
   const oldSettings = await getSettings();
@@ -23,7 +22,5 @@ export async function POST(request: Request) {
       metadata: { usdToInrRate: { old: oldSettings.usdToInrRate, new: parsed.data.usdToInrRate } },
     });
   }
-  const url = new URL("/settings", request.url);
-  url.searchParams.set("saved", "1");
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(getRedirectUrl(request, "/settings", { saved: "1" }));
 }

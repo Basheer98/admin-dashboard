@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { insertAssignment } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeFielderName } from "@/lib/normalize";
 import { validate, assignmentPostSchema } from "@/lib/validations";
 
@@ -33,14 +34,12 @@ export async function POST(request: Request) {
     dueDate,
   });
   if (!parsed.success) {
-    const url = new URL("/assignments", request.url);
-    url.searchParams.set("error", "invalid");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/assignments", { error: "invalid" }));
   }
 
   const { projectId, ratePerSqft, commissionPercentage, managedByFielderId, managerRatePerSqft, managerCommissionShare } = parsed.data;
 
-  const newId = insertAssignment({
+  const newId = await insertAssignment({
     projectId,
     fielderName: parsed.data.fielderName,
     ratePerSqft,
@@ -52,10 +51,11 @@ export async function POST(request: Request) {
     dueDate: parsed.data.dueDate,
   });
 
-  const url = new URL(redirectTo || "/assignments", request.url);
-  url.searchParams.set("success", "1");
-  url.searchParams.set("assignmentId", String(newId));
-  url.searchParams.set("projectId", String(projectId));
-  return NextResponse.redirect(url);
+  const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/assignments");
+  return NextResponse.redirect(getRedirectUrl(request, path, {
+    success: "1",
+    assignmentId: String(newId),
+    projectId: String(projectId),
+  }));
 }
 

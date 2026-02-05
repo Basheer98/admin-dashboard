@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProjectByCode, getAdditionalWorkById, updateAdditionalWork } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode } from "@/lib/normalize";
 
 type Params = { params: Promise<{ id: string }> };
@@ -8,12 +9,12 @@ export async function POST(request: Request, { params }: Params) {
   const { id: idStr } = await params;
   const id = Number(idStr);
   if (!id) {
-    return NextResponse.redirect(new URL("/additional-work", request.url));
+    return NextResponse.redirect(getRedirectUrl(request, "/additional-work"));
   }
 
   const existing = await getAdditionalWorkById(id);
   if (!existing) {
-    return NextResponse.redirect(new URL("/additional-work", request.url));
+    return NextResponse.redirect(getRedirectUrl(request, "/additional-work"));
   }
 
   const formData = await request.formData();
@@ -39,9 +40,7 @@ export async function POST(request: Request, { params }: Params) {
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
   if (!projectNumber) {
-    const url = new URL(`/additional-work/${id}`, request.url);
-    url.searchParams.set("error", "missing");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, `/additional-work/${id}`, { error: "missing" }));
   }
 
   const ourProject = await getProjectByCode(projectNumber);
@@ -61,7 +60,5 @@ export async function POST(request: Request, { params }: Params) {
     notes,
   });
 
-  const url = new URL(`/additional-work/${id}`, request.url);
-  url.searchParams.set("saved", "1");
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(getRedirectUrl(request, `/additional-work/${id}`, { saved: "1" }));
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProjectById, updateProject, insertActivity } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode } from "@/lib/normalize";
 import { validate, projectPatchSchema } from "@/lib/validations";
 
@@ -13,7 +14,7 @@ export async function POST(request: Request, { params }: Params) {
   const { id: idStr } = await params;
   const id = Number(idStr);
   if (!id) {
-    return NextResponse.redirect(new URL("/projects", request.url));
+    return NextResponse.redirect(getRedirectUrl(request, "/projects"));
   }
 
   const formData = await request.formData();
@@ -41,9 +42,7 @@ export async function POST(request: Request, { params }: Params) {
     notes,
   });
   if (!parsed.success) {
-    const url = new URL(`/projects/${id}`, request.url);
-    url.searchParams.set("error", "invalid");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, `/projects/${id}`, { error: "invalid" }));
   }
 
   const oldProject = await getProjectById(id);
@@ -86,8 +85,6 @@ export async function POST(request: Request, { params }: Params) {
     }
   }
 
-  const url = new URL(`/projects/${id}`, request.url);
-  url.searchParams.set("saved", "1");
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(getRedirectUrl(request, `/projects/${id}`, { saved: "1" }));
 }
 

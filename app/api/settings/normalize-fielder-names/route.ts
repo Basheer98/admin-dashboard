@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { normalizeAllFielderNames, insertActivity } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 
 export async function POST(request: Request) {
   const count = await normalizeAllFielderNames();
@@ -10,8 +11,5 @@ export async function POST(request: Request) {
       metadata: { action: "normalize_fielder_names", count },
     });
   }
-  const url = new URL("/settings", request.url);
-  url.searchParams.set("normalized", "1");
-  url.searchParams.set("count", String(count));
-  return NextResponse.redirect(url);
+  return NextResponse.redirect(getRedirectUrl(request, "/settings", { normalized: "1", count: String(count) }));
 }

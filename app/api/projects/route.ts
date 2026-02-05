@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { insertAssignment, insertProject } from "@/lib/db";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode, normalizeFielderName } from "@/lib/normalize";
 import { validate, projectPostSchema } from "@/lib/validations";
 
@@ -31,9 +32,7 @@ export async function POST(request: Request) {
     notes,
   });
   if (!parsed.success) {
-    const url = new URL("/projects", request.url);
-    url.searchParams.set("error", "invalid");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(getRedirectUrl(request, "/projects", { error: "invalid" }));
   }
 
   const project = await insertProject({
@@ -96,8 +95,9 @@ export async function POST(request: Request) {
     });
   }
 
-  const url = new URL(redirectTo || "/projects", request.url);
-  url.searchParams.set("success", "1");
-  return NextResponse.redirect(url);
+  const path = redirectTo?.startsWith("http")
+    ? new URL(redirectTo).pathname
+    : (redirectTo?.startsWith("/") ? redirectTo : "/projects");
+  return NextResponse.redirect(getRedirectUrl(request, path, { success: "1" }));
 }
 
