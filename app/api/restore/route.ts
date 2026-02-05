@@ -50,8 +50,12 @@ export async function POST(request: Request) {
   try {
     await restoreBackup(payload);
   } catch (e) {
+    const errMsg = e instanceof Error ? e.message : String(e);
     console.error("Restore failed:", e);
-    return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "error", message: "write" }));
+    const params: Record<string, string> = { restore: "error", message: "write" };
+    const safeDetail = errMsg.slice(0, 120).replace(/[^a-zA-Z0-9 _-]/g, " ");
+    if (safeDetail) params.detail = safeDetail;
+    return NextResponse.redirect(getRedirectUrl(request, "/settings", params));
   }
   return NextResponse.redirect(getRedirectUrl(request, "/settings", { restore: "ok" }));
 }

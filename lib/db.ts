@@ -697,6 +697,20 @@ export function isLegacyJsonShape(obj: unknown): obj is LegacyJsonShape {
   return Array.isArray(o.projects) && Array.isArray(o.assignments) && Array.isArray(o.payments);
 }
 
+/** Coerce to ISO timestamp string or null for Postgres. Handles legacy dates. */
+function toTimestamp(v: unknown): string | null {
+  if (v == null || v === "") return null;
+  if (typeof v === "string") {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  if (typeof v === "number") {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  return null;
+}
+
 /** Convert legacy data.json content to BackupPayload so restoreBackup can import it. */
 export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayload {
   const now = new Date().toISOString();
@@ -712,43 +726,54 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
       status: String(row.status ?? "NOT_STARTED"),
       ecd: row.ecd != null ? String(row.ecd) : null,
       notes: row.notes != null ? String(row.notes) : null,
-      createdAt: String(row.createdAt ?? now),
-      updatedAt: String(row.updatedAt ?? now),
-      archivedAt: row.archivedAt != null ? String(row.archivedAt) : null,
+      createdAt: toTimestamp(row.createdAt ?? row.created_at) ?? now,
+      updatedAt: toTimestamp(row.updatedAt ?? row.updated_at) ?? now,
+      archivedAt: toTimestamp(row.archivedAt ?? row.archived_at),
     };
   });
-  const assignments: FielderAssignmentRow[] = legacy.assignments.map((a, i) => {
-    const row = a as Record<string, unknown>;
-    return {
-      id: Number(row.id ?? i + 1),
-      projectId: Number(row.projectId ?? row.project_id ?? 0),
-      fielderName: String(row.fielderName ?? row.fielder_name ?? ""),
-      ratePerSqft: Number(row.ratePerSqft ?? row.rate_per_sqft ?? 0),
-      commissionPercentage: row.commissionPercentage != null ? Number(row.commissionPercentage) : row.commission_percentage != null ? Number(row.commission_percentage) : null,
-      isInternal: Boolean(row.isInternal ?? row.is_internal ?? false),
-      managedByFielderId: row.managedByFielderId != null ? Number(row.managedByFielderId) : row.managed_by_fielder_id != null ? Number(row.managed_by_fielder_id) : null,
-      managerRatePerSqft: row.managerRatePerSqft != null ? Number(row.managerRatePerSqft) : row.manager_rate_per_sqft != null ? Number(row.manager_rate_per_sqft) : null,
-      managerCommissionShare: row.managerCommissionShare != null ? Number(row.managerCommissionShare) : row.manager_commission_share != null ? Number(row.manager_commission_share) : null,
-      dueDate: row.dueDate != null ? String(row.dueDate) : row.due_date != null ? String(row.due_date) : null,
-      archivedAt: row.archivedAt != null ? String(row.archivedAt) : row.archived_at != null ? String(row.archived_at) : null,
-      createdAt: row.createdAt != null ? String(row.createdAt) : row.created_at != null ? String(row.created_at) : now,
-    };
-  });
-  const payments: PaymentRow[] = legacy.payments.map((p, i) => {
-    const row = p as Record<string, unknown>;
-    return {
-      id: Number(row.id ?? i + 1),
-      projectId: Number(row.projectId ?? row.project_id ?? 0),
-      fielderAssignmentId: Number(row.fielderAssignmentId ?? row.fielder_assignment_id ?? 0),
-      amount: Number(row.amount ?? 0),
-      currency: String(row.currency ?? "USD"),
-      method: String(row.method ?? ""),
-      paymentDate: String(row.paymentDate ?? row.payment_date ?? ""),
-      notes: row.notes != null ? String(row.notes) : null,
-      createdAt: String(row.createdAt ?? row.created_at ?? now),
-      voidedAt: row.voidedAt != null ? String(row.voidedAt) : row.voided_at != null ? String(row.voided_at) : null,
-    };
-  });
+  const projectIds = new Set(projects.map((x) => x.id));
+  const assignments: FielderAssignmentRow[] = legacy.assignments
+    .filter((a) => projectIds.has(Number((a as Record<string, unknown>).projectId ?? (a as Record<string, unknown>).project_id ?? 0)))
+    .map((a, i) => {
+      const row = a as Record<string, unknown>;
+      return {
+        id: Number(row.id ?? i + 1),
+        projectId: Number(row.projectId ?? row.project_id ?? 0),
+        fielderName: String(row.fielderName ?? row.fielder_name ?? ""),
+        ratePerSqft: Number(row.ratePerSqft ?? row.rate_per_sqft ?? 0),
+        commissionPercentage: row.commissionPercentage != null ? Number(row.commissionPercentage) : row.commission_percentage != null ? Number(row.commission_percentage) : null,
+        isInternal: Boolean(row.isInternal ?? row.is_internal ?? false),
+        managedByFielderId: row.managedByFielderId != null ? Number(row.managedByFielderId) : row.managed_by_fielder_id != null ? Number(row.managed_by_fielder_id) : null,
+        managerRatePerSqft: row.managerRatePerSqft != null ? Number(row.managerRatePerSqft) : row.manager_rate_per_sqft != null ? Number(row.manager_rate_per_sqft) : null,
+        managerCommissionShare: row.managerCommissionShare != null ? Number(row.managerCommissionShare) : row.manager_commission_share != null ? Number(row.manager_commission_share) : null,
+        dueDate: row.dueDate != null ? String(row.dueDate) : row.due_date != null ? String(row.due_date) : null,
+        archivedAt: toTimestamp(row.archivedAt ?? row.archived_at),
+        createdAt: toTimestamp(row.createdAt ?? row.created_at) ?? now,
+      };
+    });
+  const assignmentIds = new Set(assignments.map((x) => x.id));
+  const payments: PaymentRow[] = legacy.payments
+    .filter((p) => {
+      const r = p as Record<string, unknown>;
+      const pid = Number(r.projectId ?? r.project_id ?? 0);
+      const aid = Number(r.fielderAssignmentId ?? r.fielder_assignment_id ?? 0);
+      return projectIds.has(pid) && assignmentIds.has(aid);
+    })
+    .map((p, i) => {
+      const row = p as Record<string, unknown>;
+      return {
+        id: Number(row.id ?? i + 1),
+        projectId: Number(row.projectId ?? row.project_id ?? 0),
+        fielderAssignmentId: Number(row.fielderAssignmentId ?? row.fielder_assignment_id ?? 0),
+        amount: Number(row.amount ?? 0),
+        currency: String(row.currency ?? "USD"),
+        method: String(row.method ?? ""),
+        paymentDate: String(row.paymentDate ?? row.payment_date ?? ""),
+        notes: row.notes != null ? String(row.notes) : null,
+        createdAt: toTimestamp(row.createdAt ?? row.created_at) ?? now,
+        voidedAt: toTimestamp(row.voidedAt ?? row.voided_at),
+      };
+    });
   return {
     version: 1,
     exportedAt: now,
@@ -773,6 +798,9 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
   await pool.query("DELETE FROM projects");
   await pool.query("DELETE FROM fielder_logins");
 
+  const ts = (v: string | null | undefined): string | null => (v != null && v !== "" ? v : null);
+  const now = new Date().toISOString();
+
   for (const p of backup.projects) {
     await pool.query(
       `INSERT INTO projects (id, project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, created_at, updated_at, archived_at)
@@ -785,11 +813,11 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
         p.totalSqft,
         p.companyRatePerSqft,
         p.status,
-        p.ecd,
-        p.notes,
-        p.createdAt,
-        p.updatedAt,
-        p.archivedAt,
+        p.ecd ?? null,
+        p.notes ?? null,
+        p.createdAt ?? now,
+        p.updatedAt ?? now,
+        ts(p.archivedAt ?? null),
       ],
     );
   }
@@ -802,14 +830,14 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
         a.projectId,
         a.fielderName,
         a.ratePerSqft,
-        a.commissionPercentage,
+        a.commissionPercentage ?? null,
         a.isInternal,
-        a.managedByFielderId,
-        a.managerRatePerSqft,
-        a.managerCommissionShare,
-        a.dueDate,
-        a.archivedAt,
-        a.createdAt ?? new Date().toISOString(),
+        a.managedByFielderId ?? null,
+        a.managerRatePerSqft ?? null,
+        a.managerCommissionShare ?? null,
+        a.dueDate ?? null,
+        ts(a.archivedAt ?? null),
+        a.createdAt ?? now,
       ],
     );
   }
@@ -825,9 +853,9 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
         p.currency,
         p.method,
         p.paymentDate,
-        p.notes,
-        p.createdAt,
-        p.voidedAt,
+        p.notes ?? null,
+        p.createdAt ?? now,
+        ts(p.voidedAt ?? null),
       ],
     );
   }

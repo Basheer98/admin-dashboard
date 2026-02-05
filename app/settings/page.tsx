@@ -24,6 +24,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const error = sp.error === "invalid";
   const restoreStatus = typeof sp.restore === "string" ? sp.restore : "";
   const restoreMessage = typeof sp.message === "string" ? RESTORE_MESSAGES[sp.message] ?? RESTORE_MESSAGES.error : RESTORE_MESSAGES[restoreStatus] ?? "";
+  const restoreDetail = typeof sp.detail === "string" ? sp.detail : "";
   const normalized = sp.normalized === "1";
   const normalizedCount = typeof sp.count === "string" ? Number(sp.count) : 0;
   const settings = await getSettings();
@@ -48,9 +49,10 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             {restoreMessage}
           </div>
         )}
-        {restoreStatus === "error" && restoreMessage && (
+        {restoreStatus === "error" && (restoreMessage || restoreDetail) && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             {restoreMessage}
+            {restoreDetail && <p className="mt-2 font-mono text-xs">{restoreDetail}</p>}
           </div>
         )}
         {error && (
