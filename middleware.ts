@@ -4,14 +4,21 @@ import { getRedirectUrl } from "@/lib/redirectUrl";
 
 const PUBLIC_PATHS = ["/login", "/api/auth/login"];
 
+const FIELDER_PATHS = ["/fielder", "/api/auth/logout"];
+
+function isFielderPath(pathname: string): boolean {
+  const lower = pathname.toLowerCase();
+  return lower === "/fielder" || lower.startsWith("/fielder/");
+}
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some((p) => pathname.toLowerCase().startsWith(p));
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const isPublic = PUBLIC_PATHS.some((path) =>
-    pathname.toLowerCase().startsWith(path),
-  );
-
-  if (isPublic) {
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
@@ -21,6 +28,20 @@ export async function middleware(request: NextRequest) {
   if (!session) {
     const loginUrl = getRedirectUrl(request, "/login", { redirectTo: pathname });
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (session.role === "fielder") {
+    if (pathname.toLowerCase().startsWith("/api/auth/logout")) {
+      return NextResponse.next();
+    }
+    if (isFielderPath(pathname)) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(getRedirectUrl(request, "/fielder"));
+  }
+
+  if (session.role === "admin" && isFielderPath(pathname)) {
+    return NextResponse.redirect(getRedirectUrl(request, "/"));
   }
 
   return NextResponse.next();

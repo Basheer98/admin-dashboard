@@ -1,5 +1,7 @@
+import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
 import { createSession, sessionCookieName } from "@/lib/auth";
+import { getFielderLoginByEmail } from "@/lib/db";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 
 export async function POST(request: Request) {
@@ -8,27 +10,41 @@ export async function POST(request: Request) {
   const password = String(formData.get("password") ?? "");
   const redirectTo = String(formData.get("redirectTo") ?? "/");
 
+  if (!email || !password) {
+    return NextResponse.redirect(getRedirectUrl(request, "/login", { error: "invalid", email }));
+  }
+
   const adminEmail = process.env.ADMIN_EMAIL ?? "";
   const adminPassword = process.env.ADMIN_PASSWORD ?? "";
 
-  if (!email || !password || email !== adminEmail || password !== adminPassword) {
-    const url = getRedirectUrl(request, "/login", { error: "invalid", email });
-    return NextResponse.redirect(url);
+  if (email === adminEmail && password === adminPassword) {
+    const token = await createSession({ role: "admin" });
+    const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : redirectTo.startsWith("/") ? redirectTo : "/";
+    const adminPath = path.startsWith("/fielder") ? "/" : path;
+    const response = NextResponse.redirect(getRedirectUrl(request, adminPath));
+    response.cookies.set(sessionCookieName, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    return response;
   }
 
-  const token = await createSession(email);
+  const fielder = await getFielderLoginByEmail(email);
+  if (!fielder || !(await bcrypt.compare(password, fielder.passwordHash))) {
+    return NextResponse.redirect(getRedirectUrl(request, "/login", { error: "invalid", email }));
+  }
 
-  const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/");
-  const response = NextResponse.redirect(getRedirectUrl(request, path));
-
+  const token = await createSession({ role: "fielder", fielderName: fielder.fielderName });
+  const response = NextResponse.redirect(getRedirectUrl(request, "/fielder"));
   response.cookies.set(sessionCookieName, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
   });
-
   return response;
 }
-

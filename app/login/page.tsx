@@ -15,7 +15,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-100">
       <div className="card w-full max-w-md p-8">
         <h1 className="mb-6 text-center text-3xl font-semibold text-slate-900">
-          Admin Login
+          Sign in
         </h1>
 
         {isSessionExpired && (

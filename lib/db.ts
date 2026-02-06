@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { query, queryOne, queryOneRow, getPool, runSchema } from "./pg";
 import { normalizeProjectCode } from "./normalize";
 
@@ -633,6 +634,45 @@ export async function getAllFielderLogins(): Promise<FielderLoginRow[]> {
     'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName" FROM fielder_logins ORDER BY id',
   );
   return rows as FielderLoginRow[];
+}
+
+/** Assignments for one fielder by name (matches assignment.fielderName after normalizing). */
+export async function getAssignmentsForFielderByName(fielderName: string): Promise<Array<FielderAssignmentRow & { project: ProjectRow; payments: PaymentRow[] }>> {
+  const all = await getAssignmentsWithDetails({ includeArchived: true });
+  const normalized = fielderName.trim().toUpperCase();
+  return all.filter((a) => a.fielderName.trim().toUpperCase() === normalized);
+}
+
+export async function getFielderLoginByEmail(email: string): Promise<FielderLoginRow | null> {
+  const row = await queryOne<FielderLoginRow>(
+    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName" FROM fielder_logins WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))',
+    [email],
+  );
+  return row as FielderLoginRow | null ?? null;
+}
+
+const BCRYPT_ROUNDS = 10;
+
+export async function insertFielderLogin(input: {
+  email: string;
+  password: string;
+  fielderName: string;
+}): Promise<number> {
+  const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
+  const row = await queryOneRow<{ id: number }>(
+    `INSERT INTO fielder_logins (email, password_hash, fielder_name) VALUES ($1, $2, $3) RETURNING id`,
+    [input.email.trim().toLowerCase(), passwordHash, input.fielderName.trim()],
+  );
+  if (!row) throw new Error("insertFielderLogin failed");
+  return row.id;
+}
+
+export async function updateFielderLoginPassword(id: number, newPassword: string): Promise<void> {
+  const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+  await query(
+    "UPDATE fielder_logins SET password_hash = $2 WHERE id = $1",
+    [id, passwordHash],
+  );
 }
 
 export async function getSettings(): Promise<SettingsRow> {

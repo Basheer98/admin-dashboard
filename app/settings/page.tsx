@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { getSettings } from "@/lib/db";
+import { getSettings, getAllFielderLogins } from "@/lib/db";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 
 const LAST_BACKUP_COOKIE = "last_backup_at";
@@ -27,7 +27,13 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const restoreDetail = typeof sp.detail === "string" ? sp.detail : "";
   const normalized = sp.normalized === "1";
   const normalizedCount = typeof sp.count === "string" ? Number(sp.count) : 0;
-  const settings = await getSettings();
+  const flCreated = sp.flCreated === "1";
+  const flReset = sp.flReset === "1";
+  const flError = typeof sp.flError === "string" ? sp.flError : null;
+  const [settings, fielderLogins] = await Promise.all([
+    getSettings(),
+    getAllFielderLogins(),
+  ]);
 
   const cookieStore = await cookies();
   const lastBackupAtRaw = cookieStore.get(LAST_BACKUP_COOKIE)?.value;
@@ -67,6 +73,100 @@ export default async function SettingsPage({ searchParams }: PageProps) {
               : "All fielder names were already uppercase. No changes made."}
           </div>
         )}
+        {flCreated && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            Fielder login created. Share the email and password with the fielder so they can sign in.
+          </div>
+        )}
+        {flReset && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            Password reset. Share the new password with the fielder.
+          </div>
+        )}
+        {flError === "invalid" && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Invalid fielder login: email, password (min 6 characters), and fielder name are required.
+          </div>
+        )}
+        {flError === "email-taken" && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            That email is already used. Use a different email.
+          </div>
+        )}
+        {flError === "password-short" && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            New password must be at least 6 characters.
+          </div>
+        )}
+        {(flError === "create" || flError === "reset") && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Something went wrong. Please try again.
+          </div>
+        )}
+        <section className="card p-6">
+          <h2 className="mb-4 text-base font-semibold text-slate-900">
+            Fielder logins
+          </h2>
+          <p className="mb-4 text-sm text-slate-600">
+            Create login accounts for fielders so they can view their own statement, assignments, and payments at the same URL. Fielder name must match the name used on assignments (e.g. NIVAS).
+          </p>
+          <form method="POST" action="/api/fielder-logins" className="mb-6 grid max-w-xl gap-4 sm:grid-cols-3">
+            <div className="space-y-1">
+              <label className="label">Email (login)</label>
+              <input name="email" type="email" required placeholder="nivas@example.com" className="input" />
+            </div>
+            <div className="space-y-1">
+              <label className="label">Password</label>
+              <input name="password" type="password" required minLength={6} placeholder="Min 6 characters" className="input" />
+            </div>
+            <div className="space-y-1">
+              <label className="label">Fielder name</label>
+              <input name="fielderName" type="text" required placeholder="NIVAS" className="input" />
+            </div>
+            <div className="sm:col-span-3">
+              <button type="submit" className="btn-primary px-5 py-2.5">
+                Add fielder login
+              </button>
+            </div>
+          </form>
+          <div className="overflow-x-auto">
+            <table className="table-sticky table-hover min-w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2">Email</th>
+                  <th className="px-3 py-2">Fielder name</th>
+                  <th className="px-3 py-2">Reset password</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fielderLogins.map((fl) => (
+                  <tr key={fl.id} className="border-t text-slate-800">
+                    <td className="px-3 py-2">{fl.email}</td>
+                    <td className="px-3 py-2">{fl.fielderName}</td>
+                    <td className="px-3 py-2">
+                      <form method="POST" action={`/api/fielder-logins/${fl.id}/reset-password`} className="inline-flex flex-wrap items-center gap-2">
+                        <input
+                          name="newPassword"
+                          type="password"
+                          required
+                          minLength={6}
+                          placeholder="New password"
+                          className="input w-40"
+                        />
+                        <button type="submit" className="btn-secondary py-2">
+                          Reset
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {fielderLogins.length === 0 && (
+            <p className="mt-4 text-sm text-slate-500">No fielder logins yet. Add one above.</p>
+          )}
+        </section>
         <section className="card p-6">
           <h2 className="mb-4 text-base font-semibold text-slate-900">
             Currency conversion
