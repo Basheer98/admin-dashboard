@@ -361,56 +361,56 @@ export default async function Home({ searchParams }: PageProps) {
 
         <section className="grid gap-6 md:grid-cols-3">
           <div className="card-highlight p-7">
-            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-              <span aria-hidden>💰</span> Total revenue
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Total revenue
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
               {showInr ? formatWithInr(totalRevenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalRevenue)}`}
             </p>
           </div>
           <div className="card-highlight p-7">
-            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-              <span aria-hidden>📤</span> Total payouts (base + commissions)
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Total payouts (base + commissions)
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
               {showInr ? formatWithInr(totalRequiredPayouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalRequiredPayouts)}`}
             </p>
           </div>
           <div className="card-highlight p-7">
-            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-              <span aria-hidden>📈</span> Company profit
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Company profit
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
               {showInr ? formatWithInr(totalCompanyProfit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalCompanyProfit)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
-            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-              <span aria-hidden>👤</span> Manager commissions (net)
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Manager commissions (net)
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
               {showInr ? formatWithInr(totalManagerCommissions, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalManagerCommissions)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
-            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-              <span aria-hidden>🏢</span> Company share from managers
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Company share from managers
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
               {showInr ? formatWithInr(totalCompanyShareOfManagerCommissions, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalCompanyShareOfManagerCommissions)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
-            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-              <span aria-hidden>✅</span> Total paid
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Total paid
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
               {showInr ? formatWithInr(totalPaid, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalPaid)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
-            <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-              <span aria-hidden>⏳</span> Total pending payments
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+              Total pending payments
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
               {showInr ? formatWithInr(totalPending, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalPending)}`}
@@ -418,8 +418,8 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
           {totalInternalWorkValue > 0 && (
             <div className="card-highlight p-7 md:col-span-1">
-              <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-                <span aria-hidden>👔</span> Owner / internal work value
+              <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+                Owner / internal work value
               </p>
               <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
                 {showInr ? formatWithInr(totalInternalWorkValue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalInternalWorkValue)}`}

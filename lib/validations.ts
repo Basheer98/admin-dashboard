@@ -25,6 +25,15 @@ export const paymentPostSchema = z.object({
   notes: z.string().nullable(),
 });
 
+/** Log payment for a fielder (allocated across their assignments). */
+export const fielderPaymentPostSchema = z.object({
+  amount: z.number().positive(),
+  currency: z.enum(["USD", "INR"]),
+  method: z.enum(["BANK", "WISE", "CASH", "OTHER"]),
+  paymentDate: z.string().min(1),
+  notes: z.string().nullable(),
+});
+
 // --- Assignments (POST new) ---
 export const assignmentPostSchema = z.object({
   projectId: z.number().int().positive(),

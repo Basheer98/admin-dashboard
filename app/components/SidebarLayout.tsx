@@ -14,9 +14,6 @@ type SidebarLayoutProps = {
 
 const STORAGE_KEY = "admin-dashboard-sidebar-collapsed";
 const DENSITY_STORAGE_KEY = "admin-dashboard-table-density-compact";
-const THEME_STORAGE_KEY = "admin-dashboard-theme";
-
-type Theme = "light" | "dark";
 
 export function SidebarLayout({
   title,
@@ -27,7 +24,6 @@ export function SidebarLayout({
 }: SidebarLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [compactDensity, setCompactDensity] = useState(false);
-  const [theme, setTheme] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
   const [isLg, setIsLg] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,16 +35,6 @@ export function SidebarLayout({
       if (stored === "1") setCollapsed(true);
       const densityStored = localStorage.getItem(DENSITY_STORAGE_KEY);
       if (densityStored === "1") setCompactDensity(true);
-
-      const themeStored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-      let initialTheme: Theme = "light";
-      if (themeStored === "light" || themeStored === "dark") {
-        initialTheme = themeStored;
-      } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        initialTheme = "dark";
-      }
-      setTheme(initialTheme);
-      document.documentElement.dataset.theme = initialTheme;
 
       const mq = window.matchMedia("(min-width: 1024px)");
       setIsLg(mq.matches);
@@ -77,16 +63,6 @@ export function SidebarLayout({
       // ignore
     }
   }, [compactDensity, mounted]);
-
-  useEffect(() => {
-    if (!mounted) return;
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, theme);
-      document.documentElement.dataset.theme = theme;
-    } catch {
-      // ignore
-    }
-  }, [theme, mounted]);
 
   useEffect(() => {
     if (isLg) setMobileMenuOpen(false);
@@ -168,18 +144,6 @@ export function SidebarLayout({
           </button>
           <p className="mt-1.5 px-2 text-[11px] text-slate-500 uppercase tracking-wider">
             Table density
-          </p>
-        </div>
-        <div className="mt-4 rounded-xl bg-white/5 border border-white/5 p-2.5">
-          <button
-            type="button"
-            onClick={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
-            className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors"
-          >
-            {theme === "dark" ? "Dark mode: On" : "Dark mode: Off"}
-          </button>
-          <p className="mt-1.5 px-2 text-[11px] text-slate-500 uppercase tracking-wider">
-            Appearance
           </p>
         </div>
         <form method="POST" action="/api/auth/logout" className="mt-6">

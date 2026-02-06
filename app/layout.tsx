@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="light">
+    <html lang="en">
       <body className={`${plusJakarta.variable} font-sans antialiased`}>
         {children}
         <Toast />

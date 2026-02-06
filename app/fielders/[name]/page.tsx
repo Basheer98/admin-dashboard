@@ -8,10 +8,14 @@ import Link from "next/link";
 
 type PageProps = {
   params: Promise<{ name: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function FielderReportPage({ params }: PageProps) {
+export default async function FielderReportPage({ params, searchParams }: PageProps) {
   const { name: encodedName } = await params;
+  const sp = searchParams ? await searchParams : {};
+  const success = sp.success === "1";
+  const error = typeof sp.error === "string" ? sp.error : null;
   const fielderNameFromUrl = decodeURIComponent(encodedName);
   const fielderNameNormalized = fielderNameFromUrl.trim().toUpperCase();
 
@@ -96,6 +100,27 @@ export default async function FielderReportPage({ params }: PageProps) {
           </Link>
         </div>
 
+        {success && (
+          <div className="no-print rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            Payment logged. Remaining owed: {formatCurrency(Math.max(pending, 0))}.
+          </div>
+        )}
+        {error === "invalid" && (
+          <div className="no-print rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Invalid payment details. Please check amount, date, and method.
+          </div>
+        )}
+        {error === "no-pending" && (
+          <div className="no-print rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            This fielder has no pending balance to pay.
+          </div>
+        )}
+        {error === "amount-exceeds" && (
+          <div className="no-print rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Payment amount cannot exceed pending balance ({formatCurrency(pending)}).
+          </div>
+        )}
+
         <section className={`card grid gap-4 p-6 ${internalWorkValue > 0 ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
           <div>
             <p className="text-sm font-medium text-slate-500">Total SQFT</p>
@@ -133,6 +158,72 @@ export default async function FielderReportPage({ params }: PageProps) {
             </div>
           )}
         </section>
+
+        {pending > 0 && (
+          <section className="card no-print p-6">
+            <h2 className="mb-2 text-base font-semibold text-slate-900">
+              Log payment
+            </h2>
+            <p className="mb-4 text-sm text-slate-600">
+              Company owes this fielder {formatCurrency(pending)}. Enter the amount you paid; it will be applied to reduce the balance (oldest assignments first).
+            </p>
+            <form
+              method="POST"
+              action={`/api/fielders/${encodeURIComponent(encodedName)}/payments`}
+              className="grid gap-4 md:grid-cols-2"
+            >
+              <div className="space-y-1">
+                <label className="label">Amount</label>
+                <input
+                  name="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max={pending}
+                  required
+                  placeholder={pending.toFixed(2)}
+                  className="input"
+                />
+                <p className="text-xs text-slate-500">Max: {formatCurrency(pending)}</p>
+              </div>
+              <div className="space-y-1">
+                <label className="label">Currency</label>
+                <select name="currency" required className="select">
+                  <option value="USD">USD</option>
+                  <option value="INR">INR</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="label">Payment method</label>
+                <select name="method" required className="select">
+                  <option value="BANK">BANK</option>
+                  <option value="WISE">WISE</option>
+                  <option value="CASH">CASH</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="label">Payment date</label>
+                <input
+                  name="paymentDate"
+                  type="date"
+                  required
+                  className="input"
+                  defaultValue={new Date().toISOString().slice(0, 10)}
+                />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="label">Notes / reference (optional)</label>
+                <input name="notes" type="text" className="input" placeholder="Optional" />
+              </div>
+              <div className="md:col-span-2">
+                <button type="submit" className="btn-primary px-5 py-2.5">
+                  Save payment
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
 
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-slate-900">
@@ -195,18 +286,12 @@ export default async function FielderReportPage({ params }: PageProps) {
                     <td className="px-3 py-2">
                       {formatCurrency(rowPending)}
                     </td>
-                    <td className="no-print px-3 py-2 flex flex-wrap gap-2">
+                    <td className="no-print px-3 py-2">
                       <Link
                         href={`/assignments/${a.id}`}
                         className="text-slate-700 underline hover:text-slate-900"
                       >
                         Edit
-                      </Link>
-                      <Link
-                        href={`/payments?projectId=${a.projectId}&assignmentId=${a.id}`}
-                        className="text-slate-700 underline hover:text-slate-900"
-                      >
-                        Log payment
                       </Link>
                     </td>
                   </tr>
