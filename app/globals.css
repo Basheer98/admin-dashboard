@@ -167,6 +167,11 @@ a[href]:focus-visible {
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
+  .dashboard-layout main > div {
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
   .dashboard-layout main header {
     border-bottom: 1px solid #000;
     margin-bottom: 0.5rem;
@@ -178,9 +183,16 @@ a[href]:focus-visible {
   .print-content {
     color: #000;
   }
+  .print-content .card.overflow-x-auto,
+  .print-content div.overflow-x-auto {
+    overflow: visible !important;
+    max-width: 100%;
+  }
   .print-content table {
     border-collapse: collapse;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed;
   }
   .print-content th,
   .print-content td {
