@@ -15,7 +15,7 @@ function getTotalRequiredAndPending(
     managedByFielderId: number | null;
     managerRatePerSqft: number | string | null;
     commissionPercentage: number | string | null;
-    payments: { amount: string }[];
+    payments: { amount: string | number }[];
   },
 ): { totalRequired: number; pending: number } {
   const sqft = a.project.totalSqft;
