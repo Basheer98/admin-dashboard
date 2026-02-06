@@ -18,6 +18,8 @@ export async function POST(request: Request) {
   const ecdRaw = String(formData.get("ecd") ?? "").trim();
   const ecd = ecdRaw || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
+  const qfieldRaw = String(formData.get("qfield") ?? "").trim();
+  const qfield = qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2" ? qfieldRaw : null;
 
   const redirectTo = String(formData.get("redirectTo") ?? "/projects");
 
@@ -30,6 +32,7 @@ export async function POST(request: Request) {
     status: statusStr || "NOT_STARTED",
     ecd,
     notes,
+    qfield,
   });
   if (!parsed.success) {
     return NextResponse.redirect(getRedirectUrl(request, "/projects", { error: "invalid" }));
@@ -44,6 +47,7 @@ export async function POST(request: Request) {
     status: parsed.data.status,
     ecd: parsed.data.ecd,
     notes: parsed.data.notes,
+    qfield: parsed.data.qfield,
   });
 
   // Optional: create multiple fielder assignments (assignedFielder_0_name, etc.)

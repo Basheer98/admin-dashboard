@@ -45,7 +45,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   }
 
   const totalCount = projects.length;
-  const sortKey = ["projectCode", "clientName", "location", "totalSqft", "companyRatePerSqft", "revenue", "status", "ecd", "createdAt"].includes(sort) ? sort : "createdAt";
+  const sortKey = ["projectCode", "clientName", "qfield", "location", "totalSqft", "companyRatePerSqft", "revenue", "status", "ecd", "createdAt"].includes(sort) ? sort : "createdAt";
   projects = [...projects].sort((a, b) => {
     let va: string | number;
     let vb: string | number;
@@ -61,6 +61,9 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
     } else if (sortKey === "clientName") {
       va = a.clientName;
       vb = b.clientName;
+    } else if (sortKey === "qfield") {
+      va = a.qfield ?? "";
+      vb = b.qfield ?? "";
     } else if (sortKey === "location") {
       va = a.location ?? "";
       vb = b.location ?? "";
@@ -258,6 +261,9 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                     <SortLink label="Client" sortKey="clientName" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
                   <th className="px-3 py-2">
+                    <SortLink label="QField" sortKey="qfield" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
+                  </th>
+                  <th className="px-3 py-2">
                     <SortLink label="Location" sortKey="location" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
                   <th className="px-3 py-2">
@@ -287,6 +293,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                     <tr key={p.id} className="border-t text-slate-800">
                       <td className="px-3 py-2">{p.projectCode}</td>
                       <td className="px-3 py-2">{p.clientName}</td>
+                      <td className="px-3 py-2">{p.qfield ?? "—"}</td>
                       <td className="px-3 py-2">{p.location}</td>
                       <td className="px-3 py-2">{p.totalSqft}</td>
                       <td className="px-3 py-2">

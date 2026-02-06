@@ -235,6 +235,7 @@ export default async function Home({ searchParams }: PageProps) {
       projectId: p.id,
       projectCode: p.projectCode,
       clientName: p.clientName,
+      qfield: p.qfield,
       revenue,
       payoutsBase,
       commissions,
@@ -641,6 +642,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <tr>
                   <th className="px-3 py-2">Project</th>
                   <th className="px-3 py-2">Client</th>
+                  <th className="px-3 py-2">QField</th>
                   <th className="px-3 py-2">Revenue</th>
                   <th className="px-3 py-2">Payouts</th>
                   <th className="px-3 py-2">Commissions</th>
@@ -655,6 +657,7 @@ export default async function Home({ searchParams }: PageProps) {
                   <tr key={row.projectCode} className="border-t text-slate-800">
                     <td className="px-3 py-2">{row.projectCode}</td>
                     <td className="px-3 py-2">{row.clientName}</td>
+                    <td className="px-3 py-2">{row.qfield ?? "—"}</td>
                     <td className="px-3 py-2">
                       {formatCurrency(row.revenue)}
                     </td>
@@ -686,7 +689,7 @@ export default async function Home({ searchParams }: PageProps) {
                 {projectRows.length === 0 && (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={10}
                       className="px-3 py-4 text-center text-slate-500"
                     >
                       No projects yet.

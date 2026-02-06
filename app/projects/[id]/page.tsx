@@ -130,6 +130,23 @@ export default async function EditProjectPage({ params }: PageProps) {
 
             <div className="space-y-1">
               <label className="block text-sm font-medium text-slate-700">
+                QField
+              </label>
+              <select
+                name="qfield"
+                defaultValue={project.qfield ?? ""}
+                className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              >
+                <option value="">Not set</option>
+                <option value="Qfield-1">Qfield-1</option>
+                <option value="Qfield-2">Qfield-2</option>
+              </select>
+              <p className="mt-1 text-sm text-slate-500">
+                Which QField this project is stored in.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-700">
                 Status
               </label>
               <select

@@ -43,6 +43,7 @@ export type ProjectRow = {
   status: string;
   ecd: string | null;
   notes: string | null;
+  qfield: string | null;
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
@@ -83,7 +84,7 @@ export type ListPaymentsOptions = { includeVoided?: boolean };
 const projectCols = `
   id, project_code AS "projectCode", client_name AS "clientName", location,
   total_sqft AS "totalSqft", company_rate_per_sqft AS "companyRatePerSqft",
-  status, ecd, notes,
+  status, ecd, notes, qfield,
   created_at::text AS "createdAt", updated_at::text AS "updatedAt", archived_at::text AS "archivedAt"
 `;
 
@@ -161,10 +162,11 @@ export async function insertProject(input: {
   status: string;
   ecd?: string | null;
   notes: string | null;
+  qfield?: string | null;
 }): Promise<ProjectRow> {
   const row = await queryOneRow<ProjectRow>(
-    `INSERT INTO projects (project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO projects (project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, qfield)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING ${projectCols}`,
     [
       input.projectCode,
@@ -175,6 +177,7 @@ export async function insertProject(input: {
       input.status,
       input.ecd ?? null,
       input.notes,
+      input.qfield ?? null,
     ],
   );
   if (!row) throw new Error("insertProject failed");
@@ -198,15 +201,16 @@ export async function updateProject(
     status: string;
     ecd?: string | null;
     notes: string | null;
+    qfield?: string | null;
     archivedAt?: string | null;
   },
 ): Promise<void> {
   await query(
     `UPDATE projects SET
        project_code = $2, client_name = $3, location = $4, total_sqft = $5,
-       company_rate_per_sqft = $6, status = $7, ecd = $8, notes = $9,
+       company_rate_per_sqft = $6, status = $7, ecd = $8, notes = $9, qfield = $10,
        updated_at = NOW(),
-       archived_at = COALESCE($10, archived_at)
+       archived_at = COALESCE($11, archived_at)
      WHERE id = $1`,
     [
       id,
@@ -218,6 +222,7 @@ export async function updateProject(
       input.status,
       input.ecd ?? null,
       input.notes,
+      input.qfield ?? null,
       input.archivedAt ?? null,
     ],
   );
@@ -766,6 +771,7 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
       status: String(row.status ?? "NOT_STARTED"),
       ecd: row.ecd != null ? String(row.ecd) : null,
       notes: row.notes != null ? String(row.notes) : null,
+      qfield: row.qfield != null ? String(row.qfield) : null,
       createdAt: toTimestamp(row.createdAt ?? row.created_at) ?? now,
       updatedAt: toTimestamp(row.updatedAt ?? row.updated_at) ?? now,
       archivedAt: toTimestamp(row.archivedAt ?? row.archived_at),
@@ -843,8 +849,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
 
   for (const p of backup.projects) {
     await pool.query(
-      `INSERT INTO projects (id, project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, created_at, updated_at, archived_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::timestamptz, $11::timestamptz, $12::timestamptz)`,
+      `INSERT INTO projects (id, project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, qfield, created_at, updated_at, archived_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::timestamptz, $12::timestamptz, $13::timestamptz)`,
       [
         p.id,
         p.projectCode,
@@ -855,6 +861,7 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
         p.status,
         p.ecd ?? null,
         p.notes ?? null,
+        p.qfield ?? null,
         p.createdAt ?? now,
         p.updatedAt ?? now,
         ts(p.archivedAt ?? null),

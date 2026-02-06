@@ -30,6 +30,8 @@ export async function POST(request: Request, { params }: Params) {
   const ecdRaw = String(formData.get("ecd") ?? "").trim();
   const ecd = ecdRaw || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
+  const qfieldRaw = String(formData.get("qfield") ?? "").trim();
+  const qfield = qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2" ? qfieldRaw : null;
 
   const parsed = validate(projectPatchSchema, {
     projectCode: projectCode || undefined,
@@ -40,6 +42,7 @@ export async function POST(request: Request, { params }: Params) {
     status: statusStr || "NOT_STARTED",
     ecd,
     notes,
+    qfield,
   });
   if (!parsed.success) {
     return NextResponse.redirect(getRedirectUrl(request, `/projects/${id}`, { error: "invalid" }));
@@ -55,6 +58,7 @@ export async function POST(request: Request, { params }: Params) {
     status: parsed.data.status,
     ecd: parsed.data.ecd,
     notes: parsed.data.notes,
+    qfield: parsed.data.qfield,
   });
 
   if (oldProject) {
@@ -75,6 +79,10 @@ export async function POST(request: Request, { params }: Params) {
     if ((oldProject.ecd ?? null) !== (parsed.data.ecd ?? null)) {
       changes.push(`ECD ${oldProject.ecd ?? "—"} → ${parsed.data.ecd ?? "—"}`);
       meta.ecd = { old: oldProject.ecd, new: parsed.data.ecd };
+    }
+    if ((oldProject.qfield ?? null) !== (parsed.data.qfield ?? null)) {
+      changes.push(`QField ${oldProject.qfield ?? "—"} → ${parsed.data.qfield ?? "—"}`);
+      meta.qfield = { old: oldProject.qfield, new: parsed.data.qfield };
     }
     if (Object.keys(meta).length > 0) {
       await insertActivity({
