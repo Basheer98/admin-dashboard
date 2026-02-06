@@ -8,7 +8,15 @@ import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate, fielderPaymentPostSchema } from "@/lib/validations";
 
 function getTotalRequiredAndPending(
-  a: { project: { totalSqft: number }; ratePerSqft: string; isInternal: boolean; managedByFielderId: number | null; managerRatePerSqft: string | null; commissionPercentage: string | null; payments: { amount: string }[] },
+  a: {
+    project: { totalSqft: number };
+    ratePerSqft: number | string;
+    isInternal: boolean;
+    managedByFielderId: number | null;
+    managerRatePerSqft: number | string | null;
+    commissionPercentage: number | string | null;
+    payments: { amount: string }[];
+  },
 ): { totalRequired: number; pending: number } {
   const sqft = a.project.totalSqft;
   const workerRate = Number(a.ratePerSqft);
