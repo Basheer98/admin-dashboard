@@ -1,5 +1,3 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-
 const SESSION_COOKIE_NAME = "admin_session";
 
 export const sessionCookieName = SESSION_COOKIE_NAME;
@@ -11,20 +9,61 @@ export type Session = SessionAdmin | SessionFielder;
 const SESSION_SECRET =
   process.env.SESSION_SECRET || process.env.AUTH_SECRET || "dev-secret-change-in-production";
 
-function toBase64Url(buf: Buffer): string {
-  return buf.toString("base64url");
+const BASE64URL_CHARS =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+function encodeBase64Url(bytes: Uint8Array): string {
+  let result = "";
+  for (let i = 0; i < bytes.length; i += 3) {
+    const b0 = bytes[i]!;
+    const b1 = i + 1 < bytes.length ? bytes[i + 1] : undefined;
+    const b2 = i + 2 < bytes.length ? bytes[i + 2] : undefined;
+    result += BASE64URL_CHARS[b0 >> 2];
+    result += BASE64URL_CHARS[((b0 & 3) << 4) | (b1 ?? 0) >> 4];
+    result += b1 !== undefined ? BASE64URL_CHARS[((b1 & 15) << 2) | (b2 ?? 0) >> 6] : "";
+    result += b2 !== undefined ? BASE64URL_CHARS[b2 & 63] : "";
+  }
+  return result;
 }
 
-function fromBase64Url(str: string): Buffer | null {
+function decodeBase64Url(str: string): Uint8Array | null {
   try {
-    return Buffer.from(str, "base64url");
+    const pad = str.length % 4;
+    const padded = pad === 0 ? str : str + "=".repeat(4 - pad);
+    const base64 = padded.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
   } catch {
     return null;
   }
 }
 
-function sign(payload: string): string {
-  return createHmac("sha256", SESSION_SECRET).update(payload).digest("base64url");
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) {
+    out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return out === 0;
+}
+
+/** Web Crypto HMAC-SHA256 (works in Edge and Node). */
+async function signAsync(payload: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(SESSION_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(payload),
+  );
+  return encodeBase64Url(new Uint8Array(sig));
 }
 
 export async function createSession(session: Session): Promise<string> {
@@ -35,14 +74,9 @@ export async function createSession(session: Session): Promise<string> {
     role: "fielder",
     fielderName: session.fielderName,
   });
-  const encoded = toBase64Url(Buffer.from(payload, "utf8"));
-  const sig = sign(encoded);
+  const encoded = encodeBase64Url(new TextEncoder().encode(payload));
+  const sig = await signAsync(encoded);
   return `${encoded}.${sig}`;
-}
-
-function safeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
 }
 
 export async function verifySession(
@@ -54,12 +88,13 @@ export async function verifySession(
   if (dot === -1) return null;
   const encoded = token.slice(0, dot);
   const sig = token.slice(dot + 1);
-  const expectedSig = sign(encoded);
-  if (!safeCompare(sig, expectedSig)) return null;
-  const raw = fromBase64Url(encoded);
+  const expectedSig = await signAsync(encoded);
+  if (!constantTimeCompare(sig, expectedSig)) return null;
+  const raw = decodeBase64Url(encoded);
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw.toString("utf8")) as Record<string, unknown>;
+    const str = new TextDecoder().decode(raw);
+    const parsed = JSON.parse(str) as Record<string, unknown>;
     if (parsed && parsed.role === "fielder" && typeof parsed.fielderName === "string") {
       return { role: "fielder", fielderName: parsed.fielderName };
     }
