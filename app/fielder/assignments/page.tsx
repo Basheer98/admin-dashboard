@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getAssignmentsForFielderByName } from "@/lib/db";
+import { getAssignmentsForFielderByName, getAdditionalWorkForFielderByName } from "@/lib/db";
 import { getDueDateStatus } from "@/lib/dueDate";
 import { formatCurrency, formatRate } from "@/lib/currency";
 import { PrintButton } from "@/app/components/PrintButton";
@@ -11,7 +11,10 @@ export default async function FielderAssignmentsPage() {
   if (!session || session.role !== "fielder") redirect("/login");
 
   const fielderName = session.fielderName;
-  const fielderAssignments = await getAssignmentsForFielderByName(fielderName);
+  const [fielderAssignments, additionalWork] = await Promise.all([
+    getAssignmentsForFielderByName(fielderName),
+    getAdditionalWorkForFielderByName(fielderName),
+  ]);
 
   const rows = fielderAssignments.map((a) => {
     const sqft = a.project.totalSqft;
@@ -111,6 +114,50 @@ export default async function FielderAssignmentsPage() {
       {rows.length === 0 && (
         <p className="text-slate-600">No assignments yet.</p>
       )}
+
+      <section className="space-y-3">
+        <h3 className="text-base font-semibold text-slate-900">
+          Additional work assigned to me
+        </h3>
+        {additionalWork.length > 0 ? (
+          <div className="card overflow-x-auto">
+            <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2">Type</th>
+                  <th className="px-3 py-2">Project #</th>
+                  <th className="px-3 py-2">Our project</th>
+                  <th className="px-3 py-2">Amount</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                {additionalWork.map((w) => (
+                  <tr key={w.id} className="border-t text-slate-800">
+                    <td className="px-3 py-2">
+                      {w.type === "ADDITIONAL_FIELDING" ? "Additional fielding" : "Correction"}
+                    </td>
+                    <td className="px-3 py-2">{w.projectNumber}</td>
+                    <td className="px-3 py-2">
+                      {w.project ? w.project.projectCode : "—"}
+                    </td>
+                    <td className="px-3 py-2">
+                      {w.amount != null ? formatCurrency(w.amount) : "—"}
+                    </td>
+                    <td className="px-3 py-2">{w.status}</td>
+                    <td className="px-3 py-2">
+                      {w.dueDate ? new Date(w.dueDate).toLocaleDateString() : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-slate-600">No additional work assigned yet.</p>
+        )}
+      </section>
 
       <Link
         href="/fielder"

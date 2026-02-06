@@ -501,6 +501,28 @@ export async function getAllAdditionalWork(): Promise<AdditionalWorkRow[]> {
   return rows as AdditionalWorkRow[];
 }
 
+/** Additional work items assigned to a fielder (via their assignment ids). */
+export async function getAdditionalWorkForFielderByName(
+  fielderName: string,
+): Promise<Array<AdditionalWorkRow & { project?: ProjectRow }>> {
+  const assignments = await getAssignmentsForFielderByName(fielderName);
+  const assignmentIds = assignments.map((a) => a.id);
+  if (assignmentIds.length === 0) return [];
+
+  const placeholders = assignmentIds.map((_, i) => `$${i + 1}`).join(", ");
+  const rows = await query<AdditionalWorkRow>(
+    `SELECT ${additionalWorkCols} FROM additional_work WHERE assigned_fielder_assignment_id IN (${placeholders}) ORDER BY created_at DESC`,
+    assignmentIds,
+  );
+  const result: Array<AdditionalWorkRow & { project?: ProjectRow }> = [];
+  for (const w of rows as AdditionalWorkRow[]) {
+    let project: ProjectRow | undefined;
+    if (w.ourProjectId) project = await getProjectById(w.ourProjectId);
+    result.push({ ...w, project });
+  }
+  return result;
+}
+
 export async function getAdditionalWorkById(
   id: number,
 ): Promise<(AdditionalWorkRow & { project?: ProjectRow; assignedAssignment?: FielderAssignmentRow }) | undefined> {
