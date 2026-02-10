@@ -24,9 +24,32 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
     (a) => a.fielderName.trim().toUpperCase() === fielderNameNormalized,
   );
 
+  // Map assignment id -> fielder name so we can find who is the manager for managed assignments
+  const assignmentIdToFielderName = new Map(
+    assignments.map((a) => [a.id, a.fielderName.trim().toUpperCase()]),
+  );
+
+  // Manager commissions owed to this fielder (from assignments where they manage other workers)
+  let managerCommissionOwed = 0;
+  for (const a of assignments) {
+    if (!a.managedByFielderId || !a.managerRatePerSqft || a.isInternal) continue;
+    const managerName = assignmentIdToFielderName.get(a.managedByFielderId);
+    if (managerName !== fielderNameNormalized) continue;
+    const sqft = a.project.totalSqft;
+    const workerRate = Number(a.ratePerSqft);
+    const managerRate = Number(a.managerRatePerSqft);
+    const managerCommission = (managerRate - workerRate) * sqft;
+    const managerShare = a.managerCommissionShare
+      ? Number(a.managerCommissionShare)
+      : 0;
+    const companyShare = managerCommission * managerShare;
+    const managerNetCommission = managerCommission - companyShare;
+    managerCommissionOwed += managerNetCommission;
+  }
+
   const displayName = fielderNameNormalized || fielderNameFromUrl;
 
-  if (fielderAssignments.length === 0) {
+  if (fielderAssignments.length === 0 && managerCommissionOwed <= 0) {
     return (
       <SidebarLayout title="Fielder report" current="fielders" backLink={{ href: "/fielders", label: "Fielder reports" }}>
         <Breadcrumbs items={[{ label: "Fielder reports", href: "/fielders" }, { label: displayName }]} />
@@ -40,7 +63,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
     );
   }
 
-  let totalOwed = 0;
+  let totalOwedFromAssignments = 0;
   let totalPaid = 0;
   let internalWorkValue = 0;
   let totalSqft = 0;
@@ -70,7 +93,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
     const paid = a.payments.reduce((sum, p) => sum + Number(p.amount), 0);
     const pending = a.isInternal ? 0 : Math.max(totalRequired - paid, 0);
 
-    totalOwed += totalRequired;
+    totalOwedFromAssignments += totalRequired;
     totalPaid += paid;
 
     const dueStatus = getDueDateStatus(a.dueDate ?? null);
@@ -85,6 +108,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
     };
   });
 
+  const totalOwed = totalOwedFromAssignments + managerCommissionOwed;
   const pending = Math.max(totalOwed - totalPaid, 0);
 
   return (
@@ -121,7 +145,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
           </div>
         )}
 
-        <section className={`card grid gap-4 p-6 ${internalWorkValue > 0 ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
+        <section className={`card grid gap-4 p-6 ${internalWorkValue > 0 || managerCommissionOwed > 0 ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
           <div>
             <p className="text-sm font-medium text-slate-500">Total SQFT</p>
             <p className="mt-1 text-xl font-semibold text-slate-900">
@@ -133,6 +157,11 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
             <p className="mt-1 text-xl font-semibold text-slate-900">
               {formatCurrency(totalOwed)}
             </p>
+            {managerCommissionOwed > 0 && (
+              <p className="mt-1 text-xs text-slate-500">
+                {formatCurrency(totalOwedFromAssignments)} from assignments + {formatCurrency(managerCommissionOwed)} manager commissions
+              </p>
+            )}
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">Total paid</p>
