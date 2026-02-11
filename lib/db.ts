@@ -411,6 +411,168 @@ export async function deleteAssignment(id: number): Promise<void> {
   await query("DELETE FROM assignments WHERE id = $1", [id]);
 }
 
+// Assignment templates
+export type AssignmentTemplateRow = {
+  id: number;
+  name: string;
+  createdAt: string;
+};
+
+export type AssignmentTemplateItemRow = {
+  id: number;
+  templateId: number;
+  fielderName: string;
+  ratePerSqft: number;
+  commissionPercentage: number | null;
+  isInternal: boolean;
+  managerFielderName: string | null;
+  managerRatePerSqft: number | null;
+  managerCommissionShare: number | null;
+  sortOrder: number;
+};
+
+const templateCols = `id, name AS "name", created_at::text AS "createdAt"`;
+const templateItemCols = `
+  id, template_id AS "templateId", fielder_name AS "fielderName", rate_per_sqft AS "ratePerSqft",
+  commission_percentage AS "commissionPercentage", is_internal AS "isInternal",
+  manager_fielder_name AS "managerFielderName", manager_rate_per_sqft AS "managerRatePerSqft",
+  manager_commission_share AS "managerCommissionShare", sort_order AS "sortOrder"
+`;
+
+export async function getAllAssignmentTemplates(): Promise<
+  (AssignmentTemplateRow & { items: AssignmentTemplateItemRow[] })[]
+> {
+  const templates = await query<AssignmentTemplateRow>(
+    `SELECT ${templateCols} FROM assignment_templates ORDER BY name`,
+  );
+  const result: (AssignmentTemplateRow & { items: AssignmentTemplateItemRow[] })[] = [];
+  for (const t of templates as AssignmentTemplateRow[]) {
+    const items = await query<AssignmentTemplateItemRow>(
+      `SELECT ${templateItemCols} FROM assignment_template_items WHERE template_id = $1 ORDER BY sort_order, id`,
+      [t.id],
+    );
+    result.push({ ...t, items: items as AssignmentTemplateItemRow[] });
+  }
+  return result;
+}
+
+export async function getAssignmentTemplateById(
+  id: number,
+): Promise<(AssignmentTemplateRow & { items: AssignmentTemplateItemRow[] }) | undefined> {
+  const t = await queryOne<AssignmentTemplateRow>(
+    `SELECT ${templateCols} FROM assignment_templates WHERE id = $1`,
+    [id],
+  );
+  if (!t) return undefined;
+  const items = await query<AssignmentTemplateItemRow>(
+    `SELECT ${templateItemCols} FROM assignment_template_items WHERE template_id = $1 ORDER BY sort_order, id`,
+    [id],
+  );
+  return { ...(t as AssignmentTemplateRow), items: items as AssignmentTemplateItemRow[] };
+}
+
+export async function createAssignmentTemplate(input: {
+  name: string;
+  items: {
+    fielderName: string;
+    ratePerSqft: number;
+    commissionPercentage: number | null;
+    isInternal?: boolean;
+    managerFielderName?: string | null;
+    managerRatePerSqft?: number | null;
+    managerCommissionShare?: number | null;
+  }[];
+}): Promise<number> {
+  const row = await queryOneRow<{ id: number }>(
+    `INSERT INTO assignment_templates (name) VALUES ($1) RETURNING id`,
+    [input.name.trim()],
+  );
+  if (!row) throw new Error("createAssignmentTemplate failed");
+  const templateId = (row as { id: number }).id;
+  for (let i = 0; i < input.items.length; i++) {
+    const it = input.items[i];
+    await query(
+      `INSERT INTO assignment_template_items (template_id, fielder_name, rate_per_sqft, commission_percentage, is_internal, manager_fielder_name, manager_rate_per_sqft, manager_commission_share, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        templateId,
+        it.fielderName.trim(),
+        it.ratePerSqft,
+        it.commissionPercentage ?? null,
+        it.isInternal ?? false,
+        it.managerFielderName?.trim() || null,
+        it.managerRatePerSqft ?? null,
+        it.managerCommissionShare ?? null,
+        i,
+      ],
+    );
+  }
+  return templateId;
+}
+
+export async function deleteAssignmentTemplate(id: number): Promise<void> {
+  await query("DELETE FROM assignment_templates WHERE id = $1", [id]);
+}
+
+export async function applyAssignmentTemplateToProject(
+  projectId: number,
+  templateId: number,
+): Promise<{ created: number }> {
+  const template = await getAssignmentTemplateById(templateId);
+  if (!template) throw new Error("Template not found");
+  const project = await getProjectById(projectId);
+  if (!project) throw new Error("Project not found");
+
+  const createdIds: { assignmentId: number; managerFielderName: string | null }[] = [];
+  for (const it of template.items) {
+    const assignmentId = await insertAssignment({
+      projectId,
+      fielderName: it.fielderName,
+      ratePerSqft: it.ratePerSqft,
+      commissionPercentage: it.commissionPercentage,
+      isInternal: it.isInternal ?? false,
+      managedByFielderId: null,
+      managerRatePerSqft: it.managerRatePerSqft ?? null,
+      managerCommissionShare: it.managerCommissionShare ?? null,
+    });
+    createdIds.push({
+      assignmentId,
+      managerFielderName: it.managerFielderName ?? null,
+    });
+  }
+
+  const projectAssignments = await getAssignmentsByProjectId(projectId, {
+    includeArchived: true,
+  });
+  const fielderNameToAssignmentId = new Map(
+    projectAssignments.map((a) => [a.fielderName.trim().toUpperCase(), a.id]),
+  );
+
+  for (let i = 0; i < createdIds.length; i++) {
+    const { assignmentId, managerFielderName } = createdIds[i]!;
+    const it = template.items[i];
+    if (!managerFielderName || !it) continue;
+    const managerAssignmentId = fielderNameToAssignmentId.get(
+      managerFielderName.trim().toUpperCase(),
+    );
+    if (managerAssignmentId != null) {
+      await updateAssignment(assignmentId, {
+        managedByFielderId: managerAssignmentId,
+        managerRatePerSqft: it.managerRatePerSqft ?? null,
+        managerCommissionShare: it.managerCommissionShare ?? null,
+      });
+    }
+  }
+
+  await insertActivity({
+    type: "template_applied",
+    description: `Applied template "${template.name}" to project ${project.projectCode} (${createdIds.length} assignments)`,
+    metadata: { projectId, templateId, created: createdIds.length },
+  });
+
+  return { created: createdIds.length };
+}
+
 export async function insertPayment(input: {
   projectId: number;
   fielderAssignmentId: number;

@@ -113,9 +113,9 @@ export function AddProjectForm({
           className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
           defaultValue="NOT_STARTED"
         >
-          <option value="NOT_STARTED">NOT STARTED</option>
-          <option value="IN_PROGRESS">IN PROGRESS</option>
-          <option value="COMPLETED">COMPLETED</option>
+          <option value="NOT_STARTED">Not started</option>
+          <option value="IN_PROGRESS">In progress</option>
+          <option value="COMPLETED">Completed</option>
         </select>
       </div>
       <div className="space-y-1">

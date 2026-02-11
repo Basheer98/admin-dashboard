@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getAssignmentsForFielderByName } from "@/lib/db";
+import { getAssignmentsWithDetails } from "@/lib/db";
 import { formatCurrency } from "@/lib/currency";
 import { PrintButton } from "@/app/components/PrintButton";
 import Link from "next/link";
@@ -10,9 +10,32 @@ export default async function FielderStatementPage() {
   if (!session || session.role !== "fielder") redirect("/login");
 
   const fielderName = session.fielderName;
-  const fielderAssignments = await getAssignmentsForFielderByName(fielderName);
+  const fielderNameNormalized = (fielderName ?? "").trim().toUpperCase();
+  const assignments = await getAssignmentsWithDetails({ includeArchived: true });
+  const fielderAssignments = assignments.filter(
+    (a) => a.fielderName.trim().toUpperCase() === fielderNameNormalized,
+  );
 
-  let totalOwed = 0;
+  const assignmentIdToFielderName = new Map(
+    assignments.map((a) => [a.id, a.fielderName.trim().toUpperCase()]),
+  );
+  let managerCommissionOwed = 0;
+  for (const a of assignments) {
+    if (!a.managedByFielderId || !a.managerRatePerSqft || a.isInternal) continue;
+    const managerName = assignmentIdToFielderName.get(a.managedByFielderId);
+    if (managerName !== fielderNameNormalized) continue;
+    const sqft = a.project.totalSqft;
+    const workerRate = Number(a.ratePerSqft);
+    const managerRate = Number(a.managerRatePerSqft);
+    const managerCommission = (managerRate - workerRate) * sqft;
+    const managerShare = a.managerCommissionShare
+      ? Number(a.managerCommissionShare)
+      : 0;
+    const companyShare = managerCommission * managerShare;
+    managerCommissionOwed += managerCommission - companyShare;
+  }
+
+  let totalOwedFromAssignments = 0;
   let totalPaid = 0;
   let internalWorkValue = 0;
   let totalSqft = 0;
@@ -37,10 +60,11 @@ export default async function FielderStatementPage() {
       }
     }
     const paid = a.payments.reduce((sum, p) => sum + Number(p.amount), 0);
-    totalOwed += totalRequired;
+    totalOwedFromAssignments += totalRequired;
     totalPaid += paid;
   }
 
+  const totalOwed = totalOwedFromAssignments + managerCommissionOwed;
   const pending = Math.max(totalOwed - totalPaid, 0);
 
   return (
@@ -53,7 +77,7 @@ export default async function FielderStatementPage() {
       </div>
 
       <section
-        className={`card grid gap-4 p-6 ${internalWorkValue > 0 ? "md:grid-cols-5" : "md:grid-cols-4"}`}
+        className={`card grid gap-4 p-6 ${internalWorkValue > 0 || managerCommissionOwed > 0 ? "md:grid-cols-5" : "md:grid-cols-4"}`}
       >
         <div>
           <p className="text-sm font-medium text-slate-500">Total SQFT</p>
@@ -66,6 +90,11 @@ export default async function FielderStatementPage() {
           <p className="mt-1 text-xl font-semibold text-slate-900">
             {formatCurrency(totalOwed)}
           </p>
+          {managerCommissionOwed > 0 && (
+            <p className="mt-1 text-xs text-slate-500">
+              {formatCurrency(totalOwedFromAssignments)} from assignments + {formatCurrency(managerCommissionOwed)} manager commissions
+            </p>
+          )}
         </div>
         <div>
           <p className="text-sm font-medium text-slate-500">Total paid</p>

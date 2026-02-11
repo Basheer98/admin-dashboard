@@ -16,6 +16,10 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
   const hasMinSqft = !Number.isNaN(minSqft) && minSqft > 0;
   const assignments = await getAssignmentsWithDetails();
 
+  const assignmentIdToFielderName = new Map(
+    assignments.map((a) => [a.id, a.fielderName.trim().toUpperCase()]),
+  );
+
   const byFielder = new Map<
     string,
     {
@@ -67,6 +71,32 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
     existing.assignmentCount += 1;
     existing.totalSqft += sqft;
     byFielder.set(key, existing);
+  }
+
+  for (const a of assignments) {
+    if (!a.managedByFielderId || !a.managerRatePerSqft || a.isInternal) continue;
+    const managerName = assignmentIdToFielderName.get(a.managedByFielderId);
+    if (!managerName) continue;
+    const sqft = a.project.totalSqft;
+    const workerRate = Number(a.ratePerSqft);
+    const managerRate = Number(a.managerRatePerSqft);
+    const managerCommission = (managerRate - workerRate) * sqft;
+    const managerShare = a.managerCommissionShare
+      ? Number(a.managerCommissionShare)
+      : 0;
+    const companyShare = managerCommission * managerShare;
+    const managerNetCommission = managerCommission - companyShare;
+
+    const existing = byFielder.get(managerName) ?? {
+      totalOwed: 0,
+      totalPaid: 0,
+      pending: 0,
+      assignmentCount: 0,
+      totalSqft: 0,
+    };
+    existing.totalOwed += managerNetCommission;
+    existing.pending += managerNetCommission;
+    byFielder.set(managerName, existing);
   }
 
   let fielders = Array.from(byFielder.entries())

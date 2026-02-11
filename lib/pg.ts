@@ -106,6 +106,23 @@ export async function runSchema(): Promise<void> {
       password_hash TEXT NOT NULL,
       fielder_name TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS assignment_templates (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS assignment_template_items (
+      id SERIAL PRIMARY KEY,
+      template_id INTEGER NOT NULL REFERENCES assignment_templates(id) ON DELETE CASCADE,
+      fielder_name TEXT NOT NULL,
+      rate_per_sqft NUMERIC(12,6) NOT NULL,
+      commission_percentage NUMERIC(10,6) NULL,
+      is_internal BOOLEAN NOT NULL DEFAULT FALSE,
+      manager_fielder_name TEXT NULL,
+      manager_rate_per_sqft NUMERIC(10,6) NULL,
+      manager_commission_share NUMERIC(10,6) NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    );
   `);
   schemaDone = true;
 }

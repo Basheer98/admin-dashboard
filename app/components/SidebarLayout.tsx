@@ -7,7 +7,7 @@ import { SessionTimeout } from "./SessionTimeout";
 type SidebarLayoutProps = {
   title: string;
   children: React.ReactNode;
-  current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "additional" | "activity" | "settings" | "reports";
+  current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "additional" | "activity" | "settings" | "reports" | "reports-monthly" | "reports-manager-commissions";
   headerAction?: React.ReactNode;
   backLink?: { href: string; label: string };
 };
@@ -130,7 +130,8 @@ export function SidebarLayout({
           <SidebarLink href="/fielders" label="Fielder reports" active={current === "fielders"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/payments" label="Payments" active={current === "payments"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/additional-work" label="Additional work" active={current === "additional"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/reports/monthly" label="Monthly summary" active={current === "reports"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/reports/monthly" label="Monthly summary" active={current === "reports" || current === "reports-monthly"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/reports/manager-commissions" label="Manager commissions" active={current === "reports" || current === "reports-manager-commissions"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/activity" label="Activity log" active={current === "activity"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/settings" label="Settings" active={current === "settings"} onNavigate={!isLg ? closeMobileMenu : undefined} />
         </nav>

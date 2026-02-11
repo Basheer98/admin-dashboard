@@ -7,6 +7,7 @@ import {
   getSettings,
 } from "@/lib/db";
 import { getDueDateStatus, getProjectEcdStatus } from "@/lib/dueDate";
+import { getProjectStatusLabel, PROJECT_STATUS_VALUES } from "@/lib/projectStatus";
 import { formatCurrency, formatWithInr } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import Link from "next/link";
@@ -63,6 +64,7 @@ function DatePresetLink({
   hasDateFilter,
   currentFrom,
   currentTo,
+  filterStatus,
 }: {
   from: string;
   to: string;
@@ -70,11 +72,13 @@ function DatePresetLink({
   hasDateFilter: boolean;
   currentFrom: string | null;
   currentTo: string | null;
+  filterStatus?: string | null;
 }) {
   const isActive = hasDateFilter && currentFrom === from && currentTo === to;
+  const statusQ = filterStatus ? `&status=${encodeURIComponent(filterStatus)}` : "";
   return (
     <Link
-      href={`/?from=${from}&to=${to}`}
+      href={`/?from=${from}&to=${to}${statusQ}`}
       className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
         isActive
           ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
@@ -96,7 +100,9 @@ export default async function Home({ searchParams }: PageProps) {
     typeof sp.from === "string" && sp.from ? sp.from : null;
   const to =
     typeof sp.to === "string" && sp.to ? sp.to : null;
+  const filterStatus = typeof sp.status === "string" && sp.status ? sp.status : null;
   const hasDateFilter = Boolean(from || to);
+  const hasStatusFilter = Boolean(filterStatus);
 
   const [allProjects, allPayments, assignments, assignmentsWithDetails, settings, paymentsWithDetails] = await Promise.all([
     getAllProjects(),
@@ -106,12 +112,19 @@ export default async function Home({ searchParams }: PageProps) {
     getSettings(),
     getPaymentsWithDetails(),
   ]);
-  const projects = hasDateFilter
+  let projects = hasDateFilter
     ? allProjects.filter((p) => inDateRange(p.createdAt, from, to))
     : allProjects;
-  const payments = hasDateFilter
+  if (hasStatusFilter) {
+    projects = projects.filter((p) => p.status === filterStatus);
+  }
+  const projectIds = new Set(projects.map((p) => p.id));
+  let payments = hasDateFilter
     ? allPayments.filter((p) => inDateRange(p.paymentDate, from, to))
     : allPayments;
+  if (hasStatusFilter) {
+    payments = payments.filter((p) => projectIds.has(p.projectId));
+  }
 
   const totalRevenue = projects.reduce((sum, p) => {
     const projectRevenue = p.totalSqft * Number(p.companyRatePerSqft);
@@ -441,7 +454,7 @@ export default async function Home({ searchParams }: PageProps) {
           </p>
           <div className="mb-4 flex flex-wrap gap-2">
             <Link
-              href="/"
+              href={filterStatus ? `/?status=${encodeURIComponent(filterStatus)}` : "/"}
               className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
                 !hasDateFilter
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
@@ -450,9 +463,9 @@ export default async function Home({ searchParams }: PageProps) {
             >
               All time
             </Link>
-            <DatePresetLink from={getDatePreset("last7").from} to={getDatePreset("last7").to} label="Last 7 days" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} />
-            <DatePresetLink from={getDatePreset("thisMonth").from} to={getDatePreset("thisMonth").to} label="This month" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} />
-            <DatePresetLink from={getDatePreset("lastQuarter").from} to={getDatePreset("lastQuarter").to} label="Last quarter" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} />
+            <DatePresetLink from={getDatePreset("last7").from} to={getDatePreset("last7").to} label="Last 7 days" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} filterStatus={filterStatus} />
+            <DatePresetLink from={getDatePreset("thisMonth").from} to={getDatePreset("thisMonth").to} label="This month" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} filterStatus={filterStatus} />
+            <DatePresetLink from={getDatePreset("lastQuarter").from} to={getDatePreset("lastQuarter").to} label="Last quarter" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} filterStatus={filterStatus} />
           </div>
           <form method="get" action="/" className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
@@ -477,13 +490,22 @@ export default async function Home({ searchParams }: PageProps) {
                 className="input h-11 rounded-xl"
               />
             </div>
+            <div className="space-y-1">
+              <label className="label">Project status</label>
+              <select name="status" className="select h-11 rounded-xl" defaultValue={filterStatus ?? ""}>
+                <option value="">All statuses</option>
+                {PROJECT_STATUS_VALUES.map((v) => (
+                  <option key={v} value={v}>{getProjectStatusLabel(v)}</option>
+                ))}
+              </select>
+            </div>
             <button
               type="submit"
               className="btn-primary h-11 px-5 text-sm"
             >
               Apply
             </button>
-            {hasDateFilter && (
+            {(hasDateFilter || hasStatusFilter) && (
               <Link
                 href="/"
                 className="btn-secondary h-11 px-4 py-2"
@@ -492,9 +514,11 @@ export default async function Home({ searchParams }: PageProps) {
               </Link>
             )}
           </form>
-          {hasDateFilter && (
+          {(hasDateFilter || hasStatusFilter) && (
             <p className="mt-2 text-sm text-slate-500">
-              Showing revenue and payments from {from ?? "start"} to {to ?? "end"}.
+              {hasDateFilter && `Showing revenue and payments from ${from ?? "start"} to ${to ?? "end"}.`}
+              {hasDateFilter && hasStatusFilter && " "}
+              {hasStatusFilter && `Projects filtered by status: ${getProjectStatusLabel(filterStatus!)}.`}
             </p>
           )}
         </section>

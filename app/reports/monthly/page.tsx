@@ -62,7 +62,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
   });
 
   return (
-    <SidebarLayout title="Monthly summary" current="reports" headerAction={<PrintButton />}>
+    <SidebarLayout title="Monthly summary" current="reports-monthly" headerAction={<PrintButton />}>
       <div className="flex flex-1 flex-col gap-8">
         <section className="card no-print p-6">
           <h2 className="mb-3 text-base font-semibold text-slate-900">

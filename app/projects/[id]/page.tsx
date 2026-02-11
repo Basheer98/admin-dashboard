@@ -1,4 +1,4 @@
-import { getAllProjects, getProjectById } from "@/lib/db";
+import { getAllProjects, getProjectById, getAllAssignmentTemplates } from "@/lib/db";
 import Link from "next/link";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { ClientNameField } from "./components/ClientNameField";
@@ -14,9 +14,10 @@ type PageProps = {
 export default async function EditProjectPage({ params }: PageProps) {
   const { id: idStr } = await params;
   const id = Number(idStr);
-  const [project, allProjects] = await Promise.all([
+  const [project, allProjects, templates] = await Promise.all([
     getProjectById(id),
     getAllProjects({ includeArchived: true }),
+    getAllAssignmentTemplates(),
   ]);
   const uniqueClientNames = Array.from(
     new Set(allProjects.map((p) => p.clientName).filter(Boolean))
@@ -154,12 +155,45 @@ export default async function EditProjectPage({ params }: PageProps) {
                 defaultValue={project.status}
                 className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
               >
-                <option value="NOT_STARTED">NOT STARTED</option>
-                <option value="IN_PROGRESS">IN PROGRESS</option>
-                <option value="COMPLETED">COMPLETED</option>
+                <option value="NOT_STARTED">Not started</option>
+                <option value="IN_PROGRESS">In progress</option>
+                <option value="COMPLETED">Completed</option>
               </select>
               <p className="mt-1 text-sm text-slate-500">
                 In progress when fielders are assigned; Completed when done.
+              </p>
+            </div>
+
+            <div className="space-y-1 md:col-span-2">
+              <label className="block text-sm font-medium text-slate-700">
+                Apply assignment template
+              </label>
+              <form
+                method="POST"
+                action="/api/assignment-templates/apply"
+                className="flex flex-wrap items-end gap-3"
+              >
+                <input type="hidden" name="projectId" value={project.id} />
+                <select
+                  name="templateId"
+                  className="h-11 rounded-md border border-slate-300 px-3 py-2 text-base text-black bg-white"
+                >
+                  <option value="">Select template</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  className="btn-secondary h-11 px-4 py-2 text-sm"
+                >
+                  Apply
+                </button>
+              </form>
+              <p className="mt-1 text-xs text-slate-500">
+                Manage templates in Settings → Assignment templates.
               </p>
             </div>
 

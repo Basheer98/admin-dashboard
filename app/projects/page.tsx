@@ -1,5 +1,6 @@
 import { getAllAssignments, getAllProjects, getAssignmentsWithDetails } from "@/lib/db";
 import { getProjectEcdStatus } from "@/lib/dueDate";
+import { getProjectStatusLabel, PROJECT_STATUS_VALUES } from "@/lib/projectStatus";
 import { formatCurrency, formatRate } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { FilterChips } from "@/app/components/FilterChips";
@@ -101,7 +102,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const projectFilterChips = hasFilters
     ? [
         filterClient && { key: "client", label: "Client", value: filterClient },
-        filterStatus && { key: "status", label: "Status", value: filterStatus },
+        filterStatus && { key: "status", label: "Status", value: getProjectStatusLabel(filterStatus) },
         filterFrom && { key: "from", label: "From", value: filterFrom },
         filterTo && { key: "to", label: "To", value: filterTo },
       ].filter(Boolean) as { key: string; label: string; value: string }[]
@@ -177,9 +178,9 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                 className="h-11 rounded-md border border-slate-300 px-3 py-2 text-base text-black bg-white"
               >
                 <option value="">All statuses</option>
-                <option value="NOT_STARTED">NOT STARTED</option>
-                <option value="IN_PROGRESS">IN PROGRESS</option>
-                <option value="COMPLETED">COMPLETED</option>
+                {PROJECT_STATUS_VALUES.map((v) => (
+                  <option key={v} value={v}>{getProjectStatusLabel(v)}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-1">
@@ -303,7 +304,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                         {formatCurrency(revenue)}
                       </td>
                       <td className="px-3 py-2">
-                        {p.status}
+                        {getProjectStatusLabel(p.status)}
                         {p.archivedAt && (
                           <span className="ml-2 text-xs text-slate-500">(archived)</span>
                         )}
