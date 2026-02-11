@@ -29,21 +29,26 @@ export function SidebarLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === "1") setCollapsed(true);
-      const densityStored = localStorage.getItem(DENSITY_STORAGE_KEY);
-      if (densityStored === "1") setCompactDensity(true);
-
+    const id = setTimeout(() => {
+      setMounted(true);
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored === "1") setCollapsed(true);
+        const densityStored = localStorage.getItem(DENSITY_STORAGE_KEY);
+        if (densityStored === "1") setCompactDensity(true);
+      } catch {
+        // ignore
+      }
       const mq = window.matchMedia("(min-width: 1024px)");
       setIsLg(mq.matches);
-      const handler = () => setIsLg(window.matchMedia("(min-width: 1024px)").matches);
-      mq.addEventListener("change", handler);
-      return () => mq.removeEventListener("change", handler);
-    } catch {
-      // ignore
-    }
+    }, 0);
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = () => setIsLg(window.matchMedia("(min-width: 1024px)").matches);
+    mq.addEventListener("change", handler);
+    return () => {
+      clearTimeout(id);
+      mq.removeEventListener("change", handler);
+    };
   }, []);
 
   useEffect(() => {
@@ -65,7 +70,10 @@ export function SidebarLayout({
   }, [compactDensity, mounted]);
 
   useEffect(() => {
-    if (isLg) setMobileMenuOpen(false);
+    if (isLg) {
+      const id = setTimeout(() => setMobileMenuOpen(false), 0);
+      return () => clearTimeout(id);
+    }
   }, [isLg]);
 
   const closeMobileMenu = () => setMobileMenuOpen(false);

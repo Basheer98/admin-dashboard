@@ -33,8 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(getRedirectUrl(request, "/payments", { error: "invalid" }));
   }
 
-  const { amount, paymentDate: paymentDateStrValid } = parsed.data;
-  const paymentDate = new Date(paymentDateStrValid);
+  const paymentDate = new Date(parsed.data.paymentDate);
 
   // Ensure the assignment belongs to the project
   const assignment = await getAssignmentById(parsed.data.fielderAssignmentId);

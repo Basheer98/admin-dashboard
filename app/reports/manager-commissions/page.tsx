@@ -1,4 +1,4 @@
-import { getAssignmentsWithDetails, getAllProjects, getSettings } from "@/lib/db";
+import { getAssignmentsWithDetails, getSettings } from "@/lib/db";
 import { formatCurrency, formatWithInr } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { PrintButton } from "@/app/components/PrintButton";
@@ -42,17 +42,14 @@ export default async function ManagerCommissionsReportPage({
   const filterProject = typeof sp.project === "string" ? sp.project.trim() : "";
   const filterMonth = typeof sp.month === "string" ? sp.month.trim() : "";
 
-  const [assignments, projects, settings] = await Promise.all([
+  const [assignments, settings] = await Promise.all([
     getAssignmentsWithDetails({ includeArchived: true }),
-    getAllProjects({ includeArchived: true }),
     getSettings(),
   ]);
 
   const assignmentIdToFielderName = new Map(
     assignments.map((a) => [a.id, a.fielderName.trim().toUpperCase()]),
   );
-  const projectIdToProject = new Map(projects.map((p) => [p.id, p]));
-
   const rows: ManagerCommissionRow[] = [];
   for (const a of assignments) {
     if (!a.managedByFielderId || !a.managerRatePerSqft || a.isInternal) continue;

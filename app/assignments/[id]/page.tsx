@@ -2,7 +2,6 @@ import { getAssignmentById, getAllAssignments } from "@/lib/db";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { EditAssignmentForm } from "../components/EditAssignmentForm";
-import Link from "next/link";
 import { DeleteAssignmentButton } from "./components/DeleteAssignmentButton";
 import { ArchiveAssignmentForm } from "./components/ArchiveAssignmentForm";
 

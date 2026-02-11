@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
 
 // Load .env so ADMIN_EMAIL / ADMIN_PASSWORD are available in tests
-require("dotenv").config({ path: ".env" });
+dotenv.config({ path: ".env" });
 
 export default defineConfig({
   testDir: "e2e",

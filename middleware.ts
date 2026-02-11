@@ -4,11 +4,11 @@ import { getRedirectUrl } from "@/lib/redirectUrl";
 
 const PUBLIC_PATHS = ["/login", "/api/auth/login"];
 
-const FIELDER_PATHS = ["/fielder", "/api/auth/logout"];
+const FIELDER_PATH_PREFIX = "/fielder";
 
 function isFielderPath(pathname: string): boolean {
   const lower = pathname.toLowerCase();
-  return lower === "/fielder" || lower.startsWith("/fielder/");
+  return lower === FIELDER_PATH_PREFIX || lower.startsWith(FIELDER_PATH_PREFIX + "/");
 }
 
 function isPublicPath(pathname: string): boolean {

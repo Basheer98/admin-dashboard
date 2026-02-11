@@ -63,19 +63,11 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
     );
   }
 
-  let totalOwedFromAssignments = 0;
-  let totalPaid = 0;
-  let internalWorkValue = 0;
-  let totalSqft = 0;
-
   const rows = fielderAssignments.map((a) => {
     const sqft = a.project.totalSqft;
-    totalSqft += sqft;
     const workerRate = Number(a.ratePerSqft);
-
-    if (a.isInternal && workerRate > 0) {
-      internalWorkValue += workerRate * sqft;
-    }
+    const internalValue =
+      a.isInternal && workerRate > 0 ? workerRate * sqft : 0;
 
     let totalRequired = 0;
     if (!a.isInternal) {
@@ -92,10 +84,6 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
 
     const paid = a.payments.reduce((sum, p) => sum + Number(p.amount), 0);
     const pending = a.isInternal ? 0 : Math.max(totalRequired - paid, 0);
-
-    totalOwedFromAssignments += totalRequired;
-    totalPaid += paid;
-
     const dueStatus = getDueDateStatus(a.dueDate ?? null);
 
     return {
@@ -105,8 +93,17 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
       paid,
       pending,
       dueStatus,
+      internalValue,
     };
   });
+
+  const totalSqft = rows.reduce((s, r) => s + r.sqft, 0);
+  const totalOwedFromAssignments = rows.reduce(
+    (s, r) => s + r.totalRequired,
+    0,
+  );
+  const totalPaid = rows.reduce((s, r) => s + r.paid, 0);
+  const internalWorkValue = rows.reduce((s, r) => s + r.internalValue, 0);
 
   const totalOwed = totalOwedFromAssignments + managerCommissionOwed;
   const pending = Math.max(totalOwed - totalPaid, 0);

@@ -17,7 +17,16 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const parsedItems = items.map((it: unknown) => {
+    type ItemInput = {
+      fielderName: string;
+      ratePerSqft: number;
+      commissionPercentage: number | null;
+      isInternal: boolean;
+      managerFielderName: string | null;
+      managerRatePerSqft: number | null;
+      managerCommissionShare: number | null;
+    };
+    const parsedItems = (items as unknown[]).map((it: unknown): ItemInput | null => {
       if (!it || typeof it !== "object") return null;
       const o = it as Record<string, unknown>;
       return {
@@ -37,7 +46,7 @@ export async function POST(request: Request) {
             ? Number(o.managerCommissionShare)
             : null,
       };
-    }).filter((it) => it && it.fielderName);
+    }).filter((it): it is ItemInput => it != null && it.fielderName !== "");
     if (parsedItems.length === 0) {
       return NextResponse.json(
         { error: "At least one fielder item is required" },

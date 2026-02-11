@@ -118,7 +118,7 @@ export function SqftByFielderChart({ assignments }: SqftByFielderChartProps) {
       const weekStarts: Date[] = [];
       const startWeek = getWeekStart(minDate);
       const endWeek = getWeekStart(maxDate);
-      let current = new Date(startWeek);
+      const current = new Date(startWeek);
       const maxWeeks = 52;
       while (current <= endWeek && weekStarts.length < maxWeeks) {
         weekStarts.push(new Date(current));
@@ -138,7 +138,6 @@ export function SqftByFielderChart({ assignments }: SqftByFielderChartProps) {
         if (fielderSqftByPeriod.has(key)) {
           add(key, a.fielderName, a.totalSqft);
         } else {
-          const nearest = periodKeys[0];
           if (key <= periodKeys[0]) add(periodKeys[0], a.fielderName, a.totalSqft);
           else if (key >= periodKeys[periodKeys.length - 1]) add(periodKeys[periodKeys.length - 1], a.fielderName, a.totalSqft);
         }
@@ -167,7 +166,7 @@ export function SqftByFielderChart({ assignments }: SqftByFielderChartProps) {
       const maxMonths = 24;
       const start = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
       const end = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
-      let current = new Date(start);
+      const current = new Date(start);
       while (current <= end && monthKeys.length < maxMonths) {
         monthKeys.push(getMonthKey(current));
         current.setMonth(current.getMonth() + 1);

@@ -127,8 +127,6 @@ export async function runSchema(): Promise<void> {
   schemaDone = true;
 }
 
-type QueryResult<T> = { rows: T[]; rowCount: number };
-
 export async function query<T = unknown>(
   sql: string,
   params: unknown[] = [],

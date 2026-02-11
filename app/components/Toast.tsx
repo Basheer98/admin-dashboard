@@ -33,17 +33,23 @@ export function Toast() {
     const errorParam = params.get("error");
 
     if (errorParam) {
-      setMessage(ERROR_MESSAGES[errorParam] ?? "Something went wrong.");
-      setIsError(true);
-      setVisible(true);
+      const msg = ERROR_MESSAGES[errorParam] ?? "Something went wrong.";
       params.delete("error");
       const newUrl = pathname + (params.toString() ? "?" + params.toString() : "");
       window.history.replaceState({}, "", newUrl);
       const id = setTimeout(() => {
+        setMessage(msg);
+        setIsError(true);
+        setVisible(true);
+      }, 0);
+      const hideId = setTimeout(() => {
         setVisible(false);
         setIsError(false);
       }, 4000);
-      return () => clearTimeout(id);
+      return () => {
+        clearTimeout(id);
+        clearTimeout(hideId);
+      };
     }
 
     const t =
@@ -51,16 +57,22 @@ export function Toast() {
       (successParam === "1" ? "saved" : null) ||
       (savedParam === "1" ? "saved" : null);
     if (t) {
-      setMessage(TOAST_MESSAGES[t] ?? "Saved.");
-      setIsError(false);
-      setVisible(true);
+      const msg = TOAST_MESSAGES[t] ?? "Saved.";
       params.delete("toast");
       params.delete("success");
       params.delete("saved");
       const newUrl = pathname + (params.toString() ? "?" + params.toString() : "");
       window.history.replaceState({}, "", newUrl);
-      const id = setTimeout(() => setVisible(false), 3000);
-      return () => clearTimeout(id);
+      const id = setTimeout(() => {
+        setMessage(msg);
+        setIsError(false);
+        setVisible(true);
+      }, 0);
+      const hideId = setTimeout(() => setVisible(false), 3000);
+      return () => {
+        clearTimeout(id);
+        clearTimeout(hideId);
+      };
     }
   }, [pathname]);
 

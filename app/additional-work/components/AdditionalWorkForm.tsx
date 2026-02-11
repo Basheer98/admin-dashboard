@@ -50,6 +50,8 @@ export function AdditionalWorkForm({
   action,
   submitLabel,
 }: AdditionalWorkFormProps) {
+  void mode; // reserved for future use (e.g. conditional edit-only fields)
+  void initialOurProjectId; // used by parent for prefetch key; form uses lookup state
   const [type, setType] = useState<"ADDITIONAL_FIELDING" | "CORRECTION">(initialType);
   const [projectNumber, setProjectNumber] = useState(initialProjectNumber);
   const [lookupProject, setLookupProject] = useState<LookupProject | null>(prefetchedProject);

@@ -556,11 +556,16 @@ export async function applyAssignmentTemplateToProject(
       managerFielderName.trim().toUpperCase(),
     );
     if (managerAssignmentId != null) {
-      await updateAssignment(assignmentId, {
-        managedByFielderId: managerAssignmentId,
-        managerRatePerSqft: it.managerRatePerSqft ?? null,
-        managerCommissionShare: it.managerCommissionShare ?? null,
-      });
+      const assignment = projectAssignments.find((a) => a.id === assignmentId);
+      if (assignment) {
+        await updateAssignment(assignmentId, {
+          ratePerSqft: Number(assignment.ratePerSqft),
+          commissionPercentage: assignment.commissionPercentage ?? null,
+          managedByFielderId: managerAssignmentId,
+          managerRatePerSqft: it.managerRatePerSqft ?? null,
+          managerCommissionShare: it.managerCommissionShare ?? null,
+        });
+      }
     }
   }
 
