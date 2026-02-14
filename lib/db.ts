@@ -1157,3 +1157,20 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
     await pool.query(sql);
   }
 }
+
+/** Reset all ID sequences to match current MAX(id). Use after restore or if you see "duplicate key" on insert. */
+export async function resetSequences(): Promise<void> {
+  await runSchema();
+  const pool = getPool();
+  const seqQueries = [
+    "SELECT setval(pg_get_serial_sequence('projects', 'id'), COALESCE((SELECT MAX(id) FROM projects), 1))",
+    "SELECT setval(pg_get_serial_sequence('assignments', 'id'), COALESCE((SELECT MAX(id) FROM assignments), 1))",
+    "SELECT setval(pg_get_serial_sequence('payments', 'id'), COALESCE((SELECT MAX(id) FROM payments), 1))",
+    "SELECT setval(pg_get_serial_sequence('additional_work', 'id'), COALESCE((SELECT MAX(id) FROM additional_work), 1))",
+    "SELECT setval(pg_get_serial_sequence('activity_log', 'id'), COALESCE((SELECT MAX(id) FROM activity_log), 1))",
+    "SELECT setval(pg_get_serial_sequence('fielder_logins', 'id'), COALESCE((SELECT MAX(id) FROM fielder_logins), 1))",
+  ];
+  for (const sql of seqQueries) {
+    await pool.query(sql);
+  }
+}

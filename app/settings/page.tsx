@@ -27,6 +27,8 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const restoreDetail = typeof sp.detail === "string" ? sp.detail : "";
   const normalized = sp.normalized === "1";
   const normalizedCount = typeof sp.count === "string" ? Number(sp.count) : 0;
+  const sequencesFixed = sp.fixed === "1";
+  const sequencesFixError = sp.fixed === "error";
   const flCreated = sp.flCreated === "1";
   const flReset = sp.flReset === "1";
   const flError = typeof sp.flError === "string" ? sp.flError : null;
@@ -71,6 +73,16 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             {normalizedCount > 0
               ? `Normalized ${normalizedCount} fielder name(s) to uppercase. Duplicate entries like "naveen" and "Naveen" are now merged.`
               : "All fielder names were already uppercase. No changes made."}
+          </div>
+        )}
+        {sequencesFixed && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            ID sequences fixed. You can add new projects and other records again.
+          </div>
+        )}
+        {sequencesFixError && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Could not fix sequences. Check deployment logs.
           </div>
         )}
         {flCreated && (
@@ -210,6 +222,18 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           <form method="POST" action="/api/settings/normalize-fielder-names" className="mb-8">
             <button type="submit" className="btn-secondary">
               Normalize all fielder names to uppercase
+            </button>
+          </form>
+
+          <h2 className="mb-4 text-base font-semibold text-slate-900">
+            Fix ID sequences
+          </h2>
+          <p className="mb-4 text-sm text-slate-600">
+            If you get &quot;duplicate key&quot; or can&apos;t add new projects after a restore, the database ID counters are out of sync. This resets them so new records get the next available ID.
+          </p>
+          <form method="POST" action="/api/settings/fix-sequences" className="mb-8">
+            <button type="submit" className="btn-secondary">
+              Fix ID sequences
             </button>
           </form>
 
