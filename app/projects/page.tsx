@@ -17,6 +17,8 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const showArchived = sp.archived === "1";
   const unarchived = sp.unarchived === "1";
   const success = sp.success === "1";
+  const errorInvalid = sp.error === "invalid";
+  const errorServer = sp.error === "server";
   const filterClient = typeof sp.client === "string" ? sp.client.trim() : "";
   const filterStatus = typeof sp.status === "string" ? sp.status : "";
   const filterFrom = typeof sp.from === "string" && sp.from ? sp.from : "";
@@ -130,6 +132,16 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
               Log payment
             </Link>
             .
+          </div>
+        )}
+        {errorInvalid && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Please check the form: all required fields must be valid (e.g. project ID, client, total SQFT, rate).
+          </div>
+        )}
+        {errorServer && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Something went wrong while saving the project. Please try again. If it keeps failing, check the deployment logs.
           </div>
         )}
         {unarchived && (

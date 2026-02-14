@@ -5,40 +5,41 @@ import { normalizeProjectCode, normalizeFielderName } from "@/lib/normalize";
 import { validate, projectPostSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
+  try {
+    const formData = await request.formData();
 
-  const projectCode = normalizeProjectCode(String(formData.get("projectCode") ?? ""));
-  const clientChoice = String(formData.get("clientChoice") ?? "").trim();
-  const newClientName = String(formData.get("newClientName") ?? "").trim();
-  const clientName = clientChoice || newClientName;
-  const location = String(formData.get("location") ?? "").trim();
-  const totalSqftStr = String(formData.get("totalSqft") ?? "").trim();
-  const rateStr = String(formData.get("companyRatePerSqft") ?? "").trim();
-  const statusStr = String(formData.get("status") ?? "").trim();
-  const ecdRaw = String(formData.get("ecd") ?? "").trim();
-  const ecd = ecdRaw || null;
-  const notes = String(formData.get("notes") ?? "").trim() || null;
-  const qfieldRaw = String(formData.get("qfield") ?? "").trim();
-  const qfield = qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2" ? qfieldRaw : null;
+    const projectCode = normalizeProjectCode(String(formData.get("projectCode") ?? ""));
+    const clientChoice = String(formData.get("clientChoice") ?? "").trim();
+    const newClientName = String(formData.get("newClientName") ?? "").trim();
+    const clientName = clientChoice || newClientName;
+    const location = String(formData.get("location") ?? "").trim();
+    const totalSqftStr = String(formData.get("totalSqft") ?? "").trim();
+    const rateStr = String(formData.get("companyRatePerSqft") ?? "").trim();
+    const statusStr = String(formData.get("status") ?? "").trim();
+    const ecdRaw = String(formData.get("ecd") ?? "").trim();
+    const ecd = ecdRaw || null;
+    const notes = String(formData.get("notes") ?? "").trim() || null;
+    const qfieldRaw = String(formData.get("qfield") ?? "").trim();
+    const qfield = qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2" ? qfieldRaw : null;
 
-  const redirectTo = String(formData.get("redirectTo") ?? "/projects");
+    const redirectTo = String(formData.get("redirectTo") ?? "/projects");
 
-  const parsed = validate(projectPostSchema, {
-    projectCode: projectCode || undefined,
-    clientName: clientName || undefined,
-    location,
-    totalSqft: totalSqftStr ? Number(totalSqftStr) : undefined,
-    companyRatePerSqft: rateStr ? Number(rateStr) : undefined,
-    status: statusStr || "NOT_STARTED",
-    ecd,
-    notes,
-    qfield,
-  });
-  if (!parsed.success) {
-    return NextResponse.redirect(getRedirectUrl(request, "/projects", { error: "invalid" }));
-  }
+    const parsed = validate(projectPostSchema, {
+      projectCode: projectCode || undefined,
+      clientName: clientName || undefined,
+      location,
+      totalSqft: totalSqftStr ? Number(totalSqftStr) : undefined,
+      companyRatePerSqft: rateStr ? Number(rateStr) : undefined,
+      status: statusStr || "NOT_STARTED",
+      ecd,
+      notes,
+      qfield,
+    });
+    if (!parsed.success) {
+      return NextResponse.redirect(getRedirectUrl(request, "/projects", { error: "invalid" }));
+    }
 
-  const project = await insertProject({
+    const project = await insertProject({
     projectCode: parsed.data.projectCode,
     clientName: parsed.data.clientName,
     location: parsed.data.location,
@@ -103,5 +104,9 @@ export async function POST(request: Request) {
     ? new URL(redirectTo).pathname
     : (redirectTo?.startsWith("/") ? redirectTo : "/projects");
   return NextResponse.redirect(getRedirectUrl(request, path, { success: "1" }));
+  } catch (e) {
+    console.error("POST /api/projects failed:", e);
+    return NextResponse.redirect(getRedirectUrl(request, "/projects", { error: "server" }));
+  }
 }
 
