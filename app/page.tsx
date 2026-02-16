@@ -344,6 +344,18 @@ export default async function Home({ searchParams }: PageProps) {
     const current = payoutsByFielderMap.get(name) ?? 0;
     payoutsByFielderMap.set(name, current + Number(p.amount));
   });
+  // Include owner/internal work value (e.g. Basheer) so they appear in the chart and can compare with others
+  assignments.forEach((a) => {
+    if (!a.isInternal) return;
+    const project = projects.find((p) => p.id === a.projectId);
+    if (!project) return;
+    const rate = Number(a.ratePerSqft);
+    if (rate <= 0) return;
+    const workValue = rate * project.totalSqft;
+    const name = a.fielderName;
+    const current = payoutsByFielderMap.get(name) ?? 0;
+    payoutsByFielderMap.set(name, current + workValue);
+  });
   const payoutsByFielder = Array.from(payoutsByFielderMap.entries())
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
@@ -594,6 +606,9 @@ export default async function Home({ searchParams }: PageProps) {
               <h3 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Payouts by fielder
               </h3>
+              <p className="mb-3 text-xs text-slate-500">
+                Includes actual payments and owner/internal work value (e.g. Basheer) so you can compare who’s earning what.
+              </p>
               <PayoutsByFielderChart data={payoutsByFielder} />
             </div>
             <div className="card p-7 md:col-span-2">
