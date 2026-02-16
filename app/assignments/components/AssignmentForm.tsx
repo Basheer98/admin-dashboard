@@ -162,13 +162,13 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
               className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
             />
             <p className="mt-1 text-sm text-slate-500">
-              Rate the manager gets (must be &gt; worker rate)
+              Worker rate + manager commission per SQFT. E.g. worker 0.020, manager commission 0.005 → enter 0.025. Company pays worker 0.020; the 0.005 is split by the % below.
             </p>
           </div>
 
           <div className="space-y-1">
             <label className="block text-sm font-medium text-slate-700">
-              Manager commission share %
+              Company keeps % of manager commission
             </label>
             <input
               name="managerCommissionShare"
@@ -181,7 +181,7 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
               className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
             />
             <p className="mt-1 text-sm text-slate-500">
-              % of manager commission that goes back to company (e.g., 50 = 50%)
+              E.g. 50 = company keeps 50%, manager gets the other 50%.
             </p>
           </div>
         </>
