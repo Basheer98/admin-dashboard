@@ -134,9 +134,8 @@ export default async function Home({ searchParams }: PageProps) {
   let payments = hasDateFilter
     ? allPayments.filter((p) => inDateRange(p.paymentDate, from, to))
     : allPayments;
-  if (hasStatusFilter) {
-    payments = payments.filter((p) => projectIds.has(p.projectId));
-  }
+  // Always scope payments to filtered projects so totals and charts match (date / status / invoice filter)
+  payments = payments.filter((p) => projectIds.has(p.projectId));
 
   const totalRevenue = projects.reduce((sum, p) => {
     const projectRevenue = p.totalSqft * Number(p.companyRatePerSqft);
@@ -338,8 +337,15 @@ export default async function Home({ searchParams }: PageProps) {
   });
 
   const showInr = settings.usdToInrRate != null;
+  // Scope chart data to filtered projects (and payment date when date filter is on) so charts show whole data when no filter, filtered data when filtered
+  const paymentsWithDetailsFiltered = paymentsWithDetails.filter((p) => {
+    if (!projectIds.has(p.projectId)) return false;
+    if (hasDateFilter && from && p.paymentDate.slice(0, 10) < from) return false;
+    if (hasDateFilter && to && p.paymentDate.slice(0, 10) > to) return false;
+    return true;
+  });
   const payoutsByFielderMap = new Map<string, number>();
-  paymentsWithDetails.forEach((p) => {
+  paymentsWithDetailsFiltered.forEach((p) => {
     const name = p.assignment.fielderName;
     const current = payoutsByFielderMap.get(name) ?? 0;
     payoutsByFielderMap.set(name, current + Number(p.amount));
@@ -360,7 +366,11 @@ export default async function Home({ searchParams }: PageProps) {
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value);
 
-  const sqftByFielderAssignments = assignmentsWithDetails.map((a) => ({
+  // Only assignments for filtered projects so SQFT chart shows whole data when no filter, filtered when filtered
+  const assignmentsWithDetailsFiltered = assignmentsWithDetails.filter((a) =>
+    projectIds.has(a.projectId),
+  );
+  const sqftByFielderAssignments = assignmentsWithDetailsFiltered.map((a) => ({
     fielderName: a.fielderName,
     createdAt: a.createdAt ?? new Date().toISOString(),
     totalSqft: a.project?.totalSqft ?? 0,
