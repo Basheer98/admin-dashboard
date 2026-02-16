@@ -21,6 +21,8 @@ export async function POST(request: Request) {
     const notes = String(formData.get("notes") ?? "").trim() || null;
     const qfieldRaw = String(formData.get("qfield") ?? "").trim();
     const qfield = qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2" ? qfieldRaw : null;
+    const invoiceNumberRaw = String(formData.get("invoiceNumber") ?? "").trim();
+    const invoiceNumber = invoiceNumberRaw || null;
 
     const redirectTo = String(formData.get("redirectTo") ?? "/projects");
 
@@ -34,6 +36,7 @@ export async function POST(request: Request) {
       ecd,
       notes,
       qfield,
+      invoiceNumber,
     });
     if (!parsed.success) {
       return NextResponse.redirect(getRedirectUrl(request, "/projects", { error: "invalid" }));
@@ -49,6 +52,7 @@ export async function POST(request: Request) {
     ecd: parsed.data.ecd,
     notes: parsed.data.notes,
     qfield: parsed.data.qfield,
+    invoiceNumber: parsed.data.invoiceNumber,
   });
 
   // Optional: create multiple fielder assignments (assignedFielder_0_name, etc.)

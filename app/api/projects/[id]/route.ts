@@ -32,6 +32,8 @@ export async function POST(request: Request, { params }: Params) {
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const qfieldRaw = String(formData.get("qfield") ?? "").trim();
   const qfield = qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2" ? qfieldRaw : null;
+  const invoiceNumberRaw = String(formData.get("invoiceNumber") ?? "").trim();
+  const invoiceNumber = invoiceNumberRaw || null;
 
   const parsed = validate(projectPatchSchema, {
     projectCode: projectCode || undefined,
@@ -43,6 +45,7 @@ export async function POST(request: Request, { params }: Params) {
     ecd,
     notes,
     qfield,
+    invoiceNumber,
   });
   if (!parsed.success) {
     return NextResponse.redirect(getRedirectUrl(request, `/projects/${id}`, { error: "invalid" }));
@@ -59,6 +62,7 @@ export async function POST(request: Request, { params }: Params) {
     ecd: parsed.data.ecd,
     notes: parsed.data.notes,
     qfield: parsed.data.qfield,
+    invoiceNumber: parsed.data.invoiceNumber,
   });
 
   if (oldProject) {
@@ -83,6 +87,10 @@ export async function POST(request: Request, { params }: Params) {
     if ((oldProject.qfield ?? null) !== (parsed.data.qfield ?? null)) {
       changes.push(`QField ${oldProject.qfield ?? "—"} → ${parsed.data.qfield ?? "—"}`);
       meta.qfield = { old: oldProject.qfield, new: parsed.data.qfield };
+    }
+    if ((oldProject.invoiceNumber ?? null) !== (parsed.data.invoiceNumber ?? null)) {
+      changes.push(`Invoice ${oldProject.invoiceNumber ?? "—"} → ${parsed.data.invoiceNumber ?? "—"}`);
+      meta.invoiceNumber = { old: oldProject.invoiceNumber, new: parsed.data.invoiceNumber };
     }
     if (Object.keys(meta).length > 0) {
       await insertActivity({

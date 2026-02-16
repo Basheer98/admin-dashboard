@@ -69,6 +69,7 @@ export const projectPostSchema = z.object({
   ecd: z.string().nullable(),
   notes: z.string().nullable(),
   qfield: z.enum(["Qfield-1", "Qfield-2"]).nullable(),
+  invoiceNumber: z.string().nullable(),
 });
 
 // --- Projects (PATCH by id) ---
@@ -82,6 +83,7 @@ export const projectPatchSchema = z.object({
   ecd: z.string().nullable(),
   notes: z.string().nullable(),
   qfield: z.enum(["Qfield-1", "Qfield-2"]).nullable(),
+  invoiceNumber: z.string().nullable(),
 });
 
 // --- Settings ---

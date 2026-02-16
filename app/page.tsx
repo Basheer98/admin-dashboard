@@ -65,6 +65,7 @@ function DatePresetLink({
   currentFrom,
   currentTo,
   filterStatus,
+  filterInvoice,
 }: {
   from: string;
   to: string;
@@ -73,12 +74,14 @@ function DatePresetLink({
   currentFrom: string | null;
   currentTo: string | null;
   filterStatus?: string | null;
+  filterInvoice?: string | null;
 }) {
   const isActive = hasDateFilter && currentFrom === from && currentTo === to;
   const statusQ = filterStatus ? `&status=${encodeURIComponent(filterStatus)}` : "";
+  const invoiceQ = filterInvoice ? `&invoice=${encodeURIComponent(filterInvoice)}` : "";
   return (
     <Link
-      href={`/?from=${from}&to=${to}${statusQ}`}
+      href={`/?from=${from}&to=${to}${statusQ}${invoiceQ}`}
       className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
         isActive
           ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
@@ -101,8 +104,10 @@ export default async function Home({ searchParams }: PageProps) {
   const to =
     typeof sp.to === "string" && sp.to ? sp.to : null;
   const filterStatus = typeof sp.status === "string" && sp.status ? sp.status : null;
+  const filterInvoice = typeof sp.invoice === "string" && sp.invoice ? sp.invoice.trim() : null;
   const hasDateFilter = Boolean(from || to);
   const hasStatusFilter = Boolean(filterStatus);
+  const hasInvoiceFilter = Boolean(filterInvoice);
 
   const [allProjects, allPayments, assignments, assignmentsWithDetails, settings, paymentsWithDetails] = await Promise.all([
     getAllProjects(),
@@ -118,7 +123,14 @@ export default async function Home({ searchParams }: PageProps) {
   if (hasStatusFilter) {
     projects = projects.filter((p) => p.status === filterStatus);
   }
+  if (hasInvoiceFilter) {
+    projects = projects.filter((p) => (p.invoiceNumber ?? "").trim() === filterInvoice);
+  }
   const projectIds = new Set(projects.map((p) => p.id));
+
+  const uniqueInvoiceNumbers = Array.from(
+    new Set(allProjects.map((p) => (p.invoiceNumber ?? "").trim()).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   let payments = hasDateFilter
     ? allPayments.filter((p) => inDateRange(p.paymentDate, from, to))
     : allPayments;
@@ -454,7 +466,7 @@ export default async function Home({ searchParams }: PageProps) {
           </p>
           <div className="mb-4 flex flex-wrap gap-2">
             <Link
-              href={filterStatus ? `/?status=${encodeURIComponent(filterStatus)}` : "/"}
+              href={filterStatus ? `/?status=${encodeURIComponent(filterStatus)}` : filterInvoice ? `/?invoice=${encodeURIComponent(filterInvoice)}` : "/"}
               className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
                 !hasDateFilter
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
@@ -463,11 +475,50 @@ export default async function Home({ searchParams }: PageProps) {
             >
               All time
             </Link>
-            <DatePresetLink from={getDatePreset("last7").from} to={getDatePreset("last7").to} label="Last 7 days" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} filterStatus={filterStatus} />
-            <DatePresetLink from={getDatePreset("thisMonth").from} to={getDatePreset("thisMonth").to} label="This month" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} filterStatus={filterStatus} />
-            <DatePresetLink from={getDatePreset("lastQuarter").from} to={getDatePreset("lastQuarter").to} label="Last quarter" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} filterStatus={filterStatus} />
+            <DatePresetLink from={getDatePreset("last7").from} to={getDatePreset("last7").to} label="Last 7 days" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} filterStatus={filterStatus} filterInvoice={filterInvoice} />
+            <DatePresetLink from={getDatePreset("thisMonth").from} to={getDatePreset("thisMonth").to} label="This month" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} filterStatus={filterStatus} filterInvoice={filterInvoice} />
+            <DatePresetLink from={getDatePreset("lastQuarter").from} to={getDatePreset("lastQuarter").to} label="Last quarter" hasDateFilter={hasDateFilter} currentFrom={from} currentTo={to} filterStatus={filterStatus} filterInvoice={filterInvoice} />
           </div>
+          {uniqueInvoiceNumbers.length > 0 && (
+            <div className="mb-4">
+              <p className="mb-2 text-sm text-slate-600">Filter by invoice / billing batch</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={[from && `from=${from}`, to && `to=${to}`, filterStatus && `status=${encodeURIComponent(filterStatus)}`].filter(Boolean).length
+                    ? `/?${[from && `from=${from}`, to && `to=${to}`, filterStatus && `status=${encodeURIComponent(filterStatus)}`].filter(Boolean).join("&")}`
+                    : "/"}
+                  className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                    !filterInvoice
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                      : "bg-white/80 text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+                  }`}
+                >
+                  All invoices
+                </Link>
+                {uniqueInvoiceNumbers.map((inv) => {
+                  const isActive = filterInvoice === inv;
+                  const q = [from && `from=${from}`, to && `to=${to}`, filterStatus && `status=${encodeURIComponent(filterStatus)}`, `invoice=${encodeURIComponent(inv)}`].filter(Boolean).join("&");
+                  return (
+                    <Link
+                      key={inv}
+                      href={q ? `/?${q}` : `/?invoice=${encodeURIComponent(inv)}`}
+                      className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
+                        isActive
+                          ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                          : "bg-white/80 text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+                      }`}
+                    >
+                      Invoice {inv}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <form method="get" action="/" className="flex flex-wrap items-end gap-3">
+            {filterInvoice != null && filterInvoice !== "" && (
+              <input type="hidden" name="invoice" value={filterInvoice} />
+            )}
             <div className="space-y-1">
               <label className="label">
                 From
@@ -505,7 +556,7 @@ export default async function Home({ searchParams }: PageProps) {
             >
               Apply
             </button>
-            {(hasDateFilter || hasStatusFilter) && (
+            {(hasDateFilter || hasStatusFilter || hasInvoiceFilter) && (
               <Link
                 href="/"
                 className="btn-secondary h-11 px-4 py-2"

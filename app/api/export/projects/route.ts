@@ -18,6 +18,7 @@ export async function GET(request: Request) {
   const headers = [
     "Project ID",
     "Client",
+    "Invoice",
     "QField",
     "Location",
     "Total SQFT",
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
     return [
       escapeCsvCell(p.projectCode),
       escapeCsvCell(p.clientName),
+      escapeCsvCell(p.invoiceNumber ?? ""),
       escapeCsvCell(p.qfield ?? ""),
       escapeCsvCell(p.location),
       escapeCsvCell(p.totalSqft),

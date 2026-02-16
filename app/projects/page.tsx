@@ -21,6 +21,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const errorServer = sp.error === "server";
   const filterClient = typeof sp.client === "string" ? sp.client.trim() : "";
   const filterStatus = typeof sp.status === "string" ? sp.status : "";
+  const filterInvoice = typeof sp.invoice === "string" ? sp.invoice.trim() : "";
   const filterFrom = typeof sp.from === "string" && sp.from ? sp.from : "";
   const filterTo = typeof sp.to === "string" && sp.to ? sp.to : "";
   const sort = typeof sp.sort === "string" ? sp.sort : "createdAt";
@@ -46,8 +47,14 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   if (filterTo) {
     projects = projects.filter((p) => p.createdAt.slice(0, 10) <= filterTo);
   }
+  if (filterInvoice) {
+    projects = projects.filter((p) => (p.invoiceNumber ?? "").trim() === filterInvoice);
+  }
 
   const totalCount = projects.length;
+  const uniqueInvoiceNumbers = Array.from(
+    new Set(allProjects.map((p) => (p.invoiceNumber ?? "").trim()).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const sortKey = ["projectCode", "clientName", "qfield", "location", "totalSqft", "companyRatePerSqft", "revenue", "status", "ecd", "createdAt"].includes(sort) ? sort : "createdAt";
   projects = [...projects].sort((a, b) => {
     let va: string | number;
@@ -100,11 +107,12 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
     new Set(allProjects.map((p) => p.clientName).filter(Boolean)),
   ).sort((a, b) => a.localeCompare(b));
 
-  const hasFilters = !!(filterClient || filterStatus || filterFrom || filterTo);
+  const hasFilters = !!(filterClient || filterStatus || filterInvoice || filterFrom || filterTo);
   const projectFilterChips = hasFilters
     ? [
         filterClient && { key: "client", label: "Client", value: filterClient },
         filterStatus && { key: "status", label: "Status", value: getProjectStatusLabel(filterStatus) },
+        filterInvoice && { key: "invoice", label: "Invoice", value: filterInvoice },
         filterFrom && { key: "from", label: "From", value: filterFrom },
         filterTo && { key: "to", label: "To", value: filterTo },
       ].filter(Boolean) as { key: string; label: string; value: string }[]
@@ -112,6 +120,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const projectPreserveParams: Record<string, string> = {
     ...(filterClient && { client: filterClient }),
     ...(filterStatus && { status: filterStatus }),
+    ...(filterInvoice && { invoice: filterInvoice }),
     ...(filterFrom && { from: filterFrom }),
     ...(filterTo && { to: filterTo }),
     ...(showArchived && { archived: "1" }),
@@ -196,6 +205,19 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
               </select>
             </div>
             <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-700">Invoice</label>
+              <select
+                name="invoice"
+                defaultValue={filterInvoice}
+                className="h-11 rounded-md border border-slate-300 px-3 py-2 text-base text-black bg-white"
+              >
+                <option value="">All invoices</option>
+                {uniqueInvoiceNumbers.map((inv) => (
+                  <option key={inv} value={inv}>{inv}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
               <label className="block text-sm font-medium text-slate-700">Created from</label>
               <input
                 type="date"
@@ -219,7 +241,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
             >
               Apply
             </button>
-            {(filterClient || filterStatus || filterFrom || filterTo) && (
+            {(filterClient || filterStatus || filterInvoice || filterFrom || filterTo) && (
               <Link
                 href={showArchived ? "/projects?archived=1" : "/projects"}
                 className="h-11 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 inline-flex items-center"
@@ -273,6 +295,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                   <th className="px-3 py-2">
                     <SortLink label="Client" sortKey="clientName" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
+                  <th className="px-3 py-2">Invoice</th>
                   <th className="px-3 py-2">
                     <SortLink label="QField" sortKey="qfield" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
@@ -306,6 +329,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                     <tr key={p.id} className="border-t text-slate-800">
                       <td className="px-3 py-2">{p.projectCode}</td>
                       <td className="px-3 py-2">{p.clientName}</td>
+                      <td className="px-3 py-2">{p.invoiceNumber?.trim() ?? "—"}</td>
                       <td className="px-3 py-2">{p.qfield ?? "—"}</td>
                       <td className="px-3 py-2">{p.location}</td>
                       <td className="px-3 py-2">{p.totalSqft}</td>

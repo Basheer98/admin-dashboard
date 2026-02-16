@@ -34,6 +34,17 @@ export function AddProjectForm({
         </p>
       </div>
       <div className="space-y-1">
+        <label className="block text-sm font-medium text-slate-700">Invoice / billing batch (optional)</label>
+        <input
+          name="invoiceNumber"
+          placeholder="e.g. 001, 002, Jan-001"
+          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+        />
+        <p className="mt-1 text-sm text-slate-500">
+          Use to group projects by invoice so dashboard and reports can filter by invoice.
+        </p>
+      </div>
+      <div className="space-y-1">
         <label className="block text-sm font-medium text-slate-700">Client name</label>
         <select
           name="clientChoice"

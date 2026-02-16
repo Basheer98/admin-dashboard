@@ -45,6 +45,9 @@ export async function runSchema(): Promise<void> {
     DO $$ BEGIN ALTER TABLE projects ADD COLUMN qfield TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   await p.query(`
+    DO $$ BEGIN ALTER TABLE projects ADD COLUMN invoice_number TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
     CREATE TABLE IF NOT EXISTS assignments (
       id SERIAL PRIMARY KEY,
       project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
