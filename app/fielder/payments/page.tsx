@@ -36,6 +36,7 @@ export default async function FielderPaymentsPage() {
             <tr>
               <th className="px-3 py-2">Date</th>
               <th className="px-3 py-2">Project</th>
+              <th className="px-3 py-2">Invoice</th>
               <th className="px-3 py-2">Amount</th>
               <th className="px-3 py-2">Currency</th>
               <th className="px-3 py-2">Method</th>
@@ -49,6 +50,7 @@ export default async function FielderPaymentsPage() {
                   {new Date(p.paymentDate).toLocaleDateString()}
                 </td>
                 <td className="px-3 py-2">{p.project.projectCode}</td>
+                <td className="px-3 py-2">{p.project.invoiceNumber?.trim() ?? "—"}</td>
                 <td className="px-3 py-2">
                   {formatCurrency(Number(p.amount))}
                 </td>

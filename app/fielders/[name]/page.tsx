@@ -260,6 +260,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
               <thead>
                 <tr>
                   <th className="px-3 py-2">Project</th>
+                  <th className="px-3 py-2">Invoice</th>
                   <th className="px-3 py-2">SQFT</th>
                   <th className="px-3 py-2">Rate / SQFT</th>
                   <th className="px-3 py-2">Due</th>
@@ -280,6 +281,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
                         </span>
                       )}
                     </td>
+                    <td className="px-3 py-2">{a.project.invoiceNumber?.trim() ?? "—"}</td>
                     <td className="px-3 py-2">{sqft.toLocaleString()}</td>
                     <td className="px-3 py-2">
                       {a.isInternal ? "—" : formatRate(Number(a.ratePerSqft))}

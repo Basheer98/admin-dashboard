@@ -70,6 +70,7 @@ export default async function ManagerCommissionsReportPage({
       managerName,
       projectId: project.id,
       projectCode: project.projectCode,
+      invoiceNumber: project.invoiceNumber,
       clientName: project.clientName,
       monthKey,
       monthLabel: monthLabelFromKey(monthKey),
@@ -367,6 +368,7 @@ export default async function ManagerCommissionsReportPage({
                   <tr>
                     <th className="px-3 py-2">Manager</th>
                     <th className="px-3 py-2">Project</th>
+                    <th className="px-3 py-2">Invoice</th>
                     <th className="px-3 py-2">Month</th>
                     <th className="px-3 py-2">Worker</th>
                     <th className="px-3 py-2">SQFT</th>
@@ -392,6 +394,7 @@ export default async function ManagerCommissionsReportPage({
                             {r.projectCode}
                           </Link>
                         </td>
+                        <td className="px-3 py-2">{r.invoiceNumber?.trim() ?? "—"}</td>
                         <td className="px-3 py-2">{r.monthLabel}</td>
                         <td className="px-3 py-2">{r.workerName}</td>
                         <td className="px-3 py-2">{r.sqft.toLocaleString()}</td>
@@ -407,7 +410,7 @@ export default async function ManagerCommissionsReportPage({
                     ))}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-3 py-2 text-slate-500">
+                      <td colSpan={7} className="px-3 py-2 text-slate-500">
                         No manager commissions in this range.
                       </td>
                     </tr>

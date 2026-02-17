@@ -58,6 +58,7 @@ export default async function FielderAssignmentsPage() {
           <thead>
             <tr>
               <th className="px-3 py-2">Project</th>
+              <th className="px-3 py-2">Invoice</th>
               <th className="px-3 py-2">SQFT</th>
               <th className="px-3 py-2">Rate / SQFT</th>
               <th className="px-3 py-2">Due</th>
@@ -77,6 +78,7 @@ export default async function FielderAssignmentsPage() {
                     </span>
                   )}
                 </td>
+                <td className="px-3 py-2">{a.project.invoiceNumber?.trim() ?? "—"}</td>
                 <td className="px-3 py-2">{sqft.toLocaleString()}</td>
                 <td className="px-3 py-2">
                   {a.isInternal ? "—" : formatRate(Number(a.ratePerSqft))}
@@ -127,6 +129,7 @@ export default async function FielderAssignmentsPage() {
                   <th className="px-3 py-2">Type</th>
                   <th className="px-3 py-2">Project #</th>
                   <th className="px-3 py-2">Our project</th>
+                  <th className="px-3 py-2">Invoice</th>
                   <th className="px-3 py-2">Amount</th>
                   <th className="px-3 py-2">Status</th>
                   <th className="px-3 py-2">Due</th>
@@ -142,6 +145,7 @@ export default async function FielderAssignmentsPage() {
                     <td className="px-3 py-2">
                       {w.project ? w.project.projectCode : "—"}
                     </td>
+                    <td className="px-3 py-2">{w.project?.invoiceNumber?.trim() ?? "—"}</td>
                     <td className="px-3 py-2">
                       {w.amount != null ? formatCurrency(w.amount) : "—"}
                     </td>

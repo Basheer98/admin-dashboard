@@ -18,6 +18,7 @@ export async function GET(request: Request) {
   const headers = [
     "Date",
     "Project",
+    "Invoice",
     "Client",
     "Fielder",
     "Amount",
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
   const rows = payments.map((p) => [
     escapeCsvCell(p.paymentDate.slice(0, 10)),
     escapeCsvCell(p.project.projectCode),
+    escapeCsvCell(p.project.invoiceNumber ?? ""),
     escapeCsvCell(p.project.clientName),
     escapeCsvCell(p.assignment.fielderName),
     escapeCsvCell(Number(p.amount).toFixed(2)),

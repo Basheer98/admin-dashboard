@@ -3,7 +3,6 @@ import {
   getAllAssignments,
   getAllPayments,
   getAssignmentsWithDetails,
-  getPaymentsWithDetails,
   getSettings,
 } from "@/lib/db";
 import { getDueDateStatus, getProjectEcdStatus } from "@/lib/dueDate";
@@ -109,13 +108,12 @@ export default async function Home({ searchParams }: PageProps) {
   const hasStatusFilter = Boolean(filterStatus);
   const hasInvoiceFilter = Boolean(filterInvoice);
 
-  const [allProjects, allPayments, assignments, assignmentsWithDetails, settings, paymentsWithDetails] = await Promise.all([
+  const [allProjects, allPayments, assignments, assignmentsWithDetails, settings] = await Promise.all([
     getAllProjects(),
     getAllPayments(),
     getAllAssignments(),
     getAssignmentsWithDetails(),
     getSettings(),
-    getPaymentsWithDetails(),
   ]);
   let projects = hasDateFilter
     ? allProjects.filter((p) => inDateRange(p.createdAt, from, to))
@@ -259,6 +257,7 @@ export default async function Home({ searchParams }: PageProps) {
       projectId: p.id,
       projectCode: p.projectCode,
       clientName: p.clientName,
+      invoiceNumber: p.invoiceNumber,
       qfield: p.qfield,
       revenue,
       payoutsBase,
@@ -337,30 +336,34 @@ export default async function Home({ searchParams }: PageProps) {
   });
 
   const showInr = settings.usdToInrRate != null;
-  // Scope chart data to filtered projects (and payment date when date filter is on) so charts show whole data when no filter, filtered data when filtered
-  const paymentsWithDetailsFiltered = paymentsWithDetails.filter((p) => {
-    if (!projectIds.has(p.projectId)) return false;
-    if (hasDateFilter && from && p.paymentDate.slice(0, 10) < from) return false;
-    if (hasDateFilter && to && p.paymentDate.slice(0, 10) > to) return false;
-    return true;
-  });
+  // Payouts-by-fielder chart: use EXPECTED amounts (from assignment rates) so every fielder with work in the filter appears (Basheer, Naveen, Nivas), even before any payment is logged
   const payoutsByFielderMap = new Map<string, number>();
-  paymentsWithDetailsFiltered.forEach((p) => {
-    const name = p.assignment.fielderName;
-    const current = payoutsByFielderMap.get(name) ?? 0;
-    payoutsByFielderMap.set(name, current + Number(p.amount));
-  });
-  // Include owner/internal work value (e.g. Basheer) so they appear in the chart and can compare with others
   assignments.forEach((a) => {
-    if (!a.isInternal) return;
     const project = projects.find((p) => p.id === a.projectId);
     if (!project) return;
-    const rate = Number(a.ratePerSqft);
-    if (rate <= 0) return;
-    const workValue = rate * project.totalSqft;
-    const name = a.fielderName;
-    const current = payoutsByFielderMap.get(name) ?? 0;
-    payoutsByFielderMap.set(name, current + workValue);
+    const sqft = project.totalSqft;
+    if (a.isInternal) {
+      const rate = Number(a.ratePerSqft);
+      if (rate <= 0) return;
+      const workValue = rate * sqft;
+      payoutsByFielderMap.set(a.fielderName, (payoutsByFielderMap.get(a.fielderName) ?? 0) + workValue);
+      return;
+    }
+    const workerRate = Number(a.ratePerSqft);
+    const workerExpected = workerRate * sqft;
+    payoutsByFielderMap.set(a.fielderName, (payoutsByFielderMap.get(a.fielderName) ?? 0) + workerExpected);
+    if (a.managedByFielderId && a.managerRatePerSqft) {
+      const managerRate = Number(a.managerRatePerSqft);
+      const managerCommission = (managerRate - workerRate) * sqft;
+      const managerShare = a.managerCommissionShare ? Number(a.managerCommissionShare) : 0;
+      const companyShare = managerCommission * managerShare;
+      const managerNetCommission = managerCommission - companyShare;
+      const managerAssignment = assignments.find((m) => m.id === a.managedByFielderId);
+      const managerName = managerAssignment?.fielderName;
+      if (managerName) {
+        payoutsByFielderMap.set(managerName, (payoutsByFielderMap.get(managerName) ?? 0) + managerNetCommission);
+      }
+    }
   });
   const payoutsByFielder = Array.from(payoutsByFielderMap.entries())
     .map(([name, value]) => ({ name, value }))
@@ -400,11 +403,30 @@ export default async function Home({ searchParams }: PageProps) {
             {greeting}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Revenue and payments at a glance. Use the filter below to narrow by date.
+            Revenue and payments at a glance. Use the filter below to narrow by date or invoice.
           </p>
           <p className="mt-0.5 text-xs text-slate-400" aria-label="Data timestamp">
             Data as of {dataAsOf.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
           </p>
+          {/* So you always know what data is included (e.g. new projects can be hidden by date/invoice filter) */}
+          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-2 text-sm text-slate-700">
+            <strong>Showing:</strong>{" "}
+            {!hasDateFilter && !hasStatusFilter && !hasInvoiceFilter ? (
+              <>All projects and all payments (no filter). New projects and logged payments appear here immediately.</>
+            ) : (
+              <>
+                {projects.length} project{projects.length !== 1 ? "s" : ""}
+                {hasDateFilter && from && to && ` created ${from}–${to}`}
+                {hasInvoiceFilter && ` in invoice "${filterInvoice}"`}
+                {hasStatusFilter && ` with status "${filterStatus}"`}
+                . Payments below are only for these projects.
+                {" "}
+                <Link href="/" className="font-medium text-indigo-600 hover:underline">
+                  Show all data
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         <section className="grid gap-6 md:grid-cols-3">
@@ -418,11 +440,12 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
           <div className="card-highlight p-7">
             <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
-              Total payouts (base + commissions)
+              Total payouts (expected from rates)
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
               {showInr ? formatWithInr(totalRequiredPayouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalRequiredPayouts)}`}
             </p>
+            <p className="mt-1 text-xs text-slate-500">From fielder rates × SQFT (not from logged payments)</p>
           </div>
           <div className="card-highlight p-7">
             <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
@@ -455,6 +478,7 @@ export default async function Home({ searchParams }: PageProps) {
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
               {showInr ? formatWithInr(totalPaid, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalPaid)}`}
             </p>
+            <p className="mt-1 text-xs text-slate-500">From payments you logged (Payments → Log payment)</p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
@@ -617,7 +641,7 @@ export default async function Home({ searchParams }: PageProps) {
                 Payouts by fielder
               </h3>
               <p className="mb-3 text-xs text-slate-500">
-                Includes actual payments and owner/internal work value (e.g. Basheer) so you can compare who’s earning what.
+                Expected payouts from rates × SQFT and manager commissions. All fielders with work in the current filter appear (e.g. Basheer, Naveen, Nivas).
               </p>
               <PayoutsByFielderChart data={payoutsByFielder} />
             </div>
@@ -742,6 +766,7 @@ export default async function Home({ searchParams }: PageProps) {
                 <tr>
                   <th className="px-3 py-2">Project</th>
                   <th className="px-3 py-2">Client</th>
+                  <th className="px-3 py-2">Invoice</th>
                   <th className="px-3 py-2">QField</th>
                   <th className="px-3 py-2">Revenue</th>
                   <th className="px-3 py-2">Payouts</th>
@@ -757,6 +782,7 @@ export default async function Home({ searchParams }: PageProps) {
                   <tr key={row.projectCode} className="border-t text-slate-800">
                     <td className="px-3 py-2">{row.projectCode}</td>
                     <td className="px-3 py-2">{row.clientName}</td>
+                    <td className="px-3 py-2">{row.invoiceNumber?.trim() ?? "—"}</td>
                     <td className="px-3 py-2">{row.qfield ?? "—"}</td>
                     <td className="px-3 py-2">
                       {formatCurrency(row.revenue)}
@@ -789,7 +815,7 @@ export default async function Home({ searchParams }: PageProps) {
                 {projectRows.length === 0 && (
                   <tr>
                     <td
-                      colSpan={10}
+                      colSpan={11}
                       className="px-3 py-4 text-center text-slate-500"
                     >
                       No projects yet.

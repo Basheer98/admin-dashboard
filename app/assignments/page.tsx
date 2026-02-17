@@ -148,6 +148,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                 <tr>
                   <th className="px-3 py-2">Fielder</th>
                   <th className="px-3 py-2">Project</th>
+                  <th className="px-3 py-2">Invoice</th>
                   <th className="px-3 py-2">Rate / SQFT</th>
                   <th className="px-3 py-2">Commission %</th>
                   <th className="px-3 py-2">Due</th>
@@ -234,6 +235,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                       <td className="px-3 py-2">
                         {a.project.projectCode}
                       </td>
+                      <td className="px-3 py-2">{a.project.invoiceNumber?.trim() ?? "—"}</td>
                       <td className="px-3 py-2">
                         {a.isInternal ? "-" : formatRate(workerRate)}
                         {managerInfo && (
@@ -301,7 +303,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                 {assignmentsFiltered.length === 0 && (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={10}
                       className="px-3 py-4 text-center text-slate-500"
                     >
                       No fielder assignments yet.

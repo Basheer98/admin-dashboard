@@ -131,6 +131,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                   <tr>
                     <th className="px-3 py-2">Project</th>
                     <th className="px-3 py-2">Client</th>
+                    <th className="px-3 py-2">Invoice</th>
                     <th className="px-3 py-2">Revenue</th>
                   </tr>
                 </thead>
@@ -141,13 +142,14 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                       <tr key={p.id} className="border-t text-slate-800">
                         <td className="px-3 py-2">{p.projectCode}</td>
                         <td className="px-3 py-2">{p.clientName}</td>
+                        <td className="px-3 py-2">{p.invoiceNumber?.trim() ?? "—"}</td>
                         <td className="px-3 py-2">{formatCurrency(rev)}</td>
                       </tr>
                     );
                   })}
                   {projectsInMonth.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="px-3 py-2 text-slate-500">
+                      <td colSpan={4} className="px-3 py-2 text-slate-500">
                         None
                       </td>
                     </tr>
@@ -167,6 +169,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                   <tr>
                     <th className="px-3 py-2">Date</th>
                     <th className="px-3 py-2">Project</th>
+                    <th className="px-3 py-2">Invoice</th>
                     <th className="px-3 py-2">Fielder</th>
                     <th className="px-3 py-2">Amount</th>
                     <th className="px-3 py-2">Currency</th>
@@ -179,6 +182,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                         {new Date(p.paymentDate).toLocaleDateString()}
                       </td>
                       <td className="px-3 py-2">{p.project.projectCode}</td>
+                      <td className="px-3 py-2">{p.project.invoiceNumber?.trim() ?? "—"}</td>
                       <td className="px-3 py-2">{p.assignment.fielderName}</td>
                       <td className="px-3 py-2">{formatCurrency(Number(p.amount))}</td>
                       <td className="px-3 py-2">{p.currency}</td>
@@ -186,7 +190,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                   ))}
                   {paymentsWithDetailsInMonth.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-3 py-2 text-slate-500">
+                      <td colSpan={6} className="px-3 py-2 text-slate-500">
                         None
                       </td>
                     </tr>
