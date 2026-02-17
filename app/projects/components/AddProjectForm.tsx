@@ -16,7 +16,7 @@ export function AddProjectForm({
   uniqueFielderNames,
   uniqueClientNames,
 }: AddProjectFormProps) {
-  const [fielderRows, setFielderRows] = useState(2);
+  const [fielderRows, setFielderRows] = useState(1);
   const [clientChoice, setClientChoice] = useState<string>("");
 
   return (
