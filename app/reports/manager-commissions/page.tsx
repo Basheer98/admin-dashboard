@@ -8,6 +8,7 @@ type ManagerCommissionRow = {
   managerName: string;
   projectId: number;
   projectCode: string;
+  invoiceNumber: string | null;
   clientName: string;
   monthKey: string;
   monthLabel: string;
