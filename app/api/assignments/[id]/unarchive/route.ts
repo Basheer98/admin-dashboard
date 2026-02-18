@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { unarchiveAssignment, getAssignmentById } from "@/lib/db";
+import { unarchiveAssignment, getAssignmentById, insertAuditLog } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 
 type Params = {
@@ -7,6 +8,10 @@ type Params = {
 };
 
 export async function POST(request: Request, { params }: Params) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  const actor = getAuditActor(session);
+
   const { id: idStr } = await params;
   const id = Number(idStr);
   if (!id) {
@@ -15,6 +20,7 @@ export async function POST(request: Request, { params }: Params) {
   const assignment = await getAssignmentById(id);
   const projectId = assignment?.projectId;
   await unarchiveAssignment(id);
+  await insertAuditLog({ ...actor, action: "assignment.unarchive", entityType: "assignment", entityId: String(id) });
   const paramsObj: Record<string, string> = { unarchived: "1" };
   if (projectId) paramsObj.projectId = String(projectId);
   return NextResponse.redirect(getRedirectUrl(request, "/assignments", paramsObj));

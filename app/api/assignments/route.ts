@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { insertAssignment } from "@/lib/db";
+import { insertAssignment, insertAuditLog } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeFielderName } from "@/lib/normalize";
 import { validate, assignmentPostSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  const actor = getAuditActor(session);
+
   const formData = await request.formData();
 
   const projectIdStr = String(formData.get("projectId") ?? "").trim();
@@ -49,6 +54,14 @@ export async function POST(request: Request) {
     managerRatePerSqft,
     managerCommissionShare,
     dueDate: parsed.data.dueDate,
+  });
+
+  await insertAuditLog({
+    ...actor,
+    action: "assignment.create",
+    entityType: "assignment",
+    entityId: String(newId),
+    details: { projectId, fielderName: parsed.data.fielderName },
   });
 
   const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/assignments");

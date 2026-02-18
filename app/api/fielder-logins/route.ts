@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
-import { getAllFielderLogins, insertFielderLogin } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
+import { getAllFielderLogins, insertFielderLogin, insertAuditLog } from "@/lib/db";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate } from "@/lib/validations";
 import { z } from "zod";
@@ -39,7 +39,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    await insertFielderLogin(parsed.data);
+    const id = await insertFielderLogin(parsed.data);
+    await insertAuditLog({
+      ...getAuditActor(session),
+      action: "fielder_login.create",
+      entityType: "fielder_login",
+      entityId: String(id),
+      details: { email: parsed.data.email, fielderName: parsed.data.fielderName },
+    });
     return NextResponse.redirect(
       getRedirectUrl(request, "/settings", { flCreated: "1" }),
     );

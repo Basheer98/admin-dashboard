@@ -3,7 +3,9 @@ import {
   getAssignmentsWithDetails,
   insertPayment,
   insertActivity,
+  insertAuditLog,
 } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate, fielderPaymentPostSchema } from "@/lib/validations";
 
@@ -41,6 +43,10 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ name: string }> },
 ) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  const actor = getAuditActor(session);
+
   const { name: encodedName } = await params;
   const fielderNameFromUrl = decodeURIComponent(encodedName);
   const fielderNameNormalized = fielderNameFromUrl.trim().toUpperCase();
@@ -184,6 +190,12 @@ export async function POST(
       currency: parsed.data.currency,
       allocations: created,
     },
+  });
+  await insertAuditLog({
+    ...actor,
+    action: "payment.create",
+    entityType: "payment",
+    details: { fielderName: displayName, amount: parsed.data.amount, currency: parsed.data.currency, allocations: created.length },
   });
 
   return NextResponse.redirect(

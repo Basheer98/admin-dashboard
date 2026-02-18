@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getAllAssignmentTemplates, createAssignmentTemplate } from "@/lib/db";
+import { getAllAssignmentTemplates, createAssignmentTemplate, insertAuditLog } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 
 export async function GET() {
   const templates = await getAllAssignmentTemplates();
@@ -7,6 +8,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const actor = getAuditActor(session);
+
   try {
     const body = await request.json();
     const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -54,6 +59,13 @@ export async function POST(request: Request) {
       );
     }
     const id = await createAssignmentTemplate({ name, items: parsedItems });
+    await insertAuditLog({
+      ...actor,
+      action: "assignment_template.create",
+      entityType: "assignment_template",
+      entityId: String(id),
+      details: { name },
+    });
     return NextResponse.json({ id });
   } catch (e) {
     console.error(e);

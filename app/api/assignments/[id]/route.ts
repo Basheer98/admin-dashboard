@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getAssignmentById, updateAssignment } from "@/lib/db";
+import { getAssignmentById, updateAssignment, insertAuditLog } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate, assignmentPatchSchema } from "@/lib/validations";
 
@@ -10,6 +11,10 @@ type Params = {
 };
 
 export async function POST(request: Request, { params }: Params) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  const actor = getAuditActor(session);
+
   const { id: idStr } = await params;
   const id = Number(idStr);
   if (!id) {
@@ -56,6 +61,13 @@ export async function POST(request: Request, { params }: Params) {
     managerRatePerSqft: parsed.data.managerRatePerSqft,
     managerCommissionShare: parsed.data.managerCommissionShare,
     dueDate: parsed.data.dueDate,
+  });
+
+  await insertAuditLog({
+    ...actor,
+    action: "assignment.update",
+    entityType: "assignment",
+    entityId: String(id),
   });
 
   const assignment = await getAssignmentById(id);

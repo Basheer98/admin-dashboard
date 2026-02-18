@@ -3,11 +3,12 @@
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { SessionTimeout } from "./SessionTimeout";
+import { GlobalSearch } from "./GlobalSearch";
 
 type SidebarLayoutProps = {
   title: string;
   children: React.ReactNode;
-  current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "additional" | "activity" | "settings" | "reports" | "reports-monthly" | "reports-manager-commissions";
+  current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "additional" | "activity" | "audit" | "settings" | "reports" | "reports-monthly" | "reports-manager-commissions";
   headerAction?: React.ReactNode;
   backLink?: { href: string; label: string };
 };
@@ -141,6 +142,7 @@ export function SidebarLayout({
           <SidebarLink href="/reports/monthly" label="Monthly summary" active={current === "reports" || current === "reports-monthly"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/reports/manager-commissions" label="Manager commissions" active={current === "reports" || current === "reports-manager-commissions"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/activity" label="Activity log" active={current === "activity"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/audit" label="Audit trail" active={current === "audit"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/settings" label="Settings" active={current === "settings"} onNavigate={!isLg ? closeMobileMenu : undefined} />
         </nav>
         <div className="mt-6 rounded-xl bg-white/5 border border-white/5 p-2.5">
@@ -193,6 +195,9 @@ export function SidebarLayout({
                 <h2 className="font-display text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl truncate">
                   {title}
                 </h2>
+              </div>
+              <div className="hidden sm:block flex-1 min-w-0 max-w-xs">
+                <GlobalSearch />
               </div>
             </div>
             {headerAction != null ? <div className="no-print shrink-0">{headerAction}</div> : null}

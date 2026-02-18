@@ -120,3 +120,11 @@ export async function getSessionFromRequest(request: Request): Promise<Session |
   const token = match?.[1];
   return verifySession(token ?? null);
 }
+
+/** For audit log: who performed the action. */
+export function getAuditActor(session: Session): { actorType: "admin" | "fielder"; actorName: string } {
+  if (session.role === "admin") {
+    return { actorType: "admin", actorName: process.env.ADMIN_EMAIL ?? "Admin" };
+  }
+  return { actorType: "fielder", actorName: session.fielderName };
+}

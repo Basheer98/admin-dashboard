@@ -17,8 +17,11 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const showArchived = sp.archived === "1";
   const unarchived = sp.unarchived === "1";
   const success = sp.success === "1";
+  const successBulkInvoice = sp.success === "bulk_invoice";
+  const bulkInvoiceCount = typeof sp.count === "string" ? sp.count : "";
   const errorInvalid = sp.error === "invalid";
   const errorServer = sp.error === "server";
+  const errorBulkInvoice = sp.error === "bulk_invoice_no_selection";
   const filterClient = typeof sp.client === "string" ? sp.client.trim() : "";
   const filterStatus = typeof sp.status === "string" ? sp.status : "";
   const filterInvoice = typeof sp.invoice === "string" ? sp.invoice.trim() : "";
@@ -55,13 +58,23 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const uniqueInvoiceNumbers = Array.from(
     new Set(allProjects.map((p) => (p.invoiceNumber ?? "").trim()).filter(Boolean)),
   ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  const sortKey = ["projectCode", "clientName", "qfield", "location", "totalSqft", "companyRatePerSqft", "revenue", "status", "ecd", "createdAt"].includes(sort) ? sort : "createdAt";
+  const sortKey = ["projectCode", "clientName", "qfield", "location", "totalSqft", "companyRatePerSqft", "revenue", "profit", "marginPct", "status", "ecd", "createdAt"].includes(sort) ? sort : "createdAt";
   projects = [...projects].sort((a, b) => {
     let va: string | number;
     let vb: string | number;
     if (sortKey === "revenue") {
       va = a.totalSqft * Number(a.companyRatePerSqft);
       vb = b.totalSqft * Number(b.companyRatePerSqft);
+    } else if (sortKey === "profit") {
+      const revA = a.totalSqft * Number(a.companyRatePerSqft);
+      const revB = b.totalSqft * Number(b.companyRatePerSqft);
+      va = revA - (projectRequiredPayouts.get(a.id) ?? 0);
+      vb = revB - (projectRequiredPayouts.get(b.id) ?? 0);
+    } else if (sortKey === "marginPct") {
+      const revA = a.totalSqft * Number(a.companyRatePerSqft);
+      const revB = b.totalSqft * Number(b.companyRatePerSqft);
+      va = revA > 0 ? ((revA - (projectRequiredPayouts.get(a.id) ?? 0)) / revA) * 100 : 0;
+      vb = revB > 0 ? ((revB - (projectRequiredPayouts.get(b.id) ?? 0)) / revB) * 100 : 0;
     } else if (sortKey === "companyRatePerSqft") {
       va = Number(a.companyRatePerSqft);
       vb = Number(b.companyRatePerSqft);
@@ -100,6 +113,26 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
     getAllAssignments({ includeArchived: showArchived }),
     getAssignmentsWithDetails({ includeArchived: showArchived }),
   ]);
+  const projectRequiredPayouts = new Map<number, number>();
+  for (const p of projects) {
+    const projectAssignments = assignments.filter((a) => a.projectId === p.id);
+    let required = 0;
+    projectAssignments.forEach((a) => {
+      if (a.isInternal) return;
+      const sqft = p.totalSqft;
+      const workerRate = Number(a.ratePerSqft);
+      if (a.managedByFielderId && a.managerRatePerSqft) {
+        const managerRate = Number(a.managerRatePerSqft);
+        const managerCommission = (managerRate - workerRate) * sqft;
+        const managerShare = a.managerCommissionShare ? Number(a.managerCommissionShare) : 0;
+        required += workerRate * sqft + (managerCommission - managerCommission * managerShare);
+      } else {
+        required += workerRate * sqft;
+        if (a.commissionPercentage) required += workerRate * sqft * Number(a.commissionPercentage);
+      }
+    });
+    projectRequiredPayouts.set(p.id, required);
+  }
   const uniqueFielderNames = Array.from(
     new Set(assignments.map((a) => a.fielderName).filter(Boolean)),
   ).sort((a, b) => a.localeCompare(b));
@@ -151,6 +184,16 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
         {errorServer && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             Something went wrong while saving the project. Please try again. If it keeps failing, check the deployment logs.
+          </div>
+        )}
+        {successBulkInvoice && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            Invoice updated for {bulkInvoiceCount} project{bulkInvoiceCount !== "1" ? "s" : ""}.
+          </div>
+        )}
+        {errorBulkInvoice && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Select at least one project to set invoice.
           </div>
         )}
         {unarchived && (
@@ -277,18 +320,44 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
             <h2 className="text-lg font-bold tracking-tight text-slate-900">
               {showArchived ? "Archived projects" : "Project list"}
             </h2>
-            <a
-              href={`/api/export/projects${showArchived ? "?archived=1" : ""}`}
-              download
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-            >
-              Export CSV
-            </a>
+            <div className="flex flex-wrap items-center gap-2">
+              {filterInvoice && (
+                <a
+                  href={`/api/invoices/${encodeURIComponent(filterInvoice)}/pdf`}
+                  download
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Download invoice PDF
+                </a>
+              )}
+              <a
+                href={`/api/export/projects${showArchived ? "?archived=1" : ""}`}
+                download
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Export CSV
+              </a>
+            </div>
           </div>
+          <form id="bulk-invoice-form" method="POST" action="/api/projects/bulk-invoice" className="mb-3 flex flex-wrap items-center gap-2">
+            <label className="text-sm font-medium text-slate-700">Set invoice for selected:</label>
+            <input
+              type="text"
+              name="invoiceNumber"
+              placeholder="e.g. 002"
+              className="h-9 w-28 rounded-md border border-slate-300 px-2 text-sm"
+            />
+            <button type="submit" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Apply
+            </button>
+          </form>
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm max-h-[70vh] overflow-y-auto">
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
               <thead className="border-b border-slate-200">
                 <tr>
+                  <th className="px-3 py-2 w-10" title="Select for bulk set invoice">
+                    <span className="sr-only">Select</span>
+                  </th>
                   <th className="px-3 py-2">
                     <SortLink label="Project" sortKey="projectCode" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
@@ -312,6 +381,12 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                     <SortLink label="Revenue" sortKey="revenue" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
                   <th className="px-3 py-2">
+                    <SortLink label="Profit" sortKey="profit" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
+                  </th>
+                  <th className="px-3 py-2">
+                    <SortLink label="Margin %" sortKey="marginPct" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
+                  </th>
+                  <th className="px-3 py-2">
                     <SortLink label="Status" sortKey="status" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
                   <th className="px-3 py-2">
@@ -324,9 +399,22 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                 {paginatedProjects.map((p) => {
                   const revenue =
                     p.totalSqft * Number(p.companyRatePerSqft);
+                  const required = projectRequiredPayouts.get(p.id) ?? 0;
+                  const profit = revenue - required;
+                  const marginPct = revenue > 0 ? (profit / revenue) * 100 : 0;
                   const ecdStatus = getProjectEcdStatus(p.ecd ?? null, p.status);
                   return (
                     <tr key={p.id} className="border-t text-slate-800">
+                      <td className="px-3 py-2">
+                        <input
+                          type="checkbox"
+                          name="projectIds"
+                          value={p.id}
+                          form="bulk-invoice-form"
+                          className="rounded border-slate-300"
+                          aria-label={`Select ${p.projectCode}`}
+                        />
+                      </td>
                       <td className="px-3 py-2">{p.projectCode}</td>
                       <td className="px-3 py-2">{p.clientName}</td>
                       <td className="px-3 py-2">{p.invoiceNumber?.trim() ?? "—"}</td>
@@ -338,6 +426,12 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                       </td>
                       <td className="px-3 py-2">
                         {formatCurrency(revenue)}
+                      </td>
+                      <td className="px-3 py-2">
+                        {formatCurrency(profit)}
+                      </td>
+                      <td className="px-3 py-2">
+                        {revenue > 0 ? `${marginPct.toFixed(1)}%` : "—"}
                       </td>
                       <td className="px-3 py-2">
                         {getProjectStatusLabel(p.status)}

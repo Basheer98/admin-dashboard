@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { getProjectByCode, insertAdditionalWork } from "@/lib/db";
+import { getProjectByCode, insertAdditionalWork, insertAuditLog } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode } from "@/lib/normalize";
 import { validate, additionalWorkPostSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  const actor = getAuditActor(session);
+
   const formData = await request.formData();
 
   const type = String(formData.get("type") ?? "").trim() as "ADDITIONAL_FIELDING" | "CORRECTION";
@@ -46,7 +51,7 @@ export async function POST(request: Request) {
   const ourProject = await getProjectByCode(parsed.data.projectNumber);
   const ourProjectId = ourProject?.id ?? null;
 
-  await insertAdditionalWork({
+  const row = await insertAdditionalWork({
     type: parsed.data.type,
     projectNumber: parsed.data.projectNumber,
     ourProjectId,
@@ -58,6 +63,13 @@ export async function POST(request: Request) {
     completedAt: parsed.data.completedAt,
     status: parsed.data.status,
     notes: parsed.data.notes,
+  });
+  await insertAuditLog({
+    ...actor,
+    action: "additional_work.create",
+    entityType: "additional_work",
+    entityId: String(row.id),
+    details: { type: row.type, projectNumber: row.projectNumber },
   });
 
   return NextResponse.redirect(getRedirectUrl(request, "/additional-work", { success: "1" }));

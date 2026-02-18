@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getProjectById, updateProject, insertActivity } from "@/lib/db";
+import { getProjectById, updateProject, insertActivity, insertAuditLog } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode } from "@/lib/normalize";
 import { validate, projectPatchSchema } from "@/lib/validations";
@@ -11,6 +12,12 @@ type Params = {
 };
 
 export async function POST(request: Request, { params }: Params) {
+  const session = await getSessionFromRequest(request);
+  if (!session) {
+    return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  }
+  const actor = getAuditActor(session);
+
   const { id: idStr } = await params;
   const id = Number(idStr);
   if (!id) {
@@ -100,6 +107,14 @@ export async function POST(request: Request, { params }: Params) {
       });
     }
   }
+
+  await insertAuditLog({
+    ...actor,
+    action: "project.update",
+    entityType: "project",
+    entityId: String(id),
+    details: oldProject ? { projectCode: parsed.data.projectCode, clientName: parsed.data.clientName } : undefined,
+  });
 
   return NextResponse.redirect(getRedirectUrl(request, `/projects/${id}`, { saved: "1" }));
 }

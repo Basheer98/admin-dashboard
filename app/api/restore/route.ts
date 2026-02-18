@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import {
   restoreBackup,
+  insertAuditLog,
   type BackupPayload,
   isLegacyJsonShape,
   legacyJsonToBackupPayload,
 } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 
 function isValidBackupShape(obj: unknown): obj is BackupPayload {
@@ -22,6 +24,10 @@ function isValidBackupShape(obj: unknown): obj is BackupPayload {
 }
 
 export async function POST(request: Request) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  const actor = getAuditActor(session);
+
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   if (!file || typeof file === "string") {
@@ -49,6 +55,12 @@ export async function POST(request: Request) {
   }
   try {
     await restoreBackup(payload);
+    await insertAuditLog({
+      ...actor,
+      action: "backup.restore",
+      entityType: "setting",
+      details: { projectCount: payload.projects.length },
+    });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
     console.error("Restore failed:", e);

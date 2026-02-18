@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
-import { getProjectByCode, getAdditionalWorkById, updateAdditionalWork } from "@/lib/db";
+import { getProjectByCode, getAdditionalWorkById, updateAdditionalWork, insertAuditLog } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode } from "@/lib/normalize";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, { params }: Params) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  const actor = getAuditActor(session);
+
   const { id: idStr } = await params;
   const id = Number(idStr);
   if (!id) {
@@ -58,6 +63,13 @@ export async function POST(request: Request, { params }: Params) {
     completedAt,
     status,
     notes,
+  });
+  await insertAuditLog({
+    ...actor,
+    action: "additional_work.update",
+    entityType: "additional_work",
+    entityId: String(id),
+    details: { projectNumber, status },
   });
 
   return NextResponse.redirect(getRedirectUrl(request, `/additional-work/${id}`, { saved: "1" }));

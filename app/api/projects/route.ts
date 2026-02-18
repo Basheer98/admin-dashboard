@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
-import { insertAssignment, insertProject } from "@/lib/db";
+import { insertAssignment, insertProject, insertAuditLog } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode, normalizeFielderName } from "@/lib/normalize";
 import { validate, projectPostSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
+    const session = await getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.redirect(getRedirectUrl(request, "/login"));
+    }
+    const actor = getAuditActor(session);
     const formData = await request.formData();
 
     const projectCode = normalizeProjectCode(String(formData.get("projectCode") ?? ""));
@@ -54,6 +60,14 @@ export async function POST(request: Request) {
     qfield: parsed.data.qfield,
     invoiceNumber: parsed.data.invoiceNumber,
   });
+
+    await insertAuditLog({
+      ...actor,
+      action: "project.create",
+      entityType: "project",
+      entityId: String(project.id),
+      details: { projectCode: project.projectCode, clientName: project.clientName },
+    });
 
   // Optional: create multiple fielder assignments (assignedFielder_0_name, etc.)
   for (let i = 0; i < 20; i++) {

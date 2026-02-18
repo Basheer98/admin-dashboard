@@ -205,6 +205,73 @@ export default async function Home({ searchParams }: PageProps) {
   const totalCompanyProfit =
     totalRevenue - totalPayoutsBase - totalCommissions - totalManagerCommissions + totalCompanyShareOfManagerCommissions;
 
+  // Previous period (for comparison): same-length window before current period, or "last month" when no date filter
+  type PeriodTotals = { revenue: number; payouts: number; profit: number; label: string };
+  let currentLabel = "Current period";
+  let prevLabel = "Previous period";
+  let prevProjects: typeof projects = [];
+  if (hasDateFilter && from && to) {
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+    const days = Math.round((toDate.getTime() - fromDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+    const prevToDate = new Date(fromDate);
+    prevToDate.setDate(prevToDate.getDate() - 1);
+    const prevFromDate = new Date(prevToDate);
+    prevFromDate.setDate(prevFromDate.getDate() - days + 1);
+    const prevFrom = prevFromDate.toISOString().slice(0, 10);
+    const prevTo = prevToDate.toISOString().slice(0, 10);
+    currentLabel = `${from} – ${to}`;
+    prevLabel = `${prevFrom} – ${prevTo}`;
+    prevProjects = allProjects.filter((p) => inDateRange(p.createdAt, prevFrom, prevTo));
+    if (hasStatusFilter) prevProjects = prevProjects.filter((p) => p.status === filterStatus);
+    if (hasInvoiceFilter) prevProjects = prevProjects.filter((p) => (p.invoiceNumber ?? "").trim() === filterInvoice);
+  } else {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const lastMonthEnd = new Date(y, m, 0);
+    const lastMonthStart = new Date(y, m - 1, 1);
+    const lastMonthFrom = lastMonthStart.toISOString().slice(0, 10);
+    const lastMonthTo = lastMonthEnd.toISOString().slice(0, 10);
+    currentLabel = "This month (to date)";
+    prevLabel = "Last month";
+    prevProjects = allProjects.filter((p) => inDateRange(p.createdAt, lastMonthFrom, lastMonthTo));
+    if (hasStatusFilter) prevProjects = prevProjects.filter((p) => p.status === filterStatus);
+    if (hasInvoiceFilter) prevProjects = prevProjects.filter((p) => (p.invoiceNumber ?? "").trim() === filterInvoice);
+  }
+
+  const prevRevenue = prevProjects.reduce((sum, p) => sum + p.totalSqft * Number(p.companyRatePerSqft), 0);
+  let prevPayoutsBase = 0;
+  let prevCommissions = 0;
+  let prevManagerCommissions = 0;
+  let prevCompanyShare = 0;
+  prevProjects.forEach((proj) => {
+    assignments.forEach((a) => {
+      if (a.projectId !== proj.id) return;
+      if (a.isInternal) return;
+      const sqft = proj.totalSqft;
+      const workerRate = Number(a.ratePerSqft);
+      if (a.managedByFielderId && a.managerRatePerSqft) {
+        const managerRate = Number(a.managerRatePerSqft);
+        const managerCommission = (managerRate - workerRate) * sqft;
+        const managerShare = a.managerCommissionShare ? Number(a.managerCommissionShare) : 0;
+        prevPayoutsBase += workerRate * sqft;
+        prevManagerCommissions += managerCommission - managerCommission * managerShare;
+        prevCompanyShare += managerCommission * managerShare;
+      } else {
+        prevPayoutsBase += workerRate * sqft;
+        if (a.commissionPercentage) prevCommissions += workerRate * sqft * Number(a.commissionPercentage);
+      }
+    });
+  });
+  const prevRequiredPayouts = prevPayoutsBase + prevCommissions + prevManagerCommissions - prevCompanyShare;
+  const prevProfit = prevRevenue - prevRequiredPayouts;
+
+  const periodComparison: { current: PeriodTotals; prev: PeriodTotals } = {
+    current: { revenue: totalRevenue, payouts: totalRequiredPayouts, profit: totalCompanyProfit, label: currentLabel },
+    prev: { revenue: prevRevenue, payouts: prevRequiredPayouts, profit: prevProfit, label: prevLabel },
+  };
+
   const projectRows = projects.map((p) => {
     const revenue = p.totalSqft * Number(p.companyRatePerSqft);
     const projectAssignments = assignments.filter(
@@ -252,6 +319,7 @@ export default async function Home({ searchParams }: PageProps) {
 
     const pending = Math.max(projectRequired - paidAmount, 0);
     const profit = revenue - projectRequired;
+    const marginPct = revenue > 0 ? (profit / revenue) * 100 : 0;
 
     return {
       projectId: p.id,
@@ -267,6 +335,7 @@ export default async function Home({ searchParams }: PageProps) {
       totalPaid: paidAmount,
       pending,
       profit,
+      marginPct,
     };
   });
 
@@ -504,6 +573,43 @@ export default async function Home({ searchParams }: PageProps) {
         </section>
 
         <section className="card p-7">
+          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Period comparison — are we doing better?
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-3">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+              <p className="text-xs font-medium text-slate-500">{periodComparison.current.label}</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">{showInr ? formatWithInr(periodComparison.current.revenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.current.revenue)}`} revenue</p>
+              <p className="text-sm text-slate-600">{showInr ? formatWithInr(periodComparison.current.payouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.current.payouts)}`} payouts</p>
+              <p className="text-sm font-medium text-slate-800">{showInr ? formatWithInr(periodComparison.current.profit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.current.profit)}`} profit</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
+              <p className="text-xs font-medium text-slate-500">{periodComparison.prev.label}</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">{showInr ? formatWithInr(periodComparison.prev.revenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.prev.revenue)}`} revenue</p>
+              <p className="text-sm text-slate-600">{showInr ? formatWithInr(periodComparison.prev.payouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.prev.payouts)}`} payouts</p>
+              <p className="text-sm font-medium text-slate-800">{showInr ? formatWithInr(periodComparison.prev.profit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.prev.profit)}`} profit</p>
+            </div>
+            <div className="rounded-lg border border-indigo-200 bg-indigo-50/30 p-4">
+              <p className="text-xs font-medium text-slate-500">Change vs previous</p>
+              {[
+                { name: "Revenue", curr: periodComparison.current.revenue, prev: periodComparison.prev.revenue },
+                { name: "Payouts", curr: periodComparison.current.payouts, prev: periodComparison.prev.payouts },
+                { name: "Profit", curr: periodComparison.current.profit, prev: periodComparison.prev.profit },
+              ].map(({ name, curr, prev }) => {
+                const pct = prev !== 0 ? ((curr - prev) / prev) * 100 : (curr !== 0 ? 100 : 0);
+                const up = pct > 0;
+                const down = pct < 0;
+                return (
+                  <p key={name} className={`mt-1 text-sm ${up ? "text-green-700" : down ? "text-red-700" : "text-slate-600"}`}>
+                    {name}: {up ? "+" : ""}{pct.toFixed(1)}%
+                  </p>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="card p-7">
           <h2 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
             Date range filter
           </h2>
@@ -559,6 +665,18 @@ export default async function Home({ searchParams }: PageProps) {
                   );
                 })}
               </div>
+              <p className="mt-2 text-xs text-slate-500">
+                {uniqueInvoiceNumbers.map((inv) => (
+                  <a
+                    key={inv}
+                    href={`/api/invoices/${encodeURIComponent(inv)}/pdf`}
+                    download
+                    className="text-indigo-600 hover:underline mr-3"
+                  >
+                    Download PDF for {inv}
+                  </a>
+                ))}
+              </p>
             </div>
           )}
           <form method="get" action="/" className="flex flex-wrap items-end gap-3">
@@ -774,6 +892,7 @@ export default async function Home({ searchParams }: PageProps) {
                   <th className="px-3 py-2">Paid</th>
                   <th className="px-3 py-2">Pending</th>
                   <th className="px-3 py-2">Profit</th>
+                  <th className="px-3 py-2">Margin %</th>
                   <th className="px-3 py-2"></th>
                 </tr>
               </thead>
@@ -803,6 +922,9 @@ export default async function Home({ searchParams }: PageProps) {
                       {formatCurrency(row.profit)}
                     </td>
                     <td className="px-3 py-2">
+                      {row.revenue > 0 ? `${row.marginPct.toFixed(1)}%` : "—"}
+                    </td>
+                    <td className="px-3 py-2">
                       <Link
                         href={`/payments?projectId=${row.projectId}`}
                         className="text-sm text-slate-700 underline hover:text-slate-900"
@@ -815,7 +937,7 @@ export default async function Home({ searchParams }: PageProps) {
                 {projectRows.length === 0 && (
                   <tr>
                     <td
-                      colSpan={11}
+                      colSpan={12}
                       className="px-3 py-4 text-center text-slate-500"
                     >
                       No projects yet.

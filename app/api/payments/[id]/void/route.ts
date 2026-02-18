@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getPaymentById, voidPayment, insertActivity } from "@/lib/db";
+import { getPaymentById, voidPayment, insertActivity, insertAuditLog } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 
 type Params = {
@@ -7,6 +8,10 @@ type Params = {
 };
 
 export async function POST(request: Request, { params }: Params) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  const actor = getAuditActor(session);
+
   const { id: idStr } = await params;
   const id = Number(idStr);
   if (!id) {
@@ -31,6 +36,13 @@ export async function POST(request: Request, { params }: Params) {
     type: "payment_voided",
     description: `Voided payment of ${payment.currency} ${amountFormatted} to ${payment.assignment.fielderName}`,
     metadata: { paymentId: id, amount: payment.amount, currency: payment.currency, fielderName: payment.assignment.fielderName },
+  });
+  await insertAuditLog({
+    ...actor,
+    action: "payment.void",
+    entityType: "payment",
+    entityId: String(id),
+    details: { amount: payment.amount, currency: payment.currency },
   });
   return NextResponse.redirect(getRedirectUrl(request, "/payments", { voided: "1" }));
 }

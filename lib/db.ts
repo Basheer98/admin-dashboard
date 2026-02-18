@@ -154,6 +154,68 @@ export async function getProjectByCode(projectCode: string): Promise<ProjectRow 
   return row as ProjectRow | undefined;
 }
 
+export async function getProjectsByInvoiceNumber(invoiceNumber: string): Promise<ProjectRow[]> {
+  const trimmed = invoiceNumber.trim();
+  if (!trimmed) return [];
+  const rows = await query<ProjectRow>(
+    `SELECT ${projectCols} FROM projects
+     WHERE TRIM(COALESCE(invoice_number, '')) = $1 AND archived_at IS NULL
+     ORDER BY project_code ASC`,
+    [trimmed],
+  );
+  return rows as ProjectRow[];
+}
+
+const SEARCH_LIMIT = 8;
+
+export type GlobalSearchResult = {
+  projects: { id: number; projectCode: string; clientName: string; invoiceNumber: string | null }[];
+  fielders: string[];
+  invoices: string[];
+};
+
+export async function searchGlobal(q: string): Promise<GlobalSearchResult> {
+  const trimmed = q.trim();
+  if (!trimmed) {
+    return { projects: [], fielders: [], invoices: [] };
+  }
+  const pattern = `%${trimmed.replace(/%/g, "\\%").replace(/_/g, "\\_")}%`;
+
+  const [projectRows, fielderRows, invoiceRows] = await Promise.all([
+    query<{ id: number; projectCode: string; clientName: string; invoiceNumber: string | null }>(
+      `SELECT id, project_code AS "projectCode", client_name AS "clientName", invoice_number AS "invoiceNumber"
+       FROM projects
+       WHERE archived_at IS NULL
+         AND (project_code ILIKE $1 OR client_name ILIKE $1 OR COALESCE(invoice_number, '') ILIKE $1)
+       ORDER BY project_code ASC
+       LIMIT ${SEARCH_LIMIT}`,
+      [pattern],
+    ),
+    query<{ fielderName: string }>(
+      `SELECT DISTINCT fielder_name AS "fielderName"
+       FROM assignments
+       WHERE archived_at IS NULL AND fielder_name ILIKE $1
+       ORDER BY fielder_name ASC
+       LIMIT ${SEARCH_LIMIT}`,
+      [pattern],
+    ),
+    query<{ invoiceNumber: string }>(
+      `SELECT DISTINCT invoice_number AS "invoiceNumber"
+       FROM projects
+       WHERE archived_at IS NULL AND invoice_number IS NOT NULL AND TRIM(invoice_number) <> '' AND invoice_number ILIKE $1
+       ORDER BY invoice_number ASC
+       LIMIT ${SEARCH_LIMIT}`,
+      [pattern],
+    ),
+  ]);
+
+  return {
+    projects: projectRows as { id: number; projectCode: string; clientName: string; invoiceNumber: string | null }[],
+    fielders: (fielderRows as { fielderName: string }[]).map((r) => r.fielderName),
+    invoices: (invoiceRows as { invoiceNumber: string }[]).map((r) => r.invoiceNumber),
+  };
+}
+
 export async function insertProject(input: {
   projectCode: string;
   clientName: string;
@@ -909,6 +971,87 @@ export async function getAllActivity(limit?: number): Promise<ActivityRow[]> {
   return rows as ActivityRow[];
 }
 
+export type AuditLogRow = {
+  id: number;
+  actorType: string;
+  actorName: string;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  details: Record<string, unknown> | null;
+  createdAt: string;
+};
+
+export type GetAuditEntriesFilters = {
+  actorName?: string;
+  action?: string;
+  entityType?: string;
+  fromDate?: string; // ISO date
+  toDate?: string;   // ISO date
+  limit?: number;
+};
+
+export async function insertAuditLog(input: {
+  actorType: "admin" | "fielder";
+  actorName: string;
+  action: string;
+  entityType: string;
+  entityId?: string | null;
+  details?: Record<string, unknown> | null;
+}): Promise<void> {
+  await query(
+    `INSERT INTO audit_log (actor_type, actor_name, action, entity_type, entity_id, details)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [
+      input.actorType,
+      input.actorName,
+      input.action,
+      input.entityType,
+      input.entityId ?? null,
+      input.details ? JSON.stringify(input.details) : null,
+    ],
+  );
+}
+
+export async function getAuditEntries(filters: GetAuditEntriesFilters = {}): Promise<AuditLogRow[]> {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  let idx = 1;
+  if (filters.actorName) {
+    conditions.push(`actor_name ILIKE $${idx}`);
+    params.push(`%${filters.actorName}%`);
+    idx++;
+  }
+  if (filters.action) {
+    conditions.push(`action = $${idx}`);
+    params.push(filters.action);
+    idx++;
+  }
+  if (filters.entityType) {
+    conditions.push(`entity_type = $${idx}`);
+    params.push(filters.entityType);
+    idx++;
+  }
+  if (filters.fromDate) {
+    conditions.push(`created_at >= $${idx}::timestamptz`);
+    params.push(filters.fromDate);
+    idx++;
+  }
+  if (filters.toDate) {
+    conditions.push(`created_at <= $${idx}::timestamptz`);
+    params.push(filters.toDate + "T23:59:59.999Z");
+    idx++;
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  const limit = filters.limit ?? 500;
+  params.push(limit);
+  const sql = `SELECT id, actor_type AS "actorType", actor_name AS "actorName", action, entity_type AS "entityType",
+    entity_id AS "entityId", details, created_at::text AS "createdAt"
+    FROM audit_log ${where} ORDER BY created_at DESC LIMIT $${idx}`;
+  const rows = await query<AuditLogRow>(sql, params);
+  return rows as AuditLogRow[];
+}
+
 /** Shape of a backup JSON file (version 1) from GET /api/backup */
 export type BackupPayload = {
   version: number;
@@ -1035,6 +1178,7 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
   await pool.query("DELETE FROM payments");
   await pool.query("DELETE FROM additional_work");
   await pool.query("DELETE FROM assignments");
+  await pool.query("DELETE FROM audit_log");
   await pool.query("DELETE FROM activity_log");
   await pool.query("DELETE FROM projects");
   await pool.query("DELETE FROM fielder_logins");
@@ -1158,6 +1302,7 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
     "SELECT setval(pg_get_serial_sequence('payments', 'id'), COALESCE((SELECT MAX(id) FROM payments), 1))",
     "SELECT setval(pg_get_serial_sequence('additional_work', 'id'), COALESCE((SELECT MAX(id) FROM additional_work), 1))",
     "SELECT setval(pg_get_serial_sequence('activity_log', 'id'), COALESCE((SELECT MAX(id) FROM activity_log), 1))",
+    "SELECT setval(pg_get_serial_sequence('audit_log', 'id'), COALESCE((SELECT MAX(id) FROM audit_log), 1))",
     "SELECT setval(pg_get_serial_sequence('fielder_logins', 'id'), COALESCE((SELECT MAX(id) FROM fielder_logins), 1))",
   ];
   for (const sql of seqQueries) {
@@ -1175,6 +1320,7 @@ export async function resetSequences(): Promise<void> {
     "SELECT setval(pg_get_serial_sequence('payments', 'id'), COALESCE((SELECT MAX(id) FROM payments), 1))",
     "SELECT setval(pg_get_serial_sequence('additional_work', 'id'), COALESCE((SELECT MAX(id) FROM additional_work), 1))",
     "SELECT setval(pg_get_serial_sequence('activity_log', 'id'), COALESCE((SELECT MAX(id) FROM activity_log), 1))",
+    "SELECT setval(pg_get_serial_sequence('audit_log', 'id'), COALESCE((SELECT MAX(id) FROM audit_log), 1))",
     "SELECT setval(pg_get_serial_sequence('fielder_logins', 'id'), COALESCE((SELECT MAX(id) FROM fielder_logins), 1))",
   ];
   for (const sql of seqQueries) {

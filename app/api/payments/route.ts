@@ -3,11 +3,17 @@ import {
   getAssignmentById,
   insertPayment,
   insertActivity,
+  insertAuditLog,
 } from "@/lib/db";
+import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate, paymentPostSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  const actor = getAuditActor(session);
+
   const formData = await request.formData();
 
   const projectId = Number(formData.get("projectId"));
@@ -60,6 +66,13 @@ export async function POST(request: Request) {
     type: "payment_logged",
     description: `Logged payment of ${parsed.data.currency} ${amountFormatted} to ${assignment.fielderName}`,
     metadata: { paymentId, projectId: parsed.data.projectId, fielderAssignmentId: parsed.data.fielderAssignmentId },
+  });
+  await insertAuditLog({
+    ...actor,
+    action: "payment.create",
+    entityType: "payment",
+    entityId: String(paymentId),
+    details: { amount: parsed.data.amount, currency: parsed.data.currency, fielderName: assignment.fielderName },
   });
 
   const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/payments");
