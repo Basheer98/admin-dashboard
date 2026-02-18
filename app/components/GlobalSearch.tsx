@@ -90,7 +90,7 @@ export function GlobalSearch() {
         placeholder="Search projects, fielders, invoices…"
         className="input w-full py-2 text-sm"
         autoComplete="off"
-        aria-expanded={showDropdown}
+        aria-expanded={!!showDropdown}
         aria-controls="global-search-results"
         aria-autocomplete="list"
       />
