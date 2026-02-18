@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getAuditEntries } from "@/lib/db";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { PrintButton } from "@/app/components/PrintButton";
@@ -54,11 +55,33 @@ export default async function AuditPage({
     limit: 500,
   });
 
+  const exportParams = new URLSearchParams();
+  if (actorName) exportParams.set("actor", actorName);
+  if (action) exportParams.set("action", action);
+  if (entityType) exportParams.set("entityType", entityType);
+  if (fromDate) exportParams.set("from", fromDate);
+  if (toDate) exportParams.set("to", toDate);
+  const exportHref = `/api/export/audit?${exportParams.toString()}`;
+
   return (
     <SidebarLayout
       title="Audit trail"
       current="audit"
-      headerAction={<PrintButton />}
+      headerAction={
+        <div className="flex items-center gap-2 no-print">
+          <Link
+            href={exportHref}
+            className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm"
+            download
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Export CSV
+          </Link>
+          <PrintButton />
+        </div>
+      }
     >
       <div className="flex flex-1 flex-col gap-6 print-content">
         <p className="text-sm text-slate-600 no-print">
