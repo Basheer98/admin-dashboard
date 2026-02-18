@@ -163,9 +163,9 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
 
   return (
     <SidebarLayout title="Projects" current="projects" headerAction={<PrintButton />}>
-      <div className="flex flex-1 flex-col gap-8">
+      <div className="flex flex-1 flex-col gap-8 print-content">
         {success && (
-          <div className="rounded-2xl border border-indigo-200/80 bg-white px-5 py-4 text-sm font-semibold text-indigo-900 shadow-lg">
+          <div className="no-print rounded-2xl border border-indigo-200/80 bg-white px-5 py-4 text-sm font-semibold text-indigo-900 shadow-lg">
             Project saved.{" "}
             <Link href="/assignments" className="font-medium underline hover:no-underline">
               Assign fielders
@@ -178,31 +178,31 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
           </div>
         )}
         {errorInvalid && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="no-print rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             Please check the form: all required fields must be valid (e.g. project ID, client, total SQFT, rate).
           </div>
         )}
         {errorServer && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="no-print rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             Something went wrong while saving the project. Please try again. If it keeps failing, check the deployment logs.
           </div>
         )}
         {successBulkInvoice && (
-          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          <div className="no-print rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             Invoice updated for {bulkInvoiceCount} project{bulkInvoiceCount !== "1" ? "s" : ""}.
           </div>
         )}
         {errorBulkInvoice && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="no-print rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Select at least one project to set invoice.
           </div>
         )}
         {unarchived && (
-          <div className="rounded-2xl border border-indigo-200/80 bg-white px-5 py-4 text-sm font-semibold text-indigo-900 shadow-lg">
+          <div className="no-print rounded-2xl border border-indigo-200/80 bg-white px-5 py-4 text-sm font-semibold text-indigo-900 shadow-lg">
             Project unarchived.
           </div>
         )}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="no-print flex flex-wrap items-center gap-3">
           {showArchived ? (
             <Link
               href="/projects"
@@ -219,7 +219,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
             </Link>
           )}
         </div>
-        <section className="card p-6">
+        <section className="card p-6 no-print">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
             Filter projects
           </h2>
@@ -296,7 +296,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
           </form>
         </section>
         {!showArchived && (
-          <section className="card p-6">
+          <section className="card p-6 no-print">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
               Add project
             </h2>
@@ -317,7 +317,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
           />
         )}
         <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="no-print flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold tracking-tight text-slate-900">
               {showArchived ? "Archived projects" : "Project list"}
             </h2>
@@ -331,7 +331,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
               </a>
             </div>
           </div>
-          <form id="bulk-invoice-form" method="POST" action="/api/projects/bulk-invoice" className="mb-3 flex flex-wrap items-center gap-2">
+          <form id="bulk-invoice-form" method="POST" action="/api/projects/bulk-invoice" className="no-print mb-3 flex flex-wrap items-center gap-2">
             <label className="text-sm font-medium text-slate-700">Set invoice for selected:</label>
             <input
               type="text"
