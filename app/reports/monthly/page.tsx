@@ -37,8 +37,10 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
     year: "numeric",
   });
 
+  // Use ECD month when available, otherwise fall back to createdAt.
   const projectsInMonth = allProjects.filter((p) => {
-    const d = p.createdAt.slice(0, 10);
+    const baseDate = p.ecd && p.ecd !== "" ? p.ecd : p.createdAt;
+    const d = baseDate.slice(0, 10);
     return d >= start && d <= end;
   });
   const paymentsInMonth = allPayments.filter((p) => {
@@ -89,7 +91,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
             Monthly summary — {monthLabel}
           </h1>
           <p className="mt-1 text-sm text-slate-500 no-print">
-            Revenue from projects created this month; payouts from payments recorded this month.
+            Revenue from projects whose ECD falls in this month (or created this month if no ECD); payouts from payments recorded this month.
           </p>
 
           <section className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -123,7 +125,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
 
           <section className="mt-8">
             <h2 className="text-base font-semibold text-slate-900">
-              Projects created in {monthLabel}
+              Projects for {monthLabel}
             </h2>
             <div className="mt-2 overflow-x-auto">
               <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
