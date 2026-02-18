@@ -16,6 +16,9 @@ function getHint(message: string): string | null {
   return null;
 }
 
+const isProductionOmittedMessage =
+  (m: string) => m.includes("omitted in production") && m.includes("Server Components");
+
 export default function Error({
   error,
   reset,
@@ -24,7 +27,9 @@ export default function Error({
   reset: () => void;
 }) {
   const [showDetails, setShowDetails] = useState(false);
-  const hint = getHint(error?.message ?? "");
+  const message = error?.message ?? "";
+  const hint = getHint(message);
+  const showProductionHints = isProductionOmittedMessage(message);
 
   useEffect(() => {
     console.error(error);
@@ -45,6 +50,19 @@ export default function Error({
             {hint}
           </p>
         )}
+        {showProductionHints && !hint && (
+          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm text-slate-700">
+            <p className="font-medium">Common causes:</p>
+            <ul className="mt-1.5 list-inside list-disc space-y-0.5 text-slate-600">
+              <li><strong>DATABASE_URL</strong> not set in Railway Variables (add a Postgres service and link it)</li>
+              <li>Database not ready yet (wait a minute after linking and redeploy)</li>
+              <li>Wrong or expired database URL (re-link the Postgres service)</li>
+            </ul>
+            <p className="mt-2 text-xs text-slate-500">
+              Check Railway dashboard → your service → Variables and deploy logs.
+            </p>
+          </div>
+        )}
         <div className="mt-4">
           <button
             type="button"
@@ -53,9 +71,10 @@ export default function Error({
           >
             {showDetails ? "Hide" : "Show"} error details
           </button>
-          {showDetails && error?.message && (
+          {showDetails && message && (
             <pre className="mt-2 max-h-32 overflow-auto rounded border border-slate-200 bg-slate-50 p-2 text-left text-xs text-slate-700">
-              {error.message}
+              {message}
+              {error?.digest && `\n(digest: ${error.digest})`}
             </pre>
           )}
         </div>
