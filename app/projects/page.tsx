@@ -7,6 +7,7 @@ import { FilterChips } from "@/app/components/FilterChips";
 import { SortLink } from "@/app/components/SortLink";
 import Link from "next/link";
 import { AddProjectForm } from "./components/AddProjectForm";
+import { PrintButton } from "@/app/components/PrintButton";
 
 type PageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -161,7 +162,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const sortPreserveParams = { ...projectPreserveParams, pageSize: String(pageSize) };
 
   return (
-    <SidebarLayout title="Projects" current="projects">
+    <SidebarLayout title="Projects" current="projects" headerAction={<PrintButton />}>
       <div className="flex flex-1 flex-col gap-8">
         {success && (
           <div className="rounded-2xl border border-indigo-200/80 bg-white px-5 py-4 text-sm font-semibold text-indigo-900 shadow-lg">
@@ -321,15 +322,6 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
               {showArchived ? "Archived projects" : "Project list"}
             </h2>
             <div className="flex flex-wrap items-center gap-2">
-              {filterInvoice && (
-                <a
-                  href={`/api/invoices/${encodeURIComponent(filterInvoice)}/pdf`}
-                  download
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  Download invoice PDF
-                </a>
-              )}
               <a
                 href={`/api/export/projects${showArchived ? "?archived=1" : ""}`}
                 download
