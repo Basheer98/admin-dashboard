@@ -117,10 +117,10 @@ export function SidebarLayout({
         <div className="mb-8 flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
             <h1 className="font-display text-2xl font-bold tracking-tight text-white">
-              Admin
+              UrbanLink Networks
             </h1>
             <p className="mt-0.5 text-[10px] font-semibold text-slate-400 uppercase tracking-[0.25em]">
-              Finances
+              Admin
             </p>
           </div>
           <button
