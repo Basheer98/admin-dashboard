@@ -131,6 +131,9 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.projectCode} – {p.clientName}
+                      {p.invoiceNumber?.trim()
+                        ? ` [${p.invoiceNumber.trim()}]`
+                        : ""}
                     </option>
                   ))}
                 </select>
@@ -151,6 +154,9 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                     <option key={a.id} value={a.id}>
                       {a.fielderName}
                       {a.isInternal ? " (owner)" : ""} – {a.project.projectCode}
+                      {a.project.invoiceNumber?.trim()
+                        ? ` [${a.project.invoiceNumber.trim()}]`
+                        : ""}
                     </option>
                   ))}
                 </select>
