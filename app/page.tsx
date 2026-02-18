@@ -385,7 +385,9 @@ export default async function Home({ searchParams }: PageProps) {
 
   projects.forEach((p) => {
     const revenue = p.totalSqft * Number(p.companyRatePerSqft);
-    addMonthRevenue(p.createdAt, revenue);
+    // Use ECD month when available, otherwise fall back to createdAt.
+    const baseDate = p.ecd && p.ecd !== "" ? p.ecd : p.createdAt;
+    addMonthRevenue(baseDate, revenue);
   });
 
   payments.forEach((pay) => {
