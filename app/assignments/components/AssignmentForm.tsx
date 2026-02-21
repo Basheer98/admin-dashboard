@@ -10,6 +10,7 @@ type AssignmentFormProps = {
 
 export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [fielderName, setFielderName] = useState<string>("");
   const [hasManager, setHasManager] = useState(false);
   const [isInternal, setIsInternal] = useState(false);
 
@@ -44,6 +45,8 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
         <input
           name="fielderName"
           required
+          value={fielderName}
+          onChange={(e) => setFielderName(e.target.value)}
           placeholder="e.g. Naveen"
           className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
         />
@@ -96,7 +99,10 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
             onChange={(e) => {
               const next = e.target.checked;
               setIsInternal(next);
-              if (next) setHasManager(false);
+              if (next) {
+                setHasManager(false);
+                setFielderName("Basheer");
+              }
             }}
             className="rounded border-slate-300"
           />

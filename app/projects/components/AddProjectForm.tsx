@@ -207,6 +207,7 @@ function FielderRow({
   uniqueFielderNames: string[];
 }) {
   const prefix = `assignedFielder_${index}_`;
+  const [fielderName, setFielderName] = useState("");
   const [hasManager, setHasManager] = useState(false);
   const [isInternal, setIsInternal] = useState(false);
 
@@ -227,6 +228,8 @@ function FielderRow({
         <input
           name={`${prefix}name`}
           list={`fielderNames-${index}`}
+          value={fielderName}
+          onChange={(e) => setFielderName(e.target.value)}
           placeholder="e.g. Nivas"
           className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
         />
@@ -268,8 +271,12 @@ function FielderRow({
             name={`${prefix}isInternal`}
             checked={isInternal}
             onChange={(e) => {
-              setIsInternal(e.target.checked);
-              if (e.target.checked) setHasManager(false);
+              const checked = e.target.checked;
+              setIsInternal(checked);
+              if (checked) {
+                setHasManager(false);
+                setFielderName("Basheer");
+              }
             }}
             className="rounded border-slate-300"
           />
