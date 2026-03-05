@@ -95,8 +95,14 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
       totalSqft: 0,
     };
     existing.totalOwed += managerNetCommission;
-    existing.pending += managerNetCommission;
     byFielder.set(managerName, existing);
+  }
+
+  // Align pending with detailed fielder statement:
+  // pending = max(total owed (assignments + manager commissions) - total paid, 0)
+  for (const [key, data] of byFielder) {
+    const pending = Math.max(data.totalOwed - data.totalPaid, 0);
+    byFielder.set(key, { ...data, pending });
   }
 
   let fielders = Array.from(byFielder.entries())
