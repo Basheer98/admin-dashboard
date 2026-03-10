@@ -219,8 +219,9 @@ a[href]:focus-visible {
     background: #fff !important;
     color: #000 !important;
   }
-  .print-content {
-    color: #000;
+  .print-content,
+  .print-content * {
+    color: #000 !important;
   }
   .print-content .card.overflow-x-auto,
   .print-content div.overflow-x-auto {
