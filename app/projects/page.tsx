@@ -350,41 +350,41 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                   <th className="px-3 py-2 w-10" title="Select for bulk set invoice">
                     <span className="sr-only">Select</span>
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2">
                     <SortLink label="Project" sortKey="projectCode" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2">
                     <SortLink label="Client" sortKey="clientName" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">Invoice</th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2">Invoice</th>
+                  <th className="whitespace-nowrap px-3 py-2">
                     <SortLink label="QField" sortKey="qfield" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2">
                     <SortLink label="Location" sortKey="location" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2 text-right">
                     <SortLink label="Total SQFT" sortKey="totalSqft" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2 text-right">
                     <SortLink label="Rate / SQFT" sortKey="companyRatePerSqft" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2 text-right">
                     <SortLink label="Revenue" sortKey="revenue" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2 text-right">
                     <SortLink label="Profit" sortKey="profit" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2 text-right">
                     <SortLink label="Margin %" sortKey="marginPct" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2">
                     <SortLink label="Status" sortKey="status" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2">
+                  <th className="whitespace-nowrap px-3 py-2">
                     <SortLink label="ECD" sortKey="ecd" currentSort={sortKey} currentOrder={order} basePath="/projects" preserveParams={sortPreserveParams} />
                   </th>
-                  <th className="px-3 py-2"></th>
+                  <th className="whitespace-nowrap px-3 py-2"></th>
                 </tr>
               </thead>
               <tbody>
@@ -419,17 +419,17 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                       <td className="px-3 py-2">{p.invoiceNumber?.trim() ?? "—"}</td>
                       <td className="px-3 py-2">{p.qfield ?? "—"}</td>
                       <td className="px-3 py-2">{p.location}</td>
-                      <td className="px-3 py-2">{p.totalSqft}</td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-2 text-right tabular-nums">{p.totalSqft}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">
                         {formatRate(Number(p.companyRatePerSqft))}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-2 text-right tabular-nums">
                         {formatCurrency(revenue)}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-2 text-right tabular-nums">
                         {formatCurrency(profit)}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-2 text-right tabular-nums">
                         {revenue > 0 ? `${marginPct.toFixed(1)}%` : "—"}
                       </td>
                       <td className="px-3 py-2">
