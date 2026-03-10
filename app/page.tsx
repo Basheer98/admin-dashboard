@@ -811,7 +811,10 @@ export default async function Home({ searchParams }: PageProps) {
                         {status === "overdue" ? "Overdue" : "Due soon"}
                       </span>
                       <span className="text-zinc-300">
-                        {p.projectCode} – {p.clientName}
+                        <Link href={`/projects/${p.id}`} className="font-medium text-emerald-400 hover:underline">
+                          {p.projectCode}
+                        </Link>
+                        {" – "}{p.clientName}
                         {p.ecd && (
                           <span className="text-zinc-500">
                             {" "}
@@ -854,7 +857,10 @@ export default async function Home({ searchParams }: PageProps) {
                         {status === "overdue" ? "Overdue" : "Due soon"}
                       </span>
                       <span className="text-zinc-300">
-                        {a.fielderName} – {a.project.projectCode}
+                        {a.fielderName}{" – "}
+                        <Link href={`/projects/${a.projectId}`} className="font-medium text-emerald-400 hover:underline">
+                          {a.project.projectCode}
+                        </Link>
                         {a.dueDate && (
                           <span className="text-zinc-500">
                             {" "}
@@ -901,7 +907,14 @@ export default async function Home({ searchParams }: PageProps) {
               <tbody>
                 {projectRows.map((row) => (
                   <tr key={row.projectCode} className="border-t text-zinc-200">
-                    <td className="px-3 py-2">{row.projectCode}</td>
+                    <td className="px-3 py-2">
+                      <Link
+                        href={`/projects/${row.projectId}`}
+                        className="font-medium text-emerald-400 hover:underline"
+                      >
+                        {row.projectCode}
+                      </Link>
+                    </td>
                     <td className="px-3 py-2">{row.clientName}</td>
                     <td className="px-3 py-2">{row.invoiceNumber?.trim() ?? "—"}</td>
                     <td className="px-3 py-2">{row.qfield ?? "—"}</td>

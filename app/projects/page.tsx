@@ -407,7 +407,14 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                           aria-label={`Select ${p.projectCode}`}
                         />
                       </td>
-                      <td className="px-3 py-2">{p.projectCode}</td>
+                      <td className="px-3 py-2">
+                        <Link
+                          href={`/projects/${p.id}`}
+                          className="font-medium text-emerald-400 hover:underline"
+                        >
+                          {p.projectCode}
+                        </Link>
+                      </td>
                       <td className="px-3 py-2">{p.clientName}</td>
                       <td className="px-3 py-2">{p.invoiceNumber?.trim() ?? "—"}</td>
                       <td className="px-3 py-2">{p.qfield ?? "—"}</td>

@@ -53,29 +53,34 @@ export async function POST(request: Request, { params }: Params) {
     return NextResponse.redirect(getRedirectUrl(request, `/assignments/${id}`, { error: "invalid" }));
   }
 
-  await updateAssignment(id, {
-    ratePerSqft: parsed.data.ratePerSqft,
-    commissionPercentage: parsed.data.commissionPercentage,
-    isInternal: parsed.data.isInternal,
-    managedByFielderId: parsed.data.managedByFielderId,
-    managerRatePerSqft: parsed.data.managerRatePerSqft,
-    managerCommissionShare: parsed.data.managerCommissionShare,
-    dueDate: parsed.data.dueDate,
-  });
+  try {
+    await updateAssignment(id, {
+      ratePerSqft: parsed.data.ratePerSqft,
+      commissionPercentage: parsed.data.commissionPercentage,
+      isInternal: parsed.data.isInternal,
+      managedByFielderId: parsed.data.managedByFielderId,
+      managerRatePerSqft: parsed.data.managerRatePerSqft,
+      managerCommissionShare: parsed.data.managerCommissionShare,
+      dueDate: parsed.data.dueDate,
+    });
 
-  await insertAuditLog({
-    ...actor,
-    action: "assignment.update",
-    entityType: "assignment",
-    entityId: String(id),
-  });
+    await insertAuditLog({
+      ...actor,
+      action: "assignment.update",
+      entityType: "assignment",
+      entityId: String(id),
+    });
 
-  const assignment = await getAssignmentById(id);
-  const projectId = assignment?.projectId ?? id;
-  return NextResponse.redirect(getRedirectUrl(request, "/assignments", {
-    saved: "1",
-    assignmentId: String(id),
-    projectId: String(projectId),
-  }));
+    const assignment = await getAssignmentById(id);
+    const projectId = assignment?.projectId ?? id;
+    return NextResponse.redirect(getRedirectUrl(request, "/assignments", {
+      saved: "1",
+      assignmentId: String(id),
+      projectId: String(projectId),
+    }));
+  } catch (e) {
+    console.error("Assignment update failed:", e);
+    return NextResponse.redirect(getRedirectUrl(request, `/assignments/${id}`, { error: "server" }));
+  }
 }
 

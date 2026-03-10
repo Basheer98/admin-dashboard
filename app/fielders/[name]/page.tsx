@@ -274,7 +274,12 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
                 {rows.map(({ assignment: a, sqft, totalRequired, paid, pending: rowPending, dueStatus }) => (
                   <tr key={a.id} className="border-t text-zinc-200">
                     <td className="px-3 py-2">
-                      {a.project.projectCode}
+                      <Link
+                        href={`/projects/${a.projectId}`}
+                        className="font-medium text-emerald-400 hover:underline"
+                      >
+                        {a.project.projectCode}
+                      </Link>
                       {a.archivedAt && (
                         <span className="ml-2 text-xs text-zinc-500">
                           (archived)

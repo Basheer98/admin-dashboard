@@ -42,33 +42,38 @@ export async function POST(request: Request) {
     return NextResponse.redirect(getRedirectUrl(request, "/assignments", { error: "invalid" }));
   }
 
-  const { projectId, ratePerSqft, commissionPercentage, managedByFielderId, managerRatePerSqft, managerCommissionShare } = parsed.data;
+  try {
+    const { projectId, ratePerSqft, commissionPercentage, managedByFielderId, managerRatePerSqft, managerCommissionShare } = parsed.data;
 
-  const newId = await insertAssignment({
-    projectId,
-    fielderName: parsed.data.fielderName,
-    ratePerSqft,
-    commissionPercentage,
-    isInternal: parsed.data.isInternal,
-    managedByFielderId,
-    managerRatePerSqft,
-    managerCommissionShare,
-    dueDate: parsed.data.dueDate,
-  });
+    const newId = await insertAssignment({
+      projectId,
+      fielderName: parsed.data.fielderName,
+      ratePerSqft,
+      commissionPercentage,
+      isInternal: parsed.data.isInternal,
+      managedByFielderId,
+      managerRatePerSqft,
+      managerCommissionShare,
+      dueDate: parsed.data.dueDate,
+    });
 
-  await insertAuditLog({
-    ...actor,
-    action: "assignment.create",
-    entityType: "assignment",
-    entityId: String(newId),
-    details: { projectId, fielderName: parsed.data.fielderName },
-  });
+    await insertAuditLog({
+      ...actor,
+      action: "assignment.create",
+      entityType: "assignment",
+      entityId: String(newId),
+      details: { projectId, fielderName: parsed.data.fielderName },
+    });
 
-  const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/assignments");
-  return NextResponse.redirect(getRedirectUrl(request, path, {
-    success: "1",
-    assignmentId: String(newId),
-    projectId: String(projectId),
-  }));
+    const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/assignments");
+    return NextResponse.redirect(getRedirectUrl(request, path, {
+      success: "1",
+      assignmentId: String(newId),
+      projectId: String(projectId),
+    }));
+  } catch (e) {
+    console.error("Assignment create failed:", e);
+    return NextResponse.redirect(getRedirectUrl(request, "/assignments", { error: "server" }));
+  }
 }
 

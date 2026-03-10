@@ -233,7 +233,12 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                         )}
                       </td>
                       <td className="px-3 py-2">
-                        {a.project.projectCode}
+                        <Link
+                          href={`/projects/${a.projectId}`}
+                          className="font-medium text-emerald-400 hover:underline"
+                        >
+                          {a.project.projectCode}
+                        </Link>
                       </td>
                       <td className="px-3 py-2">{a.project.invoiceNumber?.trim() ?? "—"}</td>
                       <td className="px-3 py-2">

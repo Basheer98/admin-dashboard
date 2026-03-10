@@ -2,9 +2,21 @@ import { getAllProjects, getAllPayments, getPaymentsWithDetails, getSettings } f
 import { formatCurrency, formatWithInr } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { PrintButton } from "@/app/components/PrintButton";
+import Link from "next/link";
 
 function monthStartEnd(monthKey: string): { start: string; end: string } {
-  const [y, m] = monthKey.split("-").map(Number);
+  const parts = monthKey.split("-").map(Number);
+  const y = parts[0];
+  const m = parts[1];
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
+    const now = new Date();
+    const fallbackY = now.getFullYear();
+    const fallbackM = now.getMonth() + 1;
+    const start = `${fallbackY}-${String(fallbackM).padStart(2, "0")}-01`;
+    const lastDay = new Date(fallbackY, fallbackM, 0).getDate();
+    const end = `${fallbackY}-${String(fallbackM).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    return { start, end };
+  }
   const start = `${y}-${String(m).padStart(2, "0")}-01`;
   const lastDay = new Date(y, m, 0).getDate();
   const end = `${y}-${String(m).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
@@ -142,7 +154,14 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                     const rev = p.totalSqft * Number(p.companyRatePerSqft);
                     return (
                       <tr key={p.id} className="border-t text-zinc-200">
-                        <td className="px-3 py-2">{p.projectCode}</td>
+                        <td className="px-3 py-2">
+                          <Link
+                            href={`/projects/${p.id}`}
+                            className="font-medium text-emerald-400 hover:underline"
+                          >
+                            {p.projectCode}
+                          </Link>
+                        </td>
                         <td className="px-3 py-2">{p.clientName}</td>
                         <td className="px-3 py-2">{p.invoiceNumber?.trim() ?? "—"}</td>
                         <td className="px-3 py-2">{formatCurrency(rev)}</td>
@@ -183,7 +202,14 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                       <td className="px-3 py-2">
                         {new Date(p.paymentDate).toLocaleDateString()}
                       </td>
-                      <td className="px-3 py-2">{p.project.projectCode}</td>
+                      <td className="px-3 py-2">
+                        <Link
+                          href={`/projects/${p.project.id}`}
+                          className="font-medium text-emerald-400 hover:underline"
+                        >
+                          {p.project.projectCode}
+                        </Link>
+                      </td>
                       <td className="px-3 py-2">{p.project.invoiceNumber?.trim() ?? "—"}</td>
                       <td className="px-3 py-2">{p.assignment.fielderName}</td>
                       <td className="px-3 py-2">{formatCurrency(Number(p.amount))}</td>

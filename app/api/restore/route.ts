@@ -25,7 +25,9 @@ function isValidBackupShape(obj: unknown): obj is BackupPayload {
 
 export async function POST(request: Request) {
   const session = await getSessionFromRequest(request);
-  if (!session) return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  if (!session || session.role !== "admin") {
+    return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  }
   const actor = getAuditActor(session);
 
   const formData = await request.formData();

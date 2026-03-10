@@ -8,11 +8,17 @@ import {
   getAllActivity,
   getAllFielderLogins,
 } from "@/lib/db";
+import { getSessionFromRequest } from "@/lib/auth";
+import { getRedirectUrl } from "@/lib/redirectUrl";
 
 const LAST_BACKUP_COOKIE = "last_backup_at";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
-export async function GET() {
+export async function GET(request: Request) {
+  const session = await getSessionFromRequest(request);
+  if (!session || session.role !== "admin") {
+    return NextResponse.redirect(getRedirectUrl(request, "/login"));
+  }
   const [settings, projects, assignments, payments, additionalWork, activityLog, fielderLogins] =
     await Promise.all([
       getSettings(),

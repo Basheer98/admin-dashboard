@@ -947,8 +947,8 @@ export async function updateSettings(input: { usdToInrRate?: number | null }): P
   const current = await getSettings();
   const value = input.usdToInrRate !== undefined ? input.usdToInrRate : current.usdToInrRate;
   await query(
-    "UPDATE settings SET usd_to_inr_rate = $2 WHERE id = 1",
-    [1, value],
+    "UPDATE settings SET usd_to_inr_rate = $1 WHERE id = 1",
+    [value],
   );
 }
 
@@ -1170,24 +1170,28 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
   };
 }
 
-/** Restore database from a backup payload. Deletes existing data and inserts backup data. */
+/** Restore database from a backup payload. Deletes existing data and inserts backup data. Uses a transaction for atomicity. */
 export async function restoreBackup(backup: BackupPayload): Promise<void> {
   await runSchema();
   const pool = getPool();
+  const client = await pool.connect();
 
-  await pool.query("DELETE FROM payments");
-  await pool.query("DELETE FROM additional_work");
-  await pool.query("DELETE FROM assignments");
-  await pool.query("DELETE FROM audit_log");
-  await pool.query("DELETE FROM activity_log");
-  await pool.query("DELETE FROM projects");
-  await pool.query("DELETE FROM fielder_logins");
+  try {
+    await client.query("BEGIN");
 
-  const ts = (v: string | null | undefined): string | null => (v != null && v !== "" ? v : null);
-  const now = new Date().toISOString();
+    await client.query("DELETE FROM payments");
+    await client.query("DELETE FROM additional_work");
+    await client.query("DELETE FROM assignments");
+    await client.query("DELETE FROM audit_log");
+    await client.query("DELETE FROM activity_log");
+    await client.query("DELETE FROM projects");
+    await client.query("DELETE FROM fielder_logins");
 
-  for (const p of backup.projects) {
-    await pool.query(
+    const ts = (v: string | null | undefined): string | null => (v != null && v !== "" ? v : null);
+    const now = new Date().toISOString();
+
+    for (const p of backup.projects) {
+      await client.query(
       `INSERT INTO projects (id, project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, qfield, invoice_number, created_at, updated_at, archived_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::timestamptz, $13::timestamptz, $14::timestamptz)`,
       [
@@ -1208,8 +1212,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
       ],
     );
   }
-  for (const a of backup.assignments) {
-    await pool.query(
+    for (const a of backup.assignments) {
+      await client.query(
       `INSERT INTO assignments (id, project_id, fielder_name, rate_per_sqft, commission_percentage, is_internal, managed_by_fielder_id, manager_rate_per_sqft, manager_commission_share, due_date, archived_at, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::timestamptz, $12::timestamptz)`,
       [
@@ -1228,8 +1232,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
       ],
     );
   }
-  for (const p of backup.payments) {
-    await pool.query(
+    for (const p of backup.payments) {
+      await client.query(
       `INSERT INTO payments (id, project_id, fielder_assignment_id, amount, currency, method, payment_date, notes, created_at, voided_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::timestamptz, $10::timestamptz)`,
       [
@@ -1246,8 +1250,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
       ],
     );
   }
-  for (const w of backup.additionalWork) {
-    await pool.query(
+    for (const w of backup.additionalWork) {
+      await client.query(
       `INSERT INTO additional_work (id, type, project_number, our_project_id, assigned_fielder_assignment_id, distance, rate_for_entire_job, amount, due_date, completed_at, status, notes, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::timestamptz, $14::timestamptz)`,
       [
@@ -1268,8 +1272,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
       ],
     );
   }
-  for (const a of backup.activityLog) {
-    await pool.query(
+    for (const a of backup.activityLog) {
+      await client.query(
       `INSERT INTO activity_log (id, type, description, created_at, metadata)
        VALUES ($1, $2, $3, $4::timestamptz, $5::jsonb)`,
       [
@@ -1282,31 +1286,38 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
     );
   }
 
-  await pool.query("UPDATE settings SET usd_to_inr_rate = $2 WHERE id = 1", [
-    1,
-    backup.settings.usdToInrRate,
-  ]);
+    await client.query("UPDATE settings SET usd_to_inr_rate = $1 WHERE id = 1", [
+      backup.settings.usdToInrRate,
+    ]);
 
-  const logins = backup.fielderLogins ?? [];
-  for (const f of logins) {
-    await pool.query(
+    const logins = backup.fielderLogins ?? [];
+    for (const f of logins) {
+      await client.query(
       `INSERT INTO fielder_logins (id, email, password_hash, fielder_name)
        VALUES ($1, $2, $3, $4)`,
       [f.id, f.email, f.passwordHash, f.fielderName],
     );
   }
 
-  const seqQueries = [
-    "SELECT setval(pg_get_serial_sequence('projects', 'id'), COALESCE((SELECT MAX(id) FROM projects), 1))",
-    "SELECT setval(pg_get_serial_sequence('assignments', 'id'), COALESCE((SELECT MAX(id) FROM assignments), 1))",
-    "SELECT setval(pg_get_serial_sequence('payments', 'id'), COALESCE((SELECT MAX(id) FROM payments), 1))",
-    "SELECT setval(pg_get_serial_sequence('additional_work', 'id'), COALESCE((SELECT MAX(id) FROM additional_work), 1))",
-    "SELECT setval(pg_get_serial_sequence('activity_log', 'id'), COALESCE((SELECT MAX(id) FROM activity_log), 1))",
-    "SELECT setval(pg_get_serial_sequence('audit_log', 'id'), COALESCE((SELECT MAX(id) FROM audit_log), 1))",
-    "SELECT setval(pg_get_serial_sequence('fielder_logins', 'id'), COALESCE((SELECT MAX(id) FROM fielder_logins), 1))",
-  ];
-  for (const sql of seqQueries) {
-    await pool.query(sql);
+    const seqQueries = [
+      "SELECT setval(pg_get_serial_sequence('projects', 'id'), COALESCE((SELECT MAX(id) FROM projects), 1))",
+      "SELECT setval(pg_get_serial_sequence('assignments', 'id'), COALESCE((SELECT MAX(id) FROM assignments), 1))",
+      "SELECT setval(pg_get_serial_sequence('payments', 'id'), COALESCE((SELECT MAX(id) FROM payments), 1))",
+      "SELECT setval(pg_get_serial_sequence('additional_work', 'id'), COALESCE((SELECT MAX(id) FROM additional_work), 1))",
+      "SELECT setval(pg_get_serial_sequence('activity_log', 'id'), COALESCE((SELECT MAX(id) FROM activity_log), 1))",
+      "SELECT setval(pg_get_serial_sequence('audit_log', 'id'), COALESCE((SELECT MAX(id) FROM audit_log), 1))",
+      "SELECT setval(pg_get_serial_sequence('fielder_logins', 'id'), COALESCE((SELECT MAX(id) FROM fielder_logins), 1))",
+    ];
+    for (const sql of seqQueries) {
+      await client.query(sql);
+    }
+
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
   }
 }
 

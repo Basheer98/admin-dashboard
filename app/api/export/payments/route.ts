@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPaymentsWithDetails } from "@/lib/db";
+import { getSessionFromRequest } from "@/lib/auth";
 
 function escapeCsvCell(value: string | number | null | undefined): string {
   if (value == null) return "";
@@ -11,6 +12,10 @@ function escapeCsvCell(value: string | number | null | undefined): string {
 }
 
 export async function GET(request: Request) {
+  const session = await getSessionFromRequest(request);
+  if (!session || session.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { searchParams } = new URL(request.url);
   const voided = searchParams.get("voided") === "1";
   const payments = await getPaymentsWithDetails({ includeVoided: voided });

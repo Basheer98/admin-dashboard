@@ -19,9 +19,20 @@ export async function POST(request: Request) {
 
   if (email === adminEmail && password === adminPassword) {
     const token = await createSession({ role: "admin" });
-    const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : redirectTo.startsWith("/") ? redirectTo : "/";
-    const adminPath = path.startsWith("/fielder") ? "/" : path;
-    const response = NextResponse.redirect(getRedirectUrl(request, adminPath));
+    let path = "/";
+    if (redirectTo.startsWith("/") && !redirectTo.startsWith("//") && !redirectTo.includes("://")) {
+      path = redirectTo.startsWith("/fielder") ? "/" : redirectTo;
+    } else if (redirectTo.startsWith("http")) {
+      try {
+        const parsed = new URL(redirectTo);
+        if (parsed.origin === new URL(request.url).origin) {
+          path = parsed.pathname || "/";
+        }
+      } catch {
+        /* ignore invalid URL */
+      }
+    }
+    const response = NextResponse.redirect(getRedirectUrl(request, path));
     response.cookies.set(sessionCookieName, token, {
       httpOnly: true,
       sameSite: "lax",

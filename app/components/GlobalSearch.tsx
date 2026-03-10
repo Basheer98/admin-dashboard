@@ -121,7 +121,7 @@ export function GlobalSearch() {
                       className="block rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/50"
                       role="option"
                     >
-                      <span className="font-medium">{p.projectCode}</span>
+                      <span className="font-medium text-emerald-400">{p.projectCode}</span>
                       {p.clientName && (
                         <span className="ml-2 text-zinc-500">{p.clientName}</span>
                       )}

@@ -51,7 +51,8 @@ export async function POST(request: Request) {
   const ourProject = await getProjectByCode(parsed.data.projectNumber);
   const ourProjectId = ourProject?.id ?? null;
 
-  const row = await insertAdditionalWork({
+  try {
+    const row = await insertAdditionalWork({
     type: parsed.data.type,
     projectNumber: parsed.data.projectNumber,
     ourProjectId,
@@ -64,13 +65,17 @@ export async function POST(request: Request) {
     status: parsed.data.status,
     notes: parsed.data.notes,
   });
-  await insertAuditLog({
-    ...actor,
-    action: "additional_work.create",
-    entityType: "additional_work",
-    entityId: String(row.id),
-    details: { type: row.type, projectNumber: row.projectNumber },
-  });
+    await insertAuditLog({
+      ...actor,
+      action: "additional_work.create",
+      entityType: "additional_work",
+      entityId: String(row.id),
+      details: { type: row.type, projectNumber: row.projectNumber },
+    });
 
-  return NextResponse.redirect(getRedirectUrl(request, "/additional-work", { success: "1" }));
+    return NextResponse.redirect(getRedirectUrl(request, "/additional-work", { success: "1" }));
+  } catch (e) {
+    console.error("Additional work create failed:", e);
+    return NextResponse.redirect(getRedirectUrl(request, "/additional-work", { error: "server" }));
+  }
 }

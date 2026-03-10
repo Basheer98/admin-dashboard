@@ -6,8 +6,13 @@ export type SessionAdmin = { role: "admin" };
 export type SessionFielder = { role: "fielder"; fielderName: string };
 export type Session = SessionAdmin | SessionFielder;
 
+const DEFAULT_SECRET = "dev-secret-change-in-production";
 const SESSION_SECRET =
-  process.env.SESSION_SECRET || process.env.AUTH_SECRET || "dev-secret-change-in-production";
+  process.env.SESSION_SECRET || process.env.AUTH_SECRET || DEFAULT_SECRET;
+
+if (typeof process !== "undefined" && process.env?.NODE_ENV === "production" && SESSION_SECRET === DEFAULT_SECRET) {
+  throw new Error("SESSION_SECRET or AUTH_SECRET must be set in production. Do not use the default dev secret.");
+}
 
 const BASE64URL_CHARS =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";

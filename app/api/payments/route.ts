@@ -48,34 +48,39 @@ export async function POST(request: Request) {
     return NextResponse.redirect(getRedirectUrl(request, "/payments", { error: "invalid-assignment" }));
   }
 
-  const paymentId = await insertPayment({
-    projectId: parsed.data.projectId,
-    fielderAssignmentId: parsed.data.fielderAssignmentId,
-    amount: parsed.data.amount,
-    currency: parsed.data.currency,
-    method: parsed.data.method,
-    paymentDate: paymentDate.toISOString(),
-    notes: parsed.data.notes,
-  });
+  try {
+    const paymentId = await insertPayment({
+      projectId: parsed.data.projectId,
+      fielderAssignmentId: parsed.data.fielderAssignmentId,
+      amount: parsed.data.amount,
+      currency: parsed.data.currency,
+      method: parsed.data.method,
+      paymentDate: paymentDate.toISOString(),
+      notes: parsed.data.notes,
+    });
 
-  const amountFormatted = parsed.data.amount.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  await insertActivity({
-    type: "payment_logged",
-    description: `Logged payment of ${parsed.data.currency} ${amountFormatted} to ${assignment.fielderName}`,
-    metadata: { paymentId, projectId: parsed.data.projectId, fielderAssignmentId: parsed.data.fielderAssignmentId },
-  });
-  await insertAuditLog({
-    ...actor,
-    action: "payment.create",
-    entityType: "payment",
-    entityId: String(paymentId),
-    details: { amount: parsed.data.amount, currency: parsed.data.currency, fielderName: assignment.fielderName },
-  });
+    const amountFormatted = parsed.data.amount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    await insertActivity({
+      type: "payment_logged",
+      description: `Logged payment of ${parsed.data.currency} ${amountFormatted} to ${assignment.fielderName}`,
+      metadata: { paymentId, projectId: parsed.data.projectId, fielderAssignmentId: parsed.data.fielderAssignmentId },
+    });
+    await insertAuditLog({
+      ...actor,
+      action: "payment.create",
+      entityType: "payment",
+      entityId: String(paymentId),
+      details: { amount: parsed.data.amount, currency: parsed.data.currency, fielderName: assignment.fielderName },
+    });
 
-  const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/payments");
-  return NextResponse.redirect(getRedirectUrl(request, path, { success: "1" }));
+    const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/payments");
+    return NextResponse.redirect(getRedirectUrl(request, path, { success: "1" }));
+  } catch (e) {
+    console.error("Payment create failed:", e);
+    return NextResponse.redirect(getRedirectUrl(request, "/payments", { error: "server" }));
+  }
 }
 

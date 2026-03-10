@@ -71,7 +71,7 @@ export default async function FielderAssignmentsPage() {
             {rows.map(({ assignment: a, sqft, totalRequired, paid, pending: rowPending, dueStatus }) => (
               <tr key={a.id} className="border-t text-zinc-200">
                 <td className="px-3 py-2">
-                  {a.project.projectCode}
+                  <span className="font-medium text-emerald-400">{a.project.projectCode}</span>
                   {a.archivedAt && (
                     <span className="ml-2 text-xs text-zinc-500">
                       (archived)
@@ -143,7 +143,11 @@ export default async function FielderAssignmentsPage() {
                     </td>
                     <td className="px-3 py-2">{w.projectNumber}</td>
                     <td className="px-3 py-2">
-                      {w.project ? w.project.projectCode : "—"}
+                      {w.project ? (
+                        <span className="font-medium text-emerald-400">{w.project.projectCode}</span>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-3 py-2">{w.project?.invoiceNumber?.trim() ?? "—"}</td>
                     <td className="px-3 py-2">

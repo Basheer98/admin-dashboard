@@ -362,7 +362,14 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                     <td className="px-3 py-2">
                       {new Date(p.paymentDate).toLocaleDateString()}
                     </td>
-                    <td className="px-3 py-2">{p.project.projectCode}</td>
+                    <td className="px-3 py-2">
+                      <Link
+                        href={`/projects/${p.projectId}`}
+                        className="font-medium text-emerald-400 hover:underline"
+                      >
+                        {p.project.projectCode}
+                      </Link>
+                    </td>
                     <td className="px-3 py-2">{p.project.invoiceNumber?.trim() ?? "—"}</td>
                     <td className="px-3 py-2">
                       {p.assignment.fielderName}

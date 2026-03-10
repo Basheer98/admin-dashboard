@@ -129,78 +129,87 @@ export async function POST(
     );
   }
 
-  const paymentDate = new Date(parsed.data.paymentDate);
-  let remainingToAllocate = amount;
-  const created: { assignmentId: number; projectId: number; amount: number }[] = [];
-  let lastAssignmentPaid: { assignment: (typeof fielderAssignments)[0]; amount: number } | null = null;
+  try {
+    const paymentDate = new Date(parsed.data.paymentDate);
+    let remainingToAllocate = amount;
+    const created: { assignmentId: number; projectId: number; amount: number }[] = [];
+    let lastAssignmentPaid: { assignment: (typeof fielderAssignments)[0]; amount: number } | null = null;
 
-  for (const { assignment, pending } of assignmentsWithPending) {
-    if (remainingToAllocate <= 0) break;
-    const payThis = Math.min(remainingToAllocate, pending);
-    await insertPayment({
-      projectId: assignment.projectId,
-      fielderAssignmentId: assignment.id,
-      amount: payThis,
-      currency: parsed.data.currency,
-      method: parsed.data.method,
-      paymentDate: paymentDate.toISOString(),
-      notes: parsed.data.notes,
-    });
-    created.push({
-      assignmentId: assignment.id,
-      projectId: assignment.projectId,
-      amount: payThis,
-    });
-    lastAssignmentPaid = { assignment, amount: payThis };
-    remainingToAllocate -= payThis;
-  }
-
-  // If paying for manager commissions too, allocate remainder to an assignment (last one we paid, or any fielder assignment if they had no pending)
-  if (remainingToAllocate > 0) {
-    const targetAssignment = lastAssignmentPaid
-      ? lastAssignmentPaid.assignment
-      : fielderAssignments.sort((a, b) => a.id - b.id)[0];
-    if (targetAssignment) {
+    for (const { assignment, pending } of assignmentsWithPending) {
+      if (remainingToAllocate <= 0) break;
+      const payThis = Math.min(remainingToAllocate, pending);
       await insertPayment({
-        projectId: targetAssignment.projectId,
-        fielderAssignmentId: targetAssignment.id,
-        amount: remainingToAllocate,
+        projectId: assignment.projectId,
+        fielderAssignmentId: assignment.id,
+        amount: payThis,
         currency: parsed.data.currency,
         method: parsed.data.method,
         paymentDate: paymentDate.toISOString(),
         notes: parsed.data.notes,
       });
-      const existingEntry = created.find((c) => c.assignmentId === targetAssignment.id);
-      if (existingEntry) existingEntry.amount += remainingToAllocate;
-      else created.push({ assignmentId: targetAssignment.id, projectId: targetAssignment.projectId, amount: remainingToAllocate });
+      created.push({
+        assignmentId: assignment.id,
+        projectId: assignment.projectId,
+        amount: payThis,
+      });
+      lastAssignmentPaid = { assignment, amount: payThis };
+      remainingToAllocate -= payThis;
     }
+
+    // If paying for manager commissions too, allocate remainder to an assignment (last one we paid, or any fielder assignment if they had no pending)
+    if (remainingToAllocate > 0) {
+      const targetAssignment = lastAssignmentPaid
+        ? lastAssignmentPaid.assignment
+        : fielderAssignments.sort((a, b) => a.id - b.id)[0];
+      if (targetAssignment) {
+        await insertPayment({
+          projectId: targetAssignment.projectId,
+          fielderAssignmentId: targetAssignment.id,
+          amount: remainingToAllocate,
+          currency: parsed.data.currency,
+          method: parsed.data.method,
+          paymentDate: paymentDate.toISOString(),
+          notes: parsed.data.notes,
+        });
+        const existingEntry = created.find((c) => c.assignmentId === targetAssignment.id);
+        if (existingEntry) existingEntry.amount += remainingToAllocate;
+        else created.push({ assignmentId: targetAssignment.id, projectId: targetAssignment.projectId, amount: remainingToAllocate });
+      }
+    }
+
+    const amountFormatted = amount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const displayName = fielderNameNormalized || fielderNameFromUrl;
+    await insertActivity({
+      type: "payment_logged",
+      description: `Logged payment of ${parsed.data.currency} ${amountFormatted} to ${displayName} (fielder-level)`,
+      metadata: {
+        fielderName: displayName,
+        amount: parsed.data.amount,
+        currency: parsed.data.currency,
+        allocations: created,
+      },
+    });
+    await insertAuditLog({
+      ...actor,
+      action: "payment.create",
+      entityType: "payment",
+      details: { fielderName: displayName, amount: parsed.data.amount, currency: parsed.data.currency, allocations: created.length },
+    });
+
+    return NextResponse.redirect(
+      getRedirectUrl(request, `/fielders/${encodeURIComponent(encodedName)}`, {
+        success: "1",
+      }),
+    );
+  } catch (e) {
+    console.error("Fielder payment failed:", e);
+    return NextResponse.redirect(
+      getRedirectUrl(request, `/fielders/${encodeURIComponent(encodedName)}`, {
+        error: "server",
+      }),
+    );
   }
-
-  const amountFormatted = amount.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  const displayName = fielderNameNormalized || fielderNameFromUrl;
-  await insertActivity({
-    type: "payment_logged",
-    description: `Logged payment of ${parsed.data.currency} ${amountFormatted} to ${displayName} (fielder-level)`,
-    metadata: {
-      fielderName: displayName,
-      amount: parsed.data.amount,
-      currency: parsed.data.currency,
-      allocations: created,
-    },
-  });
-  await insertAuditLog({
-    ...actor,
-    action: "payment.create",
-    entityType: "payment",
-    details: { fielderName: displayName, amount: parsed.data.amount, currency: parsed.data.currency, allocations: created.length },
-  });
-
-  return NextResponse.redirect(
-    getRedirectUrl(request, `/fielders/${encodeURIComponent(encodedName)}`, {
-      success: "1",
-    }),
-  );
 }

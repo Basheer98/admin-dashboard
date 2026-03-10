@@ -49,7 +49,9 @@ export default async function FielderPaymentsPage() {
                 <td className="px-3 py-2">
                   {new Date(p.paymentDate).toLocaleDateString()}
                 </td>
-                <td className="px-3 py-2">{p.project.projectCode}</td>
+                <td className="px-3 py-2">
+                  <span className="font-medium text-emerald-400">{p.project.projectCode}</span>
+                </td>
                 <td className="px-3 py-2">{p.project.invoiceNumber?.trim() ?? "—"}</td>
                 <td className="px-3 py-2">
                   {formatCurrency(Number(p.amount))}

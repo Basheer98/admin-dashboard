@@ -51,26 +51,31 @@ export async function POST(request: Request, { params }: Params) {
   const ourProject = await getProjectByCode(projectNumber);
   const ourProjectId = ourProject?.id ?? null;
 
-  await updateAdditionalWork(id, {
-    type: type === "CORRECTION" ? "CORRECTION" : "ADDITIONAL_FIELDING",
-    projectNumber,
-    ourProjectId,
-    assignedFielderAssignmentId: type === "CORRECTION" ? assignedFielderAssignmentId : null,
-    distance,
-    rateForEntireJob,
-    amount,
-    dueDate,
-    completedAt,
-    status,
-    notes,
-  });
-  await insertAuditLog({
-    ...actor,
-    action: "additional_work.update",
-    entityType: "additional_work",
-    entityId: String(id),
-    details: { projectNumber, status },
-  });
+  try {
+    await updateAdditionalWork(id, {
+      type: type === "CORRECTION" ? "CORRECTION" : "ADDITIONAL_FIELDING",
+      projectNumber,
+      ourProjectId,
+      assignedFielderAssignmentId: type === "CORRECTION" ? assignedFielderAssignmentId : null,
+      distance,
+      rateForEntireJob,
+      amount,
+      dueDate,
+      completedAt,
+      status,
+      notes,
+    });
+    await insertAuditLog({
+      ...actor,
+      action: "additional_work.update",
+      entityType: "additional_work",
+      entityId: String(id),
+      details: { projectNumber, status },
+    });
 
-  return NextResponse.redirect(getRedirectUrl(request, `/additional-work/${id}`, { saved: "1" }));
+    return NextResponse.redirect(getRedirectUrl(request, `/additional-work/${id}`, { saved: "1" }));
+  } catch (e) {
+    console.error("Additional work update failed:", e);
+    return NextResponse.redirect(getRedirectUrl(request, `/additional-work/${id}`, { error: "server" }));
+  }
 }
