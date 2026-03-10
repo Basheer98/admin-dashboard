@@ -196,8 +196,16 @@ export function SidebarLayout({
                   {title}
                 </h2>
               </div>
-              <div className="hidden sm:block flex-1 min-w-0 max-w-xs">
+              <div className="hidden sm:flex flex-1 min-w-0 max-w-xs items-center gap-2">
                 <GlobalSearch />
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("openCommandPalette"))}
+                  className="shrink-0 rounded-lg border border-zinc-600 px-2.5 py-1.5 text-xs text-zinc-500 hover:border-zinc-500 hover:text-zinc-300 transition-colors"
+                  title="Quick actions (⌘K on Mac, Ctrl+K on Windows)"
+                >
+                  {typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl+K"}
+                </button>
               </div>
             </div>
             {headerAction != null ? <div className="no-print shrink-0">{headerAction}</div> : null}
