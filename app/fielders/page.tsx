@@ -124,12 +124,12 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
   return (
     <SidebarLayout title="Fielder reports" current="fielders">
       <div className="flex flex-1 flex-col gap-8">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-zinc-400">
           One page per fielder with all assignments, total owed, total paid, and
           pending.
         </p>
         <section className="card p-6">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">
+          <h2 className="mb-3 text-base font-semibold text-zinc-100">
             Filter fielders
           </h2>
           <form method="get" action="/fielders" className="flex flex-wrap items-end gap-3">
@@ -150,7 +150,7 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
                 name="pending"
                 value="1"
                 defaultChecked={hasPendingOnly}
-                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 rounded border-zinc-600 text-emerald-400 focus:ring-emerald-500"
               />
               <label htmlFor="pending" className="label cursor-pointer">Has pending</label>
             </div>
@@ -193,7 +193,7 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
             </thead>
             <tbody>
               {fielders.map((f) => (
-                <tr key={f.name} className="border-t border-slate-200 text-slate-800">
+                <tr key={f.name} className="border-t border-zinc-700 text-zinc-200">
                   <td className="px-3 py-2 font-medium">{f.name}</td>
                   <td className="px-3 py-2">{f.assignmentCount}</td>
                   <td className="px-3 py-2">{f.totalSqft.toLocaleString()}</td>
@@ -209,7 +209,7 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
                   <td className="px-3 py-2">
                     <Link
                       href={`/fielders/${encodeURIComponent(f.name)}`}
-                      className="text-slate-700 underline hover:text-slate-900"
+                      className="text-zinc-300 underline hover:text-zinc-100"
                     >
                       View report
                     </Link>
@@ -220,7 +220,7 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
                 <tr>
                   <td
                     colSpan={7}
-                    className="px-3 py-4 text-center text-slate-500"
+                    className="px-3 py-4 text-center text-zinc-500"
                   >
                     No fielders with assignments yet.
                   </td>

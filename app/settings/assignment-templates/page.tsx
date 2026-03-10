@@ -15,17 +15,17 @@ export default async function AssignmentTemplatesSettingsPage() {
   return (
     <SidebarLayout title="Assignment templates" current="settings">
       <div className="flex flex-1 flex-col gap-8">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-zinc-400">
           Save common fielder + rate + manager setups, then apply them to new
           projects in one click.
         </p>
 
         <section className="card p-6">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">
+          <h2 className="mb-3 text-base font-semibold text-zinc-100">
             Existing templates
           </h2>
           {templates.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-zinc-500">
               No templates yet. Create your first one below.
             </p>
           ) : (
@@ -41,7 +41,7 @@ export default async function AssignmentTemplatesSettingsPage() {
                 </thead>
                 <tbody>
                   {templates.map((t) => (
-                    <tr key={t.id} className="border-t text-slate-800">
+                    <tr key={t.id} className="border-t text-zinc-200">
                       <td className="px-3 py-2 font-medium">{t.name}</td>
                       <td className="px-3 py-2">{t.items.length}</td>
                       <td className="px-3 py-2">
@@ -79,7 +79,7 @@ export default async function AssignmentTemplatesSettingsPage() {
         </section>
 
         <section className="card p-6">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">
+          <h2 className="mb-3 text-base font-semibold text-zinc-100">
             Add template
           </h2>
           <AddAssignmentTemplateForm uniqueFielderNames={uniqueFielderNames} />
@@ -88,7 +88,7 @@ export default async function AssignmentTemplatesSettingsPage() {
         <div className="no-print flex gap-3 text-sm">
           <Link
             href="/projects"
-            className="text-slate-600 underline hover:text-slate-900"
+            className="text-zinc-400 underline hover:text-zinc-100"
           >
             ← Back to projects
           </Link>

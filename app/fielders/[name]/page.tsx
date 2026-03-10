@@ -53,7 +53,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
     return (
       <SidebarLayout title="Fielder report" current="fielders" backLink={{ href: "/fielders", label: "Fielder reports" }}>
         <Breadcrumbs items={[{ label: "Fielder reports", href: "/fielders" }, { label: displayName }]} />
-        <p className="mt-4 text-slate-600">
+        <p className="mt-4 text-zinc-400">
           No assignments found for fielder &quot;{displayName}&quot;.
         </p>
         <Link href="/fielders" className="mt-2 inline-block text-sm underline">
@@ -115,7 +115,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
         <div className="no-print flex items-center justify-between gap-4">
           <Link
             href="/fielders"
-            className="text-sm text-slate-700 underline hover:text-slate-900"
+            className="text-sm text-zinc-300 underline hover:text-zinc-100"
           >
             ← Back to fielder reports
           </Link>
@@ -144,41 +144,41 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
 
         <section className={`card grid gap-4 p-6 ${internalWorkValue > 0 || managerCommissionOwed > 0 ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
           <div>
-            <p className="text-sm font-medium text-slate-500">Total SQFT</p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">
+            <p className="text-sm font-medium text-zinc-500">Total SQFT</p>
+            <p className="mt-1 text-xl font-semibold text-zinc-100">
               {totalSqft.toLocaleString()}
             </p>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Total owed</p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">
+            <p className="text-sm font-medium text-zinc-500">Total owed</p>
+            <p className="mt-1 text-xl font-semibold text-zinc-100">
               {formatCurrency(totalOwed)}
             </p>
             {managerCommissionOwed > 0 && (
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-zinc-500">
                 {formatCurrency(totalOwedFromAssignments)} from assignments + {formatCurrency(managerCommissionOwed)} manager commissions
               </p>
             )}
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Total paid</p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">
+            <p className="text-sm font-medium text-zinc-500">Total paid</p>
+            <p className="mt-1 text-xl font-semibold text-zinc-100">
               {formatCurrency(totalPaid)}
             </p>
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Pending</p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">
+            <p className="text-sm font-medium text-zinc-500">Pending</p>
+            <p className="mt-1 text-xl font-semibold text-zinc-100">
               {formatCurrency(pending)}
             </p>
           </div>
           {internalWorkValue > 0 && (
             <div>
-              <p className="text-sm font-medium text-slate-500">Owner / internal work value</p>
-              <p className="mt-1 text-xl font-semibold text-slate-900">
+              <p className="text-sm font-medium text-zinc-500">Owner / internal work value</p>
+              <p className="mt-1 text-xl font-semibold text-zinc-100">
                 {formatCurrency(internalWorkValue)}
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-zinc-500">
                 Value of your internal work (not a payout)
               </p>
             </div>
@@ -187,10 +187,10 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
 
         {pending > 0 && (
           <section className="card no-print p-6">
-            <h2 className="mb-2 text-base font-semibold text-slate-900">
+            <h2 className="mb-2 text-base font-semibold text-zinc-100">
               Log payment
             </h2>
-            <p className="mb-4 text-sm text-slate-600">
+            <p className="mb-4 text-sm text-zinc-400">
               Company owes this fielder {formatCurrency(pending)}. Enter the amount you paid; it will be applied to reduce the balance (oldest assignments first).
             </p>
             <form
@@ -210,7 +210,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
                   placeholder={pending.toFixed(2)}
                   className="input"
                 />
-                <p className="text-xs text-slate-500">Max: {formatCurrency(pending)}</p>
+                <p className="text-xs text-zinc-500">Max: {formatCurrency(pending)}</p>
               </div>
               <div className="space-y-1">
                 <label className="label">Currency</label>
@@ -252,7 +252,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
         )}
 
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-base font-semibold text-zinc-100">
             All assignments
           </h2>
           <div className="card overflow-x-auto">
@@ -272,11 +272,11 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
               </thead>
               <tbody>
                 {rows.map(({ assignment: a, sqft, totalRequired, paid, pending: rowPending, dueStatus }) => (
-                  <tr key={a.id} className="border-t text-slate-800">
+                  <tr key={a.id} className="border-t text-zinc-200">
                     <td className="px-3 py-2">
                       {a.project.projectCode}
                       {a.archivedAt && (
-                        <span className="ml-2 text-xs text-slate-500">
+                        <span className="ml-2 text-xs text-zinc-500">
                           (archived)
                         </span>
                       )}
@@ -317,7 +317,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
                     <td className="no-print px-3 py-2">
                       <Link
                         href={`/assignments/${a.id}`}
-                        className="text-slate-700 underline hover:text-slate-900"
+                        className="text-zinc-300 underline hover:text-zinc-100"
                       >
                         Edit
                       </Link>

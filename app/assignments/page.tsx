@@ -64,21 +64,21 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
           {showArchived ? (
             <Link
               href="/assignments"
-              className="text-sm font-medium text-slate-700 underline hover:text-slate-900"
+              className="text-sm font-medium text-zinc-300 underline hover:text-zinc-100"
             >
               ← Back to active fielders
             </Link>
           ) : (
             <Link
               href="/assignments?archived=1"
-              className="text-sm font-medium text-slate-700 underline hover:text-slate-900"
+              className="text-sm font-medium text-zinc-300 underline hover:text-zinc-100"
             >
               View archived assignments
             </Link>
           )}
         </div>
         <section className="card p-6">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">
+          <h2 className="mb-3 text-base font-semibold text-zinc-100">
             Filter fielders
           </h2>
           <form method="get" action="/assignments" className="flex flex-wrap items-end gap-3">
@@ -124,12 +124,12 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
 
         {!showArchived && (
           <section className="card p-6">
-            <h2 className="mb-4 text-base font-semibold text-slate-900">
+            <h2 className="mb-4 text-base font-semibold text-zinc-100">
               Assign fielder to project
             </h2>
 
             {!hasProjects ? (
-              <p className="text-base text-slate-600">
+              <p className="text-base text-zinc-400">
                 Add a project first before assigning fielders.
               </p>
             ) : (
@@ -139,7 +139,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
         )}
 
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-base font-semibold text-zinc-100">
             {showArchived ? "Archived assignments" : "Fielder assignments"}
           </h2>
           <div className="card overflow-x-auto">
@@ -213,21 +213,21 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                   const dueStatus = getDueDateStatus(a.dueDate ?? null);
 
                   return (
-                    <tr key={a.id} className="border-t border-slate-200 text-slate-800">
+                    <tr key={a.id} className="border-t border-zinc-700 text-zinc-200">
                       <td className="px-3 py-2">
                         {a.fielderName}
                         {a.isInternal && (
-                          <span className="ml-2 text-sm text-slate-500">
+                          <span className="ml-2 text-sm text-zinc-500">
                             (owner/company)
                           </span>
                         )}
                         {a.archivedAt && (
-                          <span className="ml-2 text-xs text-slate-500">
+                          <span className="ml-2 text-xs text-zinc-500">
                             (archived)
                           </span>
                         )}
                         {managerInfo && (
-                          <span className="ml-2 text-sm text-slate-500">
+                          <span className="ml-2 text-sm text-zinc-500">
                             (managed by {managerInfo.name})
                           </span>
                         )}
@@ -239,7 +239,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                       <td className="px-3 py-2">
                         {a.isInternal ? "-" : formatRate(workerRate)}
                         {managerInfo && (
-                          <span className="block text-sm text-slate-500">
+                          <span className="block text-sm text-zinc-500">
                             Manager: {formatRate(managerInfo.rate)}
                           </span>
                         )}
@@ -284,14 +284,14 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                       <td className="px-3 py-2 flex flex-wrap gap-2">
                         <Link
                           href={`/assignments/${a.id}`}
-                          className="text-sm text-slate-700 underline hover:text-slate-900"
+                          className="text-sm text-zinc-300 underline hover:text-zinc-100"
                         >
                           Edit
                         </Link>
                         {!showArchived && (
                           <Link
                             href={`/payments?projectId=${a.projectId}&assignmentId=${a.id}`}
-                            className="text-sm text-slate-700 underline hover:text-slate-900"
+                            className="text-sm text-zinc-300 underline hover:text-zinc-100"
                           >
                             Log payment
                           </Link>
@@ -304,7 +304,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                   <tr>
                     <td
                       colSpan={10}
-                      className="px-3 py-4 text-center text-slate-500"
+                      className="px-3 py-4 text-center text-zinc-500"
                     >
                       No fielder assignments yet.
                     </td>

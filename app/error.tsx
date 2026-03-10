@@ -38,10 +38,10 @@ export default function Error({
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
       <div className="card max-w-md p-8 text-center">
-        <h1 className="text-xl font-semibold text-slate-900">
+        <h1 className="text-xl font-semibold text-zinc-100">
           Something went wrong
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-zinc-400">
           An error occurred while loading this page. You can try again or return
           to the dashboard.
         </p>
@@ -51,14 +51,14 @@ export default function Error({
           </p>
         )}
         {showProductionHints && !hint && (
-          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm text-slate-700">
+          <div className="mt-3 rounded-lg border border-zinc-700 bg-zinc-900/50 px-3 py-3 text-left text-sm text-zinc-300">
             <p className="font-medium">Common causes:</p>
-            <ul className="mt-1.5 list-inside list-disc space-y-0.5 text-slate-600">
+            <ul className="mt-1.5 list-inside list-disc space-y-0.5 text-zinc-400">
               <li><strong>DATABASE_URL</strong> not set in Railway Variables (add a Postgres service and link it)</li>
               <li>Database not ready yet (wait a minute after linking and redeploy)</li>
               <li>Wrong or expired database URL (re-link the Postgres service)</li>
             </ul>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-zinc-500">
               Check Railway dashboard → your service → Variables and deploy logs.
             </p>
           </div>
@@ -67,12 +67,12 @@ export default function Error({
           <button
             type="button"
             onClick={() => setShowDetails((v) => !v)}
-            className="text-xs text-slate-500 underline hover:text-slate-700"
+            className="text-xs text-zinc-500 underline hover:text-zinc-300"
           >
             {showDetails ? "Hide" : "Show"} error details
           </button>
           {showDetails && message && (
-            <pre className="mt-2 max-h-32 overflow-auto rounded border border-slate-200 bg-slate-50 p-2 text-left text-xs text-slate-700">
+            <pre className="mt-2 max-h-32 overflow-auto rounded border border-zinc-700 bg-zinc-900/50 p-2 text-left text-xs text-zinc-300">
               {message}
               {error?.digest && `\n(digest: ${error.digest})`}
             </pre>

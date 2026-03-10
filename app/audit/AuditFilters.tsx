@@ -44,7 +44,7 @@ export function AuditFilters({
   return (
     <form onSubmit={handleSubmit} className="card no-print flex flex-wrap items-end gap-4 p-4">
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Who (actor)</span>
+        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Who (actor)</span>
         <input
           type="text"
           name="actor"
@@ -54,7 +54,7 @@ export function AuditFilters({
         />
       </label>
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Action</span>
+        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Action</span>
         <select name="action" className="input w-52" defaultValue={action ?? ""}>
           <option value="">All</option>
           {actions.map((a) => (
@@ -65,7 +65,7 @@ export function AuditFilters({
         </select>
       </label>
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Entity type</span>
+        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Entity type</span>
         <select name="entityType" className="input w-40" defaultValue={entityType ?? ""}>
           <option value="">All</option>
           {entityTypes.map((et) => (
@@ -76,11 +76,11 @@ export function AuditFilters({
         </select>
       </label>
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">From date</span>
+        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">From date</span>
         <input type="date" name="from" defaultValue={fromDate} className="input w-40" />
       </label>
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">To date</span>
+        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">To date</span>
         <input type="date" name="to" defaultValue={toDate} className="input w-40" />
       </label>
       <div className="flex gap-2">

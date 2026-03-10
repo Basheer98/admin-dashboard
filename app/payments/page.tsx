@@ -106,12 +106,12 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
           </div>
         )}
         <section className="card no-print p-6">
-          <h2 className="mb-4 text-base font-semibold text-slate-900">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
             Log payment
           </h2>
 
           {!hasData ? (
-            <p className="text-base text-slate-600">
+            <p className="text-base text-zinc-400">
               Add at least one project and one fielder assignment before logging
               payments.
             </p>
@@ -243,7 +243,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
         </section>
 
         <section className="card no-print p-6">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">
+          <h2 className="mb-3 text-base font-semibold text-zinc-100">
             Filters
           </h2>
           <form method="get" action="/payments" className="flex flex-wrap items-end gap-3">
@@ -305,7 +305,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
             )}
           </form>
           {hasAnyFilter && (
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-zinc-500">
               {hasDateFilter && `Date: ${from ?? "start"} – ${to ?? "end"}`}
               {hasDateFilter && (hasProjectFilter || hasFielderFilter) && " · "}
               {hasProjectFilter && `Project: ${projectLabel}`}
@@ -326,10 +326,10 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
         <section className="space-y-3 print-content">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-base font-semibold text-zinc-100">
                 Recent payments
               </h2>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-zinc-400">
                 Total paid{hasAnyFilter ? " (filtered)" : ""} (excl. voided): {formatCurrency(totalPaid)}
               </p>
             </div>
@@ -358,7 +358,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
               </thead>
               <tbody>
                 {payments.map((p) => (
-                  <tr key={p.id} className={`border-t border-slate-200 text-slate-800 ${p.voidedAt ? "bg-slate-50 text-slate-500" : ""}`}>
+                  <tr key={p.id} className={`border-t border-zinc-700 text-zinc-200 ${p.voidedAt ? "bg-zinc-900/50 text-zinc-500" : ""}`}>
                     <td className="px-3 py-2">
                       {new Date(p.paymentDate).toLocaleDateString()}
                     </td>
@@ -367,7 +367,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                     <td className="px-3 py-2">
                       {p.assignment.fielderName}
                       {p.voidedAt && (
-                        <span className="ml-2 rounded bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">
+                        <span className="ml-2 rounded bg-slate-200 px-2 py-0.5 text-xs font-medium text-zinc-300">
                           Voided
                         </span>
                       )}
@@ -389,7 +389,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                   <tr>
                     <td
                       colSpan={9}
-                      className="px-3 py-4 text-center text-slate-500"
+                      className="px-3 py-4 text-center text-zinc-500"
                     >
                       No payments recorded yet.
                     </td>

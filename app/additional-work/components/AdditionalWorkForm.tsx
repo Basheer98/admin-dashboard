@@ -82,12 +82,12 @@ export function AdditionalWorkForm({
   return (
     <form method="POST" action={action} className="grid gap-4 md:grid-cols-2">
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Type</label>
+        <label className="block text-sm font-medium text-zinc-300">Type</label>
         <select
           name="type"
           value={type}
           onChange={(e) => setType(e.target.value as "ADDITIONAL_FIELDING" | "CORRECTION")}
-          className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         >
           <option value="ADDITIONAL_FIELDING">Additional fielding</option>
           <option value="CORRECTION">Correction</option>
@@ -95,7 +95,7 @@ export function AdditionalWorkForm({
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Project number</label>
+        <label className="block text-sm font-medium text-zinc-300">Project number</label>
         <div className="flex gap-2">
           <input
             name="projectNumber"
@@ -105,18 +105,18 @@ export function AdditionalWorkForm({
             onChange={(e) => setProjectNumber(e.target.value)}
             onBlur={doLookup}
             placeholder="e.g. P.12345 or external ref"
-            className="flex-1 rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+            className="flex-1 rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
           />
           <button
             type="button"
             onClick={doLookup}
             disabled={lookupLoading}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-900/50 disabled:opacity-50"
           >
             {lookupLoading ? "…" : "Look up"}
           </button>
         </div>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Enter our project code or an external reference. Use Look up to see who did the project (for corrections).
         </p>
       </div>
@@ -138,11 +138,11 @@ export function AdditionalWorkForm({
 
       {type === "CORRECTION" && lookupAssignments.length > 0 && (
         <div className="space-y-1 md:col-span-2">
-          <label className="block text-sm font-medium text-slate-700">Assign correction to fielder</label>
+          <label className="block text-sm font-medium text-zinc-300">Assign correction to fielder</label>
           <select
             name="assignedFielderAssignmentId"
             defaultValue={initialAssignedFielderAssignmentId ?? ""}
-            className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+            className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
           >
             <option value="">— Select fielder —</option>
             {lookupAssignments.map((a) => (
@@ -151,14 +151,14 @@ export function AdditionalWorkForm({
               </option>
             ))}
           </select>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-zinc-500">
             Who did the original work (for follow-up on this correction).
           </p>
         </div>
       )}
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Distance</label>
+        <label className="block text-sm font-medium text-zinc-300">Distance</label>
         <input
           name="distance"
           type="number"
@@ -166,12 +166,12 @@ export function AdditionalWorkForm({
           step="0.01"
           defaultValue={initialDistance ?? ""}
           placeholder="Optional"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Rate for entire job</label>
+        <label className="block text-sm font-medium text-zinc-300">Rate for entire job</label>
         <input
           name="rateForEntireJob"
           type="number"
@@ -179,12 +179,12 @@ export function AdditionalWorkForm({
           step="0.001"
           defaultValue={initialRateForEntireJob ?? ""}
           placeholder="Optional"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Amount</label>
+        <label className="block text-sm font-medium text-zinc-300">Amount</label>
         <input
           name="amount"
           type="number"
@@ -192,36 +192,36 @@ export function AdditionalWorkForm({
           step="0.01"
           defaultValue={initialAmount ?? ""}
           placeholder="Optional"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Due date</label>
+        <label className="block text-sm font-medium text-zinc-300">Due date</label>
         <input
           name="dueDate"
           type="date"
           defaultValue={initialDueDate?.slice(0, 10) ?? ""}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Completed at</label>
+        <label className="block text-sm font-medium text-zinc-300">Completed at</label>
         <input
           name="completedAt"
           type="date"
           defaultValue={initialCompletedAt?.slice(0, 10) ?? ""}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Status</label>
+        <label className="block text-sm font-medium text-zinc-300">Status</label>
         <select
           name="status"
           defaultValue={initialStatus}
-          className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         >
           <option value="NOT_STARTED">NOT STARTED</option>
           <option value="IN_PROGRESS">IN PROGRESS</option>
@@ -230,12 +230,12 @@ export function AdditionalWorkForm({
       </div>
 
       <div className="space-y-1 md:col-span-2">
-        <label className="block text-sm font-medium text-slate-700">Notes</label>
+        <label className="block text-sm font-medium text-zinc-300">Notes</label>
         <textarea
           name="notes"
           rows={2}
           defaultValue={initialNotes ?? ""}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
 

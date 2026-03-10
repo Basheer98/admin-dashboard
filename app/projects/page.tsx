@@ -165,7 +165,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
     <SidebarLayout title="Projects" current="projects" headerAction={<PrintButton />}>
       <div className="flex flex-1 flex-col gap-8 print-content">
         {success && (
-          <div className="no-print rounded-2xl border border-indigo-200/80 bg-white px-5 py-4 text-sm font-semibold text-indigo-900 shadow-lg">
+          <div className="no-print rounded-2xl border border-emerald-500/40 bg-zinc-900 px-5 py-4 text-sm font-semibold text-emerald-300 shadow-lg">
             Project saved.{" "}
             <Link href="/assignments" className="font-medium underline hover:no-underline">
               Assign fielders
@@ -198,7 +198,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
           </div>
         )}
         {unarchived && (
-          <div className="no-print rounded-2xl border border-indigo-200/80 bg-white px-5 py-4 text-sm font-semibold text-indigo-900 shadow-lg">
+          <div className="no-print rounded-2xl border border-emerald-500/40 bg-zinc-900 px-5 py-4 text-sm font-semibold text-emerald-300 shadow-lg">
             Project unarchived.
           </div>
         )}
@@ -206,41 +206,41 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
           {showArchived ? (
             <Link
               href="/projects"
-              className="text-sm font-medium text-slate-700 underline hover:text-slate-900"
+              className="text-sm font-medium text-zinc-300 underline hover:text-zinc-100"
             >
               ← Back to active projects
             </Link>
           ) : (
             <Link
               href="/projects?archived=1"
-              className="text-sm font-medium text-slate-700 underline hover:text-slate-900"
+              className="text-sm font-medium text-zinc-300 underline hover:text-zinc-100"
             >
               View archived projects
             </Link>
           )}
         </div>
         <section className="card p-6 no-print">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
             Filter projects
           </h2>
           <form method="get" action="/projects" className="flex flex-wrap items-end gap-3">
             {showArchived && <input type="hidden" name="archived" value="1" />}
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-700">Client</label>
+              <label className="block text-sm font-medium text-zinc-300">Client</label>
               <input
                 type="text"
                 name="client"
                 defaultValue={filterClient}
                 placeholder="Filter by client name"
-                className="h-11 rounded-md border border-slate-300 px-3 py-2 text-base text-black bg-white w-48"
+                className="h-11 rounded-md border border-zinc-600 px-3 py-2 text-base text-zinc-100 bg-zinc-900 w-48"
               />
             </div>
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-700">Status</label>
+              <label className="block text-sm font-medium text-zinc-300">Status</label>
               <select
                 name="status"
                 defaultValue={filterStatus}
-                className="h-11 rounded-md border border-slate-300 px-3 py-2 text-base text-black bg-white"
+                className="h-11 rounded-md border border-zinc-600 px-3 py-2 text-base text-zinc-100 bg-zinc-900"
               >
                 <option value="">All statuses</option>
                 {PROJECT_STATUS_VALUES.map((v) => (
@@ -249,11 +249,11 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-700">Invoice</label>
+              <label className="block text-sm font-medium text-zinc-300">Invoice</label>
               <select
                 name="invoice"
                 defaultValue={filterInvoice}
-                className="h-11 rounded-md border border-slate-300 px-3 py-2 text-base text-black bg-white"
+                className="h-11 rounded-md border border-zinc-600 px-3 py-2 text-base text-zinc-100 bg-zinc-900"
               >
                 <option value="">All invoices</option>
                 {uniqueInvoiceNumbers.map((inv) => (
@@ -262,21 +262,21 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-700">Created from</label>
+              <label className="block text-sm font-medium text-zinc-300">Created from</label>
               <input
                 type="date"
                 name="from"
                 defaultValue={filterFrom}
-                className="h-11 rounded-md border border-slate-300 px-3 py-2 text-base text-black bg-white"
+                className="h-11 rounded-md border border-zinc-600 px-3 py-2 text-base text-zinc-100 bg-zinc-900"
               />
             </div>
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-slate-700">Created to</label>
+              <label className="block text-sm font-medium text-zinc-300">Created to</label>
               <input
                 type="date"
                 name="to"
                 defaultValue={filterTo}
-                className="h-11 rounded-md border border-slate-300 px-3 py-2 text-base text-black bg-white"
+                className="h-11 rounded-md border border-zinc-600 px-3 py-2 text-base text-zinc-100 bg-zinc-900"
               />
             </div>
             <button
@@ -288,7 +288,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
             {(filterClient || filterStatus || filterInvoice || filterFrom || filterTo) && (
               <Link
                 href={showArchived ? "/projects?archived=1" : "/projects"}
-                className="h-11 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 inline-flex items-center"
+                className="h-11 rounded-md border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800/50 inline-flex items-center"
               >
                 Clear filter
               </Link>
@@ -297,7 +297,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
         </section>
         {!showArchived && (
           <section className="card p-6 no-print">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
               Add project
             </h2>
             <AddProjectForm
@@ -318,34 +318,34 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
         )}
         <section className="space-y-3">
           <div className="no-print flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-bold tracking-tight text-slate-900">
+            <h2 className="text-lg font-bold tracking-tight text-zinc-100">
               {showArchived ? "Archived projects" : "Project list"}
             </h2>
             <div className="flex flex-wrap items-center gap-2">
               <a
                 href={`/api/export/projects${showArchived ? "?archived=1" : ""}`}
                 download
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                className="rounded-lg border border-zinc-600 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-900/50 transition-colors"
               >
                 Export CSV
               </a>
             </div>
           </div>
           <form id="bulk-invoice-form" method="POST" action="/api/projects/bulk-invoice" className="no-print mb-3 flex flex-wrap items-center gap-2">
-            <label className="text-sm font-medium text-slate-700">Set invoice for selected:</label>
+            <label className="text-sm font-medium text-zinc-300">Set invoice for selected:</label>
             <input
               type="text"
               name="invoiceNumber"
               placeholder="e.g. 002"
-              className="h-9 w-28 rounded-md border border-slate-300 px-2 text-sm"
+              className="h-9 w-28 rounded-md border border-zinc-600 px-2 text-sm"
             />
-            <button type="submit" className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <button type="submit" className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:bg-zinc-900/50">
               Apply
             </button>
           </form>
-          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm max-h-[70vh] overflow-y-auto">
+          <div className="overflow-x-auto rounded-xl border border-zinc-700 bg-zinc-900 shadow-sm max-h-[70vh] overflow-y-auto">
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
-              <thead className="border-b border-slate-200">
+              <thead className="border-b border-zinc-700">
                 <tr>
                   <th className="px-3 py-2 w-10" title="Select for bulk set invoice">
                     <span className="sr-only">Select</span>
@@ -396,14 +396,14 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                   const marginPct = revenue > 0 ? (profit / revenue) * 100 : 0;
                   const ecdStatus = getProjectEcdStatus(p.ecd ?? null, p.status);
                   return (
-                    <tr key={p.id} className="border-t text-slate-800">
+                    <tr key={p.id} className="border-t text-zinc-200">
                       <td className="px-3 py-2">
                         <input
                           type="checkbox"
                           name="projectIds"
                           value={p.id}
                           form="bulk-invoice-form"
-                          className="rounded border-slate-300"
+                          className="rounded border-zinc-600"
                           aria-label={`Select ${p.projectCode}`}
                         />
                       </td>
@@ -428,7 +428,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                       <td className="px-3 py-2">
                         {getProjectStatusLabel(p.status)}
                         {p.archivedAt && (
-                          <span className="ml-2 text-xs text-slate-500">(archived)</span>
+                          <span className="ml-2 text-xs text-zinc-500">(archived)</span>
                         )}
                       </td>
                       <td className="px-3 py-2">
@@ -453,14 +453,14 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                       <td className="px-3 py-2 flex flex-wrap gap-2">
                         <Link
                           href={`/projects/${p.id}`}
-                          className="text-sm text-slate-700 underline hover:text-slate-900"
+                          className="text-sm text-zinc-300 underline hover:text-zinc-100"
                         >
                           Edit
                         </Link>
                         {!showArchived && (
                           <Link
                             href={`/payments?projectId=${p.id}`}
-                            className="text-sm text-slate-700 underline hover:text-slate-900"
+                            className="text-sm text-zinc-300 underline hover:text-zinc-100"
                           >
                             Log payment
                           </Link>
@@ -473,10 +473,10 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                   <tr>
                     <td
                       colSpan={9}
-                      className="px-3 py-4 text-center text-slate-500"
+                      className="px-3 py-4 text-center text-zinc-500"
                     >
                       No projects yet.{" "}
-                      <Link href="/projects" className="font-medium text-slate-900 underline">
+                      <Link href="/projects" className="font-medium text-zinc-100 underline">
                         Add a project
                       </Link>
                     </td>
@@ -486,7 +486,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
             </table>
           </div>
           {totalCount > 0 && (
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-400">
               <span>
                 Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalCount)} of {totalCount}
               </span>
@@ -496,7 +496,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                   <Link
                     key={n}
                     href={`/projects?${new URLSearchParams({ ...projectPreserveParams, sort: sortKey, order, pageSize: String(n), page: "1" }).toString()}`}
-                    className={`rounded-lg px-2.5 py-1 text-sm font-medium transition-colors ${pageSize === n ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                    className={`rounded-lg px-2.5 py-1 text-sm font-medium transition-colors ${pageSize === n ? "bg-emerald-500 text-white" : "text-zinc-400 hover:bg-zinc-800/50"}`}
                   >
                     {n}
                   </Link>
@@ -506,12 +506,12 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                 {page > 1 ? (
                   <Link
                     href={`/projects?${new URLSearchParams({ ...projectPreserveParams, sort: sortKey, order, pageSize: String(pageSize), page: String(page - 1) }).toString()}`}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-zinc-300 hover:bg-zinc-900/50 transition-colors"
                   >
                     ← Prev
                   </Link>
                 ) : (
-                  <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-slate-400">← Prev</span>
+                  <span className="rounded-lg border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-zinc-500">← Prev</span>
                 )}
                 <span className="px-2">
                   Page {page} of {totalPages}
@@ -519,12 +519,12 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                 {page < totalPages ? (
                   <Link
                     href={`/projects?${new URLSearchParams({ ...projectPreserveParams, sort: sortKey, order, pageSize: String(pageSize), page: String(page + 1) }).toString()}`}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-zinc-300 hover:bg-zinc-900/50 transition-colors"
                   >
                     Next →
                   </Link>
                 ) : (
-                  <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-slate-400">Next →</span>
+                  <span className="rounded-lg border border-zinc-700 bg-zinc-900/50 px-3 py-1.5 text-zinc-500">Next →</span>
                 )}
               </div>
             </div>

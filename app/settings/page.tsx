@@ -116,10 +116,10 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           </div>
         )}
         <section className="card p-6">
-          <h2 className="mb-4 text-base font-semibold text-slate-900">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
             Fielder logins
           </h2>
-          <p className="mb-4 text-sm text-slate-600">
+          <p className="mb-4 text-sm text-zinc-400">
             Create login accounts for fielders so they can view their own statement, assignments, and payments at the same URL. Fielder name must match the name used on assignments (e.g. NIVAS).
           </p>
           <form method="POST" action="/api/fielder-logins" className="mb-6 grid max-w-xl gap-4 sm:grid-cols-3">
@@ -152,7 +152,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
               </thead>
               <tbody>
                 {fielderLogins.map((fl) => (
-                  <tr key={fl.id} className="border-t text-slate-800">
+                  <tr key={fl.id} className="border-t text-zinc-200">
                     <td className="px-3 py-2">{fl.email}</td>
                     <td className="px-3 py-2">{fl.fielderName}</td>
                     <td className="px-3 py-2">
@@ -176,14 +176,14 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             </table>
           </div>
           {fielderLogins.length === 0 && (
-            <p className="mt-4 text-sm text-slate-500">No fielder logins yet. Add one above.</p>
+            <p className="mt-4 text-sm text-zinc-500">No fielder logins yet. Add one above.</p>
           )}
         </section>
         <section className="card p-6">
-          <h2 className="mb-4 text-base font-semibold text-slate-900">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
             Currency conversion
           </h2>
-          <p className="mb-4 text-sm text-slate-600">
+          <p className="mb-4 text-sm text-zinc-400">
             Set the USD to INR exchange rate to display amounts in both currencies on the dashboard and elsewhere. Leave empty to show USD only.
           </p>
           <form method="POST" action="/api/settings" className="max-w-sm space-y-4">
@@ -208,14 +208,14 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         </section>
 
         <section className="card p-6">
-          <h2 className="mb-4 text-base font-semibold text-slate-900">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
             Fielder names
           </h2>
-          <p className="mb-4 text-sm text-slate-600">
+          <p className="mb-4 text-sm text-zinc-400">
             If you see duplicate fielders (e.g. &quot;naveen&quot; and &quot;Naveen&quot;) in Fielder reports, run this to convert all fielder names to uppercase in the database. New assignments already save names in uppercase.
           </p>
           {lastBackupLabel && (
-            <p className="mb-3 text-xs text-slate-500">
+            <p className="mb-3 text-xs text-zinc-500">
               Tip: Create a backup first so you can recover. Last backup: {lastBackupLabel}
             </p>
           )}
@@ -225,10 +225,10 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             </button>
           </form>
 
-          <h2 className="mb-4 text-base font-semibold text-slate-900">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
             Fix ID sequences
           </h2>
-          <p className="mb-4 text-sm text-slate-600">
+          <p className="mb-4 text-sm text-zinc-400">
             If you get &quot;duplicate key&quot; or can&apos;t add new projects after a restore, the database ID counters are out of sync. This resets them so new records get the next available ID.
           </p>
           <form method="POST" action="/api/settings/fix-sequences" className="mb-8">
@@ -237,14 +237,14 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             </button>
           </form>
 
-          <h2 className="mb-4 text-base font-semibold text-slate-900">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
             Backup &amp; restore
           </h2>
-          <p className="mb-4 text-sm text-slate-600">
+          <p className="mb-4 text-sm text-zinc-400">
             Download a copy of all data from the database (including settings) for disaster recovery. Restore from a current backup (Download backup) or from an old data.json file from before Postgres.
           </p>
           {lastBackupLabel && (
-            <p className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            <p className="mb-3 rounded-lg border border-zinc-700 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-300">
               Last backup at {lastBackupLabel}. Create a backup before restore or normalize so you can recover if needed.
             </p>
           )}
@@ -253,7 +253,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
               <a href="/api/backup" download className="btn-primary inline-block px-5 py-2.5">
                 Download backup
               </a>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-zinc-500">
                 Saves as backup-YYYY-MM-DD.json. Downloading updates &quot;Last backup at&quot; above.
               </p>
             </div>
@@ -267,7 +267,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
                   name="file"
                   accept=".json,application/json"
                   required
-                  className="text-sm text-slate-700 file:mr-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+                  className="text-sm text-zinc-300 file:mr-2 file:rounded-md file:border-0 file:bg-zinc-800/50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-300 hover:file:bg-slate-200"
                 />
                 <button
                   type="submit"
@@ -276,7 +276,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
                   Restore
                 </button>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-zinc-500">
                 This overwrites all current data. Download a backup first so you can recover if needed.
               </p>
             </form>

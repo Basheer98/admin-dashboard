@@ -213,7 +213,7 @@ export function SqftByFielderChart({ assignments }: SqftByFielderChartProps) {
 
   if (assignments.length === 0) {
     return (
-      <div className="flex h-80 items-center justify-center text-sm text-slate-500">
+      <div className="flex h-80 items-center justify-center text-sm text-zinc-500">
         No assignment data yet. SQFT is shown by when the fielder was assigned to each project.
       </div>
     );
@@ -223,14 +223,14 @@ export function SqftByFielderChart({ assignments }: SqftByFielderChartProps) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-slate-500">Group by:</span>
+          <span className="text-xs font-medium text-zinc-500">Group by:</span>
           <button
             type="button"
             onClick={() => setPeriodType("week")}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               periodType === "week"
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-emerald-500 text-white"
+                : "bg-zinc-800/50 text-zinc-400 hover:bg-slate-200"
             }`}
           >
             By week
@@ -240,8 +240,8 @@ export function SqftByFielderChart({ assignments }: SqftByFielderChartProps) {
             onClick={() => setPeriodType("month")}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               periodType === "month"
-                ? "bg-indigo-600 text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                ? "bg-emerald-500 text-white"
+                : "bg-zinc-800/50 text-zinc-400 hover:bg-slate-200"
             }`}
           >
             By month
@@ -250,7 +250,7 @@ export function SqftByFielderChart({ assignments }: SqftByFielderChartProps) {
         <button
           type="button"
           onClick={() => router.refresh()}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:bg-zinc-900/50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
           aria-label="Refresh chart data"
         >
           Refresh data

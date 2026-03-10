@@ -76,7 +76,7 @@ export default async function AdditionalWorkPage({ searchParams }: PageProps) {
             </thead>
             <tbody>
                 {items.map((w) => (
-                  <tr key={w.id} className="border-b border-slate-200">
+                  <tr key={w.id} className="border-b border-zinc-700">
                     <td className="px-3 py-2">
                       <span
                         className={
@@ -103,7 +103,7 @@ export default async function AdditionalWorkPage({ searchParams }: PageProps) {
                     <td className="px-3 py-2">
                       <Link
                         href={`/additional-work/${w.id}`}
-                        className="text-slate-700 underline hover:text-slate-900"
+                        className="text-zinc-300 underline hover:text-zinc-100"
                       >
                         Edit
                       </Link>

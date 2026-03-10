@@ -20,13 +20,13 @@ export default async function FielderPaymentsPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 print-content">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-display text-xl font-semibold text-slate-900">
+        <h2 className="font-display text-xl font-semibold text-zinc-100">
           My payments
         </h2>
         <PrintButton label="Print" />
       </div>
 
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-zinc-400">
         Total received: {formatCurrency(totalPaid)}
       </p>
 
@@ -45,7 +45,7 @@ export default async function FielderPaymentsPage() {
           </thead>
           <tbody>
             {payments.map((p) => (
-              <tr key={p.id} className="border-t text-slate-800">
+              <tr key={p.id} className="border-t text-zinc-200">
                 <td className="px-3 py-2">
                   {new Date(p.paymentDate).toLocaleDateString()}
                 </td>
@@ -64,12 +64,12 @@ export default async function FielderPaymentsPage() {
       </div>
 
       {payments.length === 0 && (
-        <p className="text-slate-600">No payments recorded yet.</p>
+        <p className="text-zinc-400">No payments recorded yet.</p>
       )}
 
       <Link
         href="/fielder"
-        className="text-sm text-slate-600 underline hover:text-slate-900"
+        className="text-sm text-zinc-400 underline hover:text-zinc-100"
       >
         ← My statement
       </Link>

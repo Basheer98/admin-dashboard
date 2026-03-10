@@ -28,11 +28,11 @@ export function SortLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1 font-medium text-slate-600 hover:text-indigo-600 transition-colors"
+      className="inline-flex items-center gap-1 font-medium text-zinc-400 hover:text-emerald-400 transition-colors"
     >
       {label}
       {isActive && (
-        <span className="text-indigo-500" aria-hidden>
+        <span className="text-emerald-500" aria-hidden>
           {currentOrder === "asc" ? "↑" : "↓"}
         </span>
       )}

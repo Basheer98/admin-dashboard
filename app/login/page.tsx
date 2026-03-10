@@ -12,19 +12,19 @@ export default function LoginPage() {
   const isSessionExpired = message === "session_expired";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="card w-full max-w-md p-8">
-        <h1 className="mb-6 text-center text-3xl font-semibold text-slate-900">
+        <h1 className="mb-6 text-center text-3xl font-semibold text-zinc-100">
           Sign in
         </h1>
 
         {isSessionExpired && (
-          <p className="mb-4 text-base text-amber-700 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="mb-4 text-base text-amber-200 rounded-lg border border-amber-500/50 bg-amber-950/50 px-4 py-3">
             Session expired. You were signed out due to inactivity. Please sign in again.
           </p>
         )}
         {error && !isSessionExpired && (
-          <p className="mb-4 text-base text-red-600">
+          <p className="mb-4 text-base text-red-400">
             Invalid email or password. Please try again.
           </p>
         )}

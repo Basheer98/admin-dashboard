@@ -29,7 +29,7 @@ type PayoutsByFielderChartProps = {
 export function PayoutsByFielderChart({ data }: PayoutsByFielderChartProps) {
   if (data.length === 0) {
     return (
-      <div className="flex h-80 items-center justify-center text-sm text-slate-500">
+      <div className="flex h-80 items-center justify-center text-sm text-zinc-500">
         No payment data yet.
       </div>
     );
@@ -60,7 +60,7 @@ export function PayoutsByFielderChart({ data }: PayoutsByFielderChartProps) {
                 maximumFractionDigits: 2,
               })
             }
-            contentStyle={{ backgroundColor: "#fff", border: "1px solid #e4e4e7" }}
+            contentStyle={{ backgroundColor: "#262626", border: "1px solid #52525b" }}
           />
           <Legend />
         </PieChart>

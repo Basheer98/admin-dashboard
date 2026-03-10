@@ -19,7 +19,7 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
   return (
     <form method="POST" action="/api/assignments" className="grid gap-4 md:grid-cols-2">
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Project
         </label>
         <select
@@ -27,7 +27,7 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
           required
           value={selectedProjectId}
           onChange={(e) => setSelectedProjectId(e.target.value)}
-          className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         >
           <option value="">Select project</option>
           {projects.map((p) => (
@@ -39,7 +39,7 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Fielder name
         </label>
         <input
@@ -48,15 +48,15 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
           value={fielderName}
           onChange={(e) => setFielderName(e.target.value)}
           placeholder="e.g. Naveen"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Stored in uppercase so Naveen and naveen are the same.
         </p>
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Rate per SQFT {isInternal && "(optional – for tracking owner earnings)"}
         </label>
         <input
@@ -66,17 +66,17 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
           step="0.001"
           required={!isInternal}
           placeholder={isInternal ? "e.g. 0.02 for owner work value" : undefined}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
         {isInternal && (
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-zinc-500">
             Optional. Used to show &quot;Owner earnings&quot; / internal work value on your report.
           </p>
         )}
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Commission %
         </label>
         <input
@@ -86,7 +86,7 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
           step="0.01"
           placeholder="Optional"
           disabled={isInternal || hasManager}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white disabled:bg-slate-100 disabled:text-slate-500"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900 disabled:bg-zinc-800/50 disabled:text-zinc-500"
         />
       </div>
 
@@ -104,13 +104,13 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
                 setFielderName("Basheer");
               }
             }}
-            className="rounded border-slate-300"
+            className="rounded border-zinc-600"
           />
-          <span className="text-sm font-medium text-slate-700">
+          <span className="text-sm font-medium text-zinc-300">
             Owner / company work (no payout)
           </span>
         </label>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Use this for Basheer (owner) or any internal work that should not count
           as a payout/pending payment.
         </p>
@@ -122,10 +122,10 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
             type="checkbox"
             checked={hasManager}
             onChange={(e) => setHasManager(e.target.checked)}
-            className="rounded border-slate-300"
+            className="rounded border-zinc-600"
             disabled={isInternal}
           />
-          <span className="text-sm font-medium text-slate-700">
+          <span className="text-sm font-medium text-zinc-300">
             This fielder is managed by another fielder
           </span>
         </label>
@@ -134,13 +134,13 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
       {hasManager ? (
         <>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-zinc-300">
               Managed by
             </label>
             <select
               name="managedByFielderId"
               required={hasManager}
-              className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
             >
               <option value="">Select manager</option>
               {managerOptions.map((a) => (
@@ -149,13 +149,13 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-zinc-500">
               Select the fielder who manages this one (e.g., Nivas manages Naveen)
             </p>
           </div>
 
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-zinc-300">
               Manager rate per SQFT
             </label>
             <input
@@ -165,15 +165,15 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
               step="0.001"
               required={hasManager}
               placeholder="e.g., 0.025"
-              className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
             />
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-zinc-500">
               Worker rate + manager commission per SQFT. E.g. worker 0.020, manager commission 0.005 → enter 0.025. Company pays worker 0.020; the 0.005 is split by the % below.
             </p>
           </div>
 
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-zinc-300">
               Company keeps % of manager commission
             </label>
             <input
@@ -184,9 +184,9 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
               step="0.01"
               required={hasManager}
               placeholder="e.g., 50"
-              className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
             />
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-zinc-500">
               E.g. 50 = company keeps 50%, manager gets the other 50%.
             </p>
           </div>
@@ -200,13 +200,13 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
       )}
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Due date (optional)
         </label>
         <input
           name="dueDate"
           type="date"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
 

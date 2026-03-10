@@ -70,7 +70,7 @@ export default async function FielderStatementPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 print-content">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-display text-xl font-semibold text-slate-900">
+        <h2 className="font-display text-xl font-semibold text-zinc-100">
           My statement
         </h2>
         <PrintButton label="Print" />
@@ -80,43 +80,43 @@ export default async function FielderStatementPage() {
         className={`card grid gap-4 p-6 ${internalWorkValue > 0 || managerCommissionOwed > 0 ? "md:grid-cols-5" : "md:grid-cols-4"}`}
       >
         <div>
-          <p className="text-sm font-medium text-slate-500">Total SQFT</p>
-          <p className="mt-1 text-xl font-semibold text-slate-900">
+          <p className="text-sm font-medium text-zinc-500">Total SQFT</p>
+          <p className="mt-1 text-xl font-semibold text-zinc-100">
             {totalSqft.toLocaleString()}
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-slate-500">Total owed</p>
-          <p className="mt-1 text-xl font-semibold text-slate-900">
+          <p className="text-sm font-medium text-zinc-500">Total owed</p>
+          <p className="mt-1 text-xl font-semibold text-zinc-100">
             {formatCurrency(totalOwed)}
           </p>
           {managerCommissionOwed > 0 && (
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-zinc-500">
               {formatCurrency(totalOwedFromAssignments)} from assignments + {formatCurrency(managerCommissionOwed)} manager commissions
             </p>
           )}
         </div>
         <div>
-          <p className="text-sm font-medium text-slate-500">Total paid</p>
-          <p className="mt-1 text-xl font-semibold text-slate-900">
+          <p className="text-sm font-medium text-zinc-500">Total paid</p>
+          <p className="mt-1 text-xl font-semibold text-zinc-100">
             {formatCurrency(totalPaid)}
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-slate-500">Pending</p>
-          <p className="mt-1 text-xl font-semibold text-slate-900">
+          <p className="text-sm font-medium text-zinc-500">Pending</p>
+          <p className="mt-1 text-xl font-semibold text-zinc-100">
             {formatCurrency(pending)}
           </p>
         </div>
         {internalWorkValue > 0 && (
           <div>
-            <p className="text-sm font-medium text-slate-500">
+            <p className="text-sm font-medium text-zinc-500">
               Owner / internal work value
             </p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">
+            <p className="mt-1 text-xl font-semibold text-zinc-100">
               {formatCurrency(internalWorkValue)}
             </p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-zinc-500">
               Value of internal work (not a payout)
             </p>
           </div>
@@ -126,13 +126,13 @@ export default async function FielderStatementPage() {
       <div className="flex gap-3 text-sm">
         <Link
           href="/fielder/assignments"
-          className="text-slate-600 underline hover:text-slate-900"
+          className="text-zinc-400 underline hover:text-zinc-100"
         >
           View my assignments →
         </Link>
         <Link
           href="/fielder/payments"
-          className="text-slate-600 underline hover:text-slate-900"
+          className="text-zinc-400 underline hover:text-zinc-100"
         >
           View my payments →
         </Link>

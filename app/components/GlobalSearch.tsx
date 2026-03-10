@@ -98,19 +98,19 @@ export function GlobalSearch() {
         <div
           id="global-search-results"
           role="listbox"
-          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 bg-white py-2 shadow-xl"
+          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[70vh] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 py-2 shadow-xl"
         >
           {loading ? (
-            <div className="px-4 py-3 text-sm text-slate-500">Searching…</div>
+            <div className="px-4 py-3 text-sm text-zinc-500">Searching…</div>
           ) : !hasResults ? (
-            <div className="px-4 py-3 text-sm text-slate-500">
+            <div className="px-4 py-3 text-sm text-zinc-500">
               No projects, fielders, or invoices match &quot;{q.trim()}&quot;
             </div>
           ) : (
             <>
               {result!.projects.length > 0 && (
                 <div className="px-2 pb-1">
-                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                     Projects
                   </div>
                   {result!.projects.map((p) => (
@@ -118,15 +118,15 @@ export function GlobalSearch() {
                       key={p.id}
                       href={`/projects/${p.id}`}
                       onClick={() => setOpen(false)}
-                      className="block rounded-lg px-3 py-2 text-sm text-slate-800 hover:bg-slate-100"
+                      className="block rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/50"
                       role="option"
                     >
                       <span className="font-medium">{p.projectCode}</span>
                       {p.clientName && (
-                        <span className="ml-2 text-slate-500">{p.clientName}</span>
+                        <span className="ml-2 text-zinc-500">{p.clientName}</span>
                       )}
                       {p.invoiceNumber && (
-                        <span className="ml-2 text-xs text-slate-400">Inv: {p.invoiceNumber}</span>
+                        <span className="ml-2 text-xs text-zinc-500">Inv: {p.invoiceNumber}</span>
                       )}
                     </Link>
                   ))}
@@ -134,7 +134,7 @@ export function GlobalSearch() {
               )}
               {result!.fielders.length > 0 && (
                 <div className="px-2 pb-1">
-                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                     Fielders
                   </div>
                   {result!.fielders.map((name) => (
@@ -142,7 +142,7 @@ export function GlobalSearch() {
                       key={name}
                       href={`/fielders/${encodeURIComponent(name)}`}
                       onClick={() => setOpen(false)}
-                      className="block rounded-lg px-3 py-2 text-sm text-slate-800 hover:bg-slate-100"
+                      className="block rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/50"
                       role="option"
                     >
                       {name}
@@ -152,7 +152,7 @@ export function GlobalSearch() {
               )}
               {result!.invoices.length > 0 && (
                 <div className="px-2">
-                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
                     Invoices
                   </div>
                   {result!.invoices.map((inv) => (
@@ -160,7 +160,7 @@ export function GlobalSearch() {
                       key={inv}
                       href={`/projects?invoice=${encodeURIComponent(inv)}`}
                       onClick={() => setOpen(false)}
-                      className="block rounded-lg px-3 py-2 text-sm text-slate-800 hover:bg-slate-100"
+                      className="block rounded-lg px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800/50"
                       role="option"
                     >
                       {inv}

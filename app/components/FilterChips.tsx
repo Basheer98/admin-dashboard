@@ -35,17 +35,17 @@ export function FilterChips({
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-      <span className="text-sm text-slate-500">Active filters:</span>
+      <span className="text-sm text-zinc-500">Active filters:</span>
       {chips.map(({ key, label, value }) => (
         <span
           key={key}
-          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm"
+          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-300 shadow-sm"
         >
           <span className="font-medium">{label}:</span>
           <span>{value}</span>
           <Link
             href={buildUrlWithout(key)}
-            className="ml-0.5 rounded-full p-0.5 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition-colors"
+            className="ml-0.5 rounded-full p-0.5 text-zinc-500 hover:bg-zinc-800/50 hover:text-emerald-400 transition-colors"
             aria-label={`Remove ${label} filter`}
           >
             ×

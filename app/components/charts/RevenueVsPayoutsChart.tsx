@@ -39,7 +39,7 @@ export function RevenueVsPayoutsChart({ data }: RevenueVsPayoutsChartProps) {
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#52525b" />
           <XAxis dataKey="name" className="text-xs" tick={{ fill: "#71717a" }} />
           <YAxis tickFormatter={formatTick} className="text-xs" tick={{ fill: "#71717a" }} />
           <Tooltip
@@ -49,24 +49,24 @@ export function RevenueVsPayoutsChart({ data }: RevenueVsPayoutsChartProps) {
                 maximumFractionDigits: 2,
               })
             }
-            contentStyle={{ backgroundColor: "#fff", border: "1px solid #e4e4e7" }}
+            contentStyle={{ backgroundColor: "#262626", border: "1px solid #52525b" }}
           />
           <Legend />
           <Line
             type="monotone"
             dataKey="revenue"
             name="Revenue"
-            stroke="#18181b"
+            stroke="#22c55e"
             strokeWidth={2}
-            dot={{ fill: "#18181b" }}
+            dot={{ fill: "#22c55e" }}
           />
           <Line
             type="monotone"
             dataKey="payouts"
             name="Payouts"
-            stroke="#a16207"
+            stroke="#f59e0b"
             strokeWidth={2}
-            dot={{ fill: "#a16207" }}
+            dot={{ fill: "#f59e0b" }}
           />
         </LineChart>
       </ResponsiveContainer>

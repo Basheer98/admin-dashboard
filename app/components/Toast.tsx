@@ -85,7 +85,7 @@ export function Toast() {
       className={
         isError
           ? "fixed bottom-8 right-8 z-50 rounded-2xl border border-red-200/80 bg-red-50/95 backdrop-blur-md px-6 py-4 text-sm font-semibold text-red-800 shadow-[0_2px_12px_rgba(0,0,0,0.08)]"
-          : "fixed bottom-8 right-8 z-50 rounded-2xl border border-indigo-200/60 bg-white/90 backdrop-blur-md px-6 py-4 text-sm font-semibold text-indigo-900 shadow-[0_2px_12px_rgba(0,0,0,0.08)]"
+          : "fixed bottom-8 right-8 z-50 rounded-2xl border border-emerald-500/40 bg-zinc-900/95 backdrop-blur-md px-6 py-4 text-sm font-semibold text-emerald-300 shadow-[0_2px_12px_rgba(0,0,0,0.3)]"
       }
     >
       {message}

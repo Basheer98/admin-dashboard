@@ -117,9 +117,9 @@ export function AddAssignmentTemplateForm({
           className="input"
         />
       </div>
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <div className="overflow-x-auto rounded-lg border border-zinc-700">
         <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50">
+          <thead className="bg-zinc-900/50">
             <tr>
               <th className="px-3 py-2">Fielder</th>
               <th className="px-3 py-2">Rate / SQFT</th>
@@ -176,7 +176,7 @@ export function AddAssignmentTemplateForm({
                 <td className="px-3 py-2">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    className="h-4 w-4 rounded border-zinc-600 text-emerald-400 focus:ring-emerald-500"
                     checked={row.isInternal}
                     onChange={(e) =>
                       updateRow(idx, {
@@ -233,7 +233,7 @@ export function AddAssignmentTemplateForm({
                     <button
                       type="button"
                       onClick={() => removeRow(idx)}
-                      className="text-xs text-slate-500 hover:text-red-600"
+                      className="text-xs text-zinc-500 hover:text-red-600"
                     >
                       Remove
                     </button>

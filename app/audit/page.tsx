@@ -84,7 +84,7 @@ export default async function AuditPage({
       }
     >
       <div className="flex flex-1 flex-col gap-6 print-content">
-        <p className="text-sm text-slate-600 no-print">
+        <p className="text-sm text-zinc-400 no-print">
           Who did what, when. Filter by actor, action, entity type, or date range.
         </p>
         <AuditFilters
@@ -110,18 +110,18 @@ export default async function AuditPage({
             </thead>
             <tbody>
               {entries.map((e) => (
-                <tr key={e.id} className="border-t border-slate-200 text-slate-800">
-                  <td className="whitespace-nowrap px-3 py-2 text-slate-500">
+                <tr key={e.id} className="border-t border-zinc-700 text-zinc-200">
+                  <td className="whitespace-nowrap px-3 py-2 text-zinc-500">
                     {new Date(e.createdAt).toLocaleString()}
                   </td>
                   <td className="px-3 py-2">
                     <span className="font-medium">{e.actorName}</span>
-                    <span className="ml-1 text-slate-500 text-xs">({e.actorType})</span>
+                    <span className="ml-1 text-zinc-500 text-xs">({e.actorType})</span>
                   </td>
                   <td className="px-3 py-2">{e.action}</td>
                   <td className="px-3 py-2">{e.entityType}</td>
                   <td className="px-3 py-2 font-mono text-xs">{e.entityId ?? "—"}</td>
-                  <td className="max-w-xs px-3 py-2 text-slate-500">
+                  <td className="max-w-xs px-3 py-2 text-zinc-500">
                     {e.details && Object.keys(e.details).length > 0 ? (
                       <span className="text-xs">
                         {Object.entries(e.details)
@@ -136,7 +136,7 @@ export default async function AuditPage({
               ))}
               {entries.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-4 text-center text-slate-500">
+                  <td colSpan={6} className="px-3 py-4 text-center text-zinc-500">
                     No audit entries match your filters.
                   </td>
                 </tr>

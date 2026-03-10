@@ -21,8 +21,8 @@ export default async function EditAdditionalWorkPage({ params, searchParams }: P
     return (
       <SidebarLayout title="Edit additional work" current="additional">
         <div className="flex flex-1 flex-col gap-6">
-          <p className="text-sm text-slate-700">Additional work not found.</p>
-          <Link href="/additional-work" className="text-sm text-slate-700 underline hover:text-slate-900">
+          <p className="text-sm text-zinc-300">Additional work not found.</p>
+          <Link href="/additional-work" className="text-sm text-zinc-300 underline hover:text-zinc-100">
             Back to additional work
           </Link>
         </div>
@@ -62,12 +62,12 @@ export default async function EditAdditionalWorkPage({ params, searchParams }: P
           </div>
         )}
         <nav className="text-sm">
-          <Link href="/additional-work" className="text-slate-700 hover:underline hover:text-slate-900">
+          <Link href="/additional-work" className="text-zinc-300 hover:underline hover:text-zinc-100">
             ← Back to additional work
           </Link>
         </nav>
         <section className="card p-6">
-          <h2 className="mb-4 text-base font-semibold text-slate-900">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
             Edit {row.type === "CORRECTION" ? "correction" : "additional fielding"}
           </h2>
           <AdditionalWorkForm

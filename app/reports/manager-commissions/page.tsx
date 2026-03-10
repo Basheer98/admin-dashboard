@@ -130,12 +130,12 @@ export default async function ManagerCommissionsReportPage({
       headerAction={<PrintButton />}
     >
       <div className="flex flex-1 flex-col gap-8">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-zinc-400">
           All manager net commissions from managed assignments. Filter by manager, project, or month for reconciliation.
         </p>
 
         <section className="card no-print p-6">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">
+          <h2 className="mb-3 text-base font-semibold text-zinc-100">
             Filters
           </h2>
           <form method="get" action="/reports/manager-commissions" className="flex flex-wrap items-end gap-4">
@@ -186,11 +186,11 @@ export default async function ManagerCommissionsReportPage({
         </section>
 
         <div className="card p-6 print:shadow-none">
-          <h1 className="text-xl font-bold text-slate-900">
+          <h1 className="text-xl font-bold text-zinc-100">
             Manager commissions report
           </h1>
           {(filterManager || filterProject || filterMonth) && (
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-zinc-500">
               Filtered by
               {filterManager && ` manager: ${filterManager}`}
               {filterMonth && ` month: ${monthLabelFromKey(filterMonth)}`}
@@ -200,8 +200,8 @@ export default async function ManagerCommissionsReportPage({
 
           <section className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <p className="text-sm font-medium text-slate-500">Total net commissions</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <p className="text-sm font-medium text-zinc-500">Total net commissions</p>
+              <p className="mt-1 text-2xl font-semibold text-zinc-100">
                 {showInr
                   ? formatWithInr(totalCommission, {
                       showInr: true,
@@ -211,27 +211,27 @@ export default async function ManagerCommissionsReportPage({
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Managers</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <p className="text-sm font-medium text-zinc-500">Managers</p>
+              <p className="mt-1 text-2xl font-semibold text-zinc-100">
                 {byManager.size}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Projects</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <p className="text-sm font-medium text-zinc-500">Projects</p>
+              <p className="mt-1 text-2xl font-semibold text-zinc-100">
                 {byProject.size}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Rows</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <p className="text-sm font-medium text-zinc-500">Rows</p>
+              <p className="mt-1 text-2xl font-semibold text-zinc-100">
                 {filtered.length}
               </p>
             </div>
           </section>
 
           <section className="mt-8">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-zinc-100">
               By manager
             </h2>
             <div className="mt-2 overflow-x-auto">
@@ -246,7 +246,7 @@ export default async function ManagerCommissionsReportPage({
                   {Array.from(byManager.entries())
                     .sort((a, b) => b[1] - a[1])
                     .map(([name, total]) => (
-                      <tr key={name} className="border-t text-slate-800">
+                      <tr key={name} className="border-t text-zinc-200">
                         <td className="px-3 py-2 font-medium">{name}</td>
                         <td className="px-3 py-2">
                           {showInr
@@ -260,7 +260,7 @@ export default async function ManagerCommissionsReportPage({
                     ))}
                   {byManager.size === 0 && (
                     <tr>
-                      <td colSpan={2} className="px-3 py-2 text-slate-500">
+                      <td colSpan={2} className="px-3 py-2 text-zinc-500">
                         No manager commissions in this range.
                       </td>
                     </tr>
@@ -271,7 +271,7 @@ export default async function ManagerCommissionsReportPage({
           </section>
 
           <section className="mt-8">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-zinc-100">
               By project
             </h2>
             <div className="mt-2 overflow-x-auto">
@@ -287,11 +287,11 @@ export default async function ManagerCommissionsReportPage({
                   {Array.from(byProject.entries())
                     .sort((a, b) => b[1].total - a[1].total)
                     .map(([id, { code, client, total }]) => (
-                      <tr key={id} className="border-t text-slate-800">
+                      <tr key={id} className="border-t text-zinc-200">
                         <td className="px-3 py-2">
                           <Link
                             href={`/projects/${id}`}
-                            className="font-medium text-indigo-600 hover:underline"
+                            className="font-medium text-emerald-400 hover:underline"
                           >
                             {code}
                           </Link>
@@ -309,7 +309,7 @@ export default async function ManagerCommissionsReportPage({
                     ))}
                   {byProject.size === 0 && (
                     <tr>
-                      <td colSpan={3} className="px-3 py-2 text-slate-500">
+                      <td colSpan={3} className="px-3 py-2 text-zinc-500">
                         No manager commissions in this range.
                       </td>
                     </tr>
@@ -320,7 +320,7 @@ export default async function ManagerCommissionsReportPage({
           </section>
 
           <section className="mt-8">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-zinc-100">
               By month
             </h2>
             <div className="mt-2 overflow-x-auto">
@@ -335,7 +335,7 @@ export default async function ManagerCommissionsReportPage({
                   {Array.from(byMonth.entries())
                     .sort((a, b) => b[0].localeCompare(a[0]))
                     .map(([monthKey, total]) => (
-                      <tr key={monthKey} className="border-t text-slate-800">
+                      <tr key={monthKey} className="border-t text-zinc-200">
                         <td className="px-3 py-2">{monthLabelFromKey(monthKey)}</td>
                         <td className="px-3 py-2">
                           {showInr
@@ -349,7 +349,7 @@ export default async function ManagerCommissionsReportPage({
                     ))}
                   {byMonth.size === 0 && (
                     <tr>
-                      <td colSpan={2} className="px-3 py-2 text-slate-500">
+                      <td colSpan={2} className="px-3 py-2 text-zinc-500">
                         No manager commissions in this range.
                       </td>
                     </tr>
@@ -360,7 +360,7 @@ export default async function ManagerCommissionsReportPage({
           </section>
 
           <section className="mt-8">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-zinc-100">
               Detail (all rows)
             </h2>
             <div className="mt-2 overflow-x-auto max-h-[60vh] overflow-y-auto">
@@ -385,12 +385,12 @@ export default async function ManagerCommissionsReportPage({
                         a.projectCode.localeCompare(b.projectCode),
                     )
                     .map((r, i) => (
-                      <tr key={i} className="border-t text-slate-800">
+                      <tr key={i} className="border-t text-zinc-200">
                         <td className="px-3 py-2 font-medium">{r.managerName}</td>
                         <td className="px-3 py-2">
                           <Link
                             href={`/projects/${r.projectId}`}
-                            className="text-indigo-600 hover:underline"
+                            className="text-emerald-400 hover:underline"
                           >
                             {r.projectCode}
                           </Link>
@@ -411,7 +411,7 @@ export default async function ManagerCommissionsReportPage({
                     ))}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-3 py-2 text-slate-500">
+                      <td colSpan={7} className="px-3 py-2 text-zinc-500">
                         No manager commissions in this range.
                       </td>
                     </tr>
@@ -421,7 +421,7 @@ export default async function ManagerCommissionsReportPage({
             </div>
           </section>
 
-          <p className="mt-6 text-xs text-slate-500">
+          <p className="mt-6 text-xs text-zinc-500">
             Generated {new Date().toLocaleString()}. Month is based on project creation date.
           </p>
         </div>
@@ -429,7 +429,7 @@ export default async function ManagerCommissionsReportPage({
         <div className="no-print flex gap-3 text-sm">
           <Link
             href="/reports/monthly"
-            className="text-slate-600 underline hover:text-slate-900"
+            className="text-zinc-400 underline hover:text-zinc-100"
           >
             ← Monthly summary
           </Link>

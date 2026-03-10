@@ -83,8 +83,8 @@ function DatePresetLink({
       href={`/?from=${from}&to=${to}${statusQ}${invoiceQ}`}
       className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
         isActive
-          ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-          : "bg-white/80 text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+          : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700"
       }`}
     >
       {label}
@@ -470,17 +470,17 @@ export default async function Home({ searchParams }: PageProps) {
     >
       <div className="flex flex-1 flex-col gap-8">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-zinc-100">
             {greeting}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-zinc-500">
             Revenue and payments at a glance. Use the filter below to narrow by date or invoice.
           </p>
-          <p className="mt-0.5 text-xs text-slate-400" aria-label="Data timestamp">
+          <p className="mt-0.5 text-xs text-zinc-500" aria-label="Data timestamp">
             Data as of {dataAsOf.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
           </p>
           {/* So you always know what data is included (e.g. new projects can be hidden by date/invoice filter) */}
-          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-2 text-sm text-slate-700">
+          <div className="mt-3 rounded-lg border border-zinc-700 bg-zinc-900/50/80 px-4 py-2 text-sm text-zinc-300">
             <strong>Showing:</strong>{" "}
             {!hasDateFilter && !hasStatusFilter && !hasInvoiceFilter ? (
               <>All projects and all payments (no filter). New projects and logged payments appear here immediately.</>
@@ -492,7 +492,7 @@ export default async function Home({ searchParams }: PageProps) {
                 {hasStatusFilter && ` with status "${filterStatus}"`}
                 . Payments below are only for these projects.
                 {" "}
-                <Link href="/" className="font-medium text-indigo-600 hover:underline">
+                <Link href="/" className="font-medium text-emerald-400 hover:underline">
                   Show all data
                 </Link>
               </>
@@ -502,72 +502,72 @@ export default async function Home({ searchParams }: PageProps) {
 
         <section className="grid gap-6 md:grid-cols-3">
           <div className="card-highlight p-7">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Total revenue
             </p>
-            <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
+            <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-zinc-100">
               {showInr ? formatWithInr(totalRevenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalRevenue)}`}
             </p>
           </div>
           <div className="card-highlight p-7">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Total payouts (expected from rates)
             </p>
-            <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
+            <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-zinc-100">
               {showInr ? formatWithInr(totalRequiredPayouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalRequiredPayouts)}`}
             </p>
-            <p className="mt-1 text-xs text-slate-500">From fielder rates × SQFT (not from logged payments)</p>
+            <p className="mt-1 text-xs text-zinc-500">From fielder rates × SQFT (not from logged payments)</p>
           </div>
           <div className="card-highlight p-7">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Company profit
             </p>
-            <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-slate-900">
+            <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-zinc-100">
               {showInr ? formatWithInr(totalCompanyProfit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalCompanyProfit)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Manager commissions (net)
             </p>
-            <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
+            <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
               {showInr ? formatWithInr(totalManagerCommissions, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalManagerCommissions)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Company share from managers
             </p>
-            <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
+            <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
               {showInr ? formatWithInr(totalCompanyShareOfManagerCommissions, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalCompanyShareOfManagerCommissions)}`}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Total paid
             </p>
-            <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
+            <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
               {showInr ? formatWithInr(totalPaid, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalPaid)}`}
             </p>
-            <p className="mt-1 text-xs text-slate-500">From payments you logged (Payments → Log payment)</p>
+            <p className="mt-1 text-xs text-zinc-500">From payments you logged (Payments → Log payment)</p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Total pending payments
             </p>
-            <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
+            <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
               {showInr ? formatWithInr(totalPending, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalPending)}`}
             </p>
           </div>
           {totalInternalWorkValue > 0 && (
             <div className="card-highlight p-7 md:col-span-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
                 Owner / internal work value
               </p>
-              <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-slate-900">
+              <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
                 {showInr ? formatWithInr(totalInternalWorkValue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalInternalWorkValue)}`}
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-zinc-500">
                 Value of owner/internal work (not payouts)
               </p>
             </div>
@@ -575,24 +575,24 @@ export default async function Home({ searchParams }: PageProps) {
         </section>
 
         <section className="card p-7">
-          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Period comparison — are we doing better?
           </h2>
           <div className="grid gap-6 sm:grid-cols-3">
-            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-              <p className="text-xs font-medium text-slate-500">{periodComparison.current.label}</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">{showInr ? formatWithInr(periodComparison.current.revenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.current.revenue)}`} revenue</p>
-              <p className="text-sm text-slate-600">{showInr ? formatWithInr(periodComparison.current.payouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.current.payouts)}`} payouts</p>
-              <p className="text-sm font-medium text-slate-800">{showInr ? formatWithInr(periodComparison.current.profit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.current.profit)}`} profit</p>
+            <div className="rounded-lg border border-zinc-700 bg-zinc-900/50/50 p-4">
+              <p className="text-xs font-medium text-zinc-500">{periodComparison.current.label}</p>
+              <p className="mt-1 text-lg font-semibold text-zinc-100">{showInr ? formatWithInr(periodComparison.current.revenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.current.revenue)}`} revenue</p>
+              <p className="text-sm text-zinc-400">{showInr ? formatWithInr(periodComparison.current.payouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.current.payouts)}`} payouts</p>
+              <p className="text-sm font-medium text-zinc-200">{showInr ? formatWithInr(periodComparison.current.profit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.current.profit)}`} profit</p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-              <p className="text-xs font-medium text-slate-500">{periodComparison.prev.label}</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">{showInr ? formatWithInr(periodComparison.prev.revenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.prev.revenue)}`} revenue</p>
-              <p className="text-sm text-slate-600">{showInr ? formatWithInr(periodComparison.prev.payouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.prev.payouts)}`} payouts</p>
-              <p className="text-sm font-medium text-slate-800">{showInr ? formatWithInr(periodComparison.prev.profit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.prev.profit)}`} profit</p>
+            <div className="rounded-lg border border-zinc-700 bg-zinc-900/50/50 p-4">
+              <p className="text-xs font-medium text-zinc-500">{periodComparison.prev.label}</p>
+              <p className="mt-1 text-lg font-semibold text-zinc-100">{showInr ? formatWithInr(periodComparison.prev.revenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.prev.revenue)}`} revenue</p>
+              <p className="text-sm text-zinc-400">{showInr ? formatWithInr(periodComparison.prev.payouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.prev.payouts)}`} payouts</p>
+              <p className="text-sm font-medium text-zinc-200">{showInr ? formatWithInr(periodComparison.prev.profit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(periodComparison.prev.profit)}`} profit</p>
             </div>
             <div className="rounded-lg border border-indigo-200 bg-indigo-50/30 p-4">
-              <p className="text-xs font-medium text-slate-500">Change vs previous</p>
+              <p className="text-xs font-medium text-zinc-500">Change vs previous</p>
               {[
                 { name: "Revenue", curr: periodComparison.current.revenue, prev: periodComparison.prev.revenue },
                 { name: "Payouts", curr: periodComparison.current.payouts, prev: periodComparison.prev.payouts },
@@ -602,7 +602,7 @@ export default async function Home({ searchParams }: PageProps) {
                 const up = pct > 0;
                 const down = pct < 0;
                 return (
-                  <p key={name} className={`mt-1 text-sm ${up ? "text-green-700" : down ? "text-red-700" : "text-slate-600"}`}>
+                  <p key={name} className={`mt-1 text-sm ${up ? "text-green-700" : down ? "text-red-700" : "text-zinc-400"}`}>
                     {name}: {up ? "+" : ""}{pct.toFixed(1)}%
                   </p>
                 );
@@ -612,10 +612,10 @@ export default async function Home({ searchParams }: PageProps) {
         </section>
 
         <section className="card p-7">
-          <h2 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <h2 className="mb-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Date range filter
           </h2>
-          <p className="mb-3 text-sm text-slate-600">
+          <p className="mb-3 text-sm text-zinc-400">
             Show revenue (by project creation) and payments in a date range.
           </p>
           <div className="mb-4 flex flex-wrap gap-2">
@@ -623,8 +623,8 @@ export default async function Home({ searchParams }: PageProps) {
               href={filterStatus ? `/?status=${encodeURIComponent(filterStatus)}` : filterInvoice ? `/?invoice=${encodeURIComponent(filterInvoice)}` : "/"}
               className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
                 !hasDateFilter
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                  : "bg-white/80 text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+                  ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+                  : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700"
               }`}
             >
               All time
@@ -635,7 +635,7 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
           {uniqueInvoiceNumbers.length > 0 && (
             <div className="mb-4">
-              <p className="mb-2 text-sm text-slate-600">Filter by invoice / billing batch</p>
+              <p className="mb-2 text-sm text-zinc-400">Filter by invoice / billing batch</p>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={[from && `from=${from}`, to && `to=${to}`, filterStatus && `status=${encodeURIComponent(filterStatus)}`].filter(Boolean).length
@@ -643,8 +643,8 @@ export default async function Home({ searchParams }: PageProps) {
                     : "/"}
                   className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
                     !filterInvoice
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                      : "bg-white/80 text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+                      : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700"
                   }`}
                 >
                   All invoices
@@ -658,8 +658,8 @@ export default async function Home({ searchParams }: PageProps) {
                       href={q ? `/?${q}` : `/?invoice=${encodeURIComponent(inv)}`}
                       className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
                         isActive
-                          ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                          : "bg-white/80 text-slate-600 hover:bg-slate-100 border border-slate-200/80"
+                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+                          : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700"
                       }`}
                     >
                       Invoice {inv}
@@ -667,13 +667,13 @@ export default async function Home({ searchParams }: PageProps) {
                   );
                 })}
               </div>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-zinc-500">
                 {uniqueInvoiceNumbers.map((inv) => (
                   <a
                     key={inv}
                     href={`/api/invoices/${encodeURIComponent(inv)}/pdf`}
                     download
-                    className="text-indigo-600 hover:underline mr-3"
+                    className="text-emerald-400 hover:underline mr-3"
                   >
                     Download PDF for {inv}
                   </a>
@@ -732,7 +732,7 @@ export default async function Home({ searchParams }: PageProps) {
             )}
           </form>
           {(hasDateFilter || hasStatusFilter) && (
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-zinc-500">
               {hasDateFilter && `Showing revenue and payments from ${from ?? "start"} to ${to ?? "end"}.`}
               {hasDateFilter && hasStatusFilter && " "}
               {hasStatusFilter && `Projects filtered by status: ${getProjectStatusLabel(filterStatus!)}.`}
@@ -741,10 +741,10 @@ export default async function Home({ searchParams }: PageProps) {
         </section>
 
         <section className="space-y-6">
-          <h2 className="text-lg font-bold tracking-tight text-slate-900">Charts</h2>
+          <h2 className="text-lg font-bold tracking-tight text-zinc-100">Charts</h2>
           <div className="grid gap-6 md:grid-cols-2">
             <div className="card p-7">
-              <h3 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h3 className="mb-5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Revenue vs payouts over time
               </h3>
               <RevenueVsPayoutsChart
@@ -757,19 +757,19 @@ export default async function Home({ searchParams }: PageProps) {
               />
             </div>
             <div className="card p-7">
-              <h3 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h3 className="mb-5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Payouts by fielder
               </h3>
-              <p className="mb-3 text-xs text-slate-500">
+              <p className="mb-3 text-xs text-zinc-500">
                 Expected payouts from rates × SQFT and manager commissions. All fielders with work in the current filter appear (e.g. Basheer, Naveen, Nivas).
               </p>
               <PayoutsByFielderChart data={payoutsByFielder} />
             </div>
             <div className="card p-7 md:col-span-2">
-              <h3 className="mb-5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h3 className="mb-5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Total SQFT by fielder (by week or month)
               </h3>
-              <p className="mb-4 text-sm text-slate-600">
+              <p className="mb-4 text-sm text-zinc-400">
                 Square footage from projects each fielder is assigned to, grouped by when the assignment was created.
               </p>
               <SqftByFielderChart assignments={sqftByFielderAssignments} />
@@ -779,11 +779,11 @@ export default async function Home({ searchParams }: PageProps) {
 
         {hasProjectEcdSummary && (
           <section className="space-y-4">
-            <h2 className="text-lg font-bold tracking-tight text-slate-900">
+            <h2 className="text-lg font-bold tracking-tight text-zinc-100">
               Project ECD summary
             </h2>
             <div className="card border-amber-200/50 bg-amber-50/40 p-6">
-              <p className="mb-4 text-sm font-medium text-slate-700">
+              <p className="mb-4 text-sm font-medium text-zinc-300">
                 {projectsOverdue.length > 0 && (
                   <span>
                     <strong>{projectsOverdue.length}</strong> project{projectsOverdue.length !== 1 ? "s" : ""} overdue (past ECD)
@@ -810,10 +810,10 @@ export default async function Home({ searchParams }: PageProps) {
                       >
                         {status === "overdue" ? "Overdue" : "Due soon"}
                       </span>
-                      <span className="text-slate-700">
+                      <span className="text-zinc-300">
                         {p.projectCode} – {p.clientName}
                         {p.ecd && (
-                          <span className="text-slate-500">
+                          <span className="text-zinc-500">
                             {" "}
                             (ECD {new Date(p.ecd).toLocaleDateString()})
                           </span>
@@ -821,7 +821,7 @@ export default async function Home({ searchParams }: PageProps) {
                       </span>
                       <Link
                         href={`/projects/${p.id}`}
-                        className="text-slate-700 underline hover:text-slate-900"
+                        className="text-zinc-300 underline hover:text-zinc-100"
                       >
                         Edit
                       </Link>
@@ -835,7 +835,7 @@ export default async function Home({ searchParams }: PageProps) {
 
         {dueSoonOrOverdue.length > 0 && (
           <section className="space-y-4">
-            <h2 className="text-lg font-bold tracking-tight text-slate-900">
+            <h2 className="text-lg font-bold tracking-tight text-zinc-100">
               Assignment due dates (due soon / overdue)
             </h2>
             <div className="card border-amber-200/50 bg-amber-50/40 p-6">
@@ -853,10 +853,10 @@ export default async function Home({ searchParams }: PageProps) {
                       >
                         {status === "overdue" ? "Overdue" : "Due soon"}
                       </span>
-                      <span className="text-slate-700">
+                      <span className="text-zinc-300">
                         {a.fielderName} – {a.project.projectCode}
                         {a.dueDate && (
-                          <span className="text-slate-500">
+                          <span className="text-zinc-500">
                             {" "}
                             (due {new Date(a.dueDate).toLocaleDateString()})
                           </span>
@@ -864,7 +864,7 @@ export default async function Home({ searchParams }: PageProps) {
                       </span>
                       <Link
                         href={`/assignments/${a.id}`}
-                        className="text-slate-700 underline hover:text-slate-900"
+                        className="text-zinc-300 underline hover:text-zinc-100"
                       >
                         Edit
                       </Link>
@@ -877,7 +877,7 @@ export default async function Home({ searchParams }: PageProps) {
         )}
 
         <section className="space-y-4">
-          <h2 className="text-lg font-bold tracking-tight text-slate-900">
+          <h2 className="text-lg font-bold tracking-tight text-zinc-100">
             Projects overview
           </h2>
           <div className="card overflow-x-auto">
@@ -900,7 +900,7 @@ export default async function Home({ searchParams }: PageProps) {
               </thead>
               <tbody>
                 {projectRows.map((row) => (
-                  <tr key={row.projectCode} className="border-t text-slate-800">
+                  <tr key={row.projectCode} className="border-t text-zinc-200">
                     <td className="px-3 py-2">{row.projectCode}</td>
                     <td className="px-3 py-2">{row.clientName}</td>
                     <td className="px-3 py-2">{row.invoiceNumber?.trim() ?? "—"}</td>
@@ -929,7 +929,7 @@ export default async function Home({ searchParams }: PageProps) {
                     <td className="px-3 py-2">
                       <Link
                         href={`/payments?projectId=${row.projectId}`}
-                        className="text-sm text-slate-700 underline hover:text-slate-900"
+                        className="text-sm text-zinc-300 underline hover:text-zinc-100"
                       >
                         Log payment
                       </Link>
@@ -940,7 +940,7 @@ export default async function Home({ searchParams }: PageProps) {
                   <tr>
                     <td
                       colSpan={12}
-                      className="px-3 py-4 text-center text-slate-500"
+                      className="px-3 py-4 text-center text-zinc-500"
                     >
                       No projects yet.
                     </td>
@@ -952,7 +952,7 @@ export default async function Home({ searchParams }: PageProps) {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 className="text-base font-semibold text-zinc-100">
             Monthly summary
           </h2>
           <div className="card overflow-x-auto">
@@ -967,7 +967,7 @@ export default async function Home({ searchParams }: PageProps) {
               </thead>
               <tbody>
                 {monthlyRows.map((row) => (
-                  <tr key={row.monthKey} className="border-t text-slate-800">
+                  <tr key={row.monthKey} className="border-t text-zinc-200">
                     <td className="px-3 py-2">{row.label}</td>
                     <td className="px-3 py-2">
                       {formatCurrency(row.revenue)}
@@ -984,7 +984,7 @@ export default async function Home({ searchParams }: PageProps) {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-3 py-4 text-center text-slate-500"
+                      className="px-3 py-4 text-center text-zinc-500"
                     >
                       No financial activity yet.
                     </td>

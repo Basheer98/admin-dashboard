@@ -22,35 +22,35 @@ export function AddProjectForm({
   return (
     <form method="POST" action="/api/projects" className="grid gap-4 md:grid-cols-2">
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Project ID</label>
+        <label className="block text-sm font-medium text-zinc-300">Project ID</label>
         <input
           name="projectCode"
           required
           placeholder="e.g. 12345 or P.12345"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Starts with P by default (e.g. 12345 → P.12345).
         </p>
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Invoice / billing batch (optional)</label>
+        <label className="block text-sm font-medium text-zinc-300">Invoice / billing batch (optional)</label>
         <input
           name="invoiceNumber"
           placeholder="e.g. 001, 002, Jan-001"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Use to group projects by invoice so dashboard and reports can filter by invoice.
         </p>
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Client name</label>
+        <label className="block text-sm font-medium text-zinc-300">Client name</label>
         <select
           name="clientChoice"
           value={clientChoice}
           onChange={(e) => setClientChoice(e.target.value)}
-          className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         >
           <option value="">New client</option>
           {uniqueClientNames.map((name) => (
@@ -65,33 +65,33 @@ export function AddProjectForm({
             type="text"
             required
             placeholder="Enter new client name"
-            className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+            className="mt-2 w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
           />
         )}
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Pick an existing client or choose &quot;New client&quot; to enter a new one.
         </p>
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Location (optional)</label>
+        <label className="block text-sm font-medium text-zinc-300">Location (optional)</label>
         <input
           name="location"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Total SQFT</label>
+        <label className="block text-sm font-medium text-zinc-300">Total SQFT</label>
         <input
           name="totalSqft"
           type="number"
           min="0"
           step="1"
           required
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Company rate per SQFT
         </label>
         <input
@@ -101,28 +101,28 @@ export function AddProjectForm({
           step="0.001"
           defaultValue="0.03"
           required
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">QField</label>
+        <label className="block text-sm font-medium text-zinc-300">QField</label>
         <select
           name="qfield"
-          className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         >
           <option value="">Not set</option>
           <option value="Qfield-1">Qfield-1</option>
           <option value="Qfield-2">Qfield-2</option>
         </select>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Which QField this project is stored in.
         </p>
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Status</label>
+        <label className="block text-sm font-medium text-zinc-300">Status</label>
         <select
           name="status"
-          className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
           defaultValue="NOT_STARTED"
         >
           <option value="NOT_STARTED">Not started</option>
@@ -131,34 +131,34 @@ export function AddProjectForm({
         </select>
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           ECD (Estimated Completion Date)
         </label>
         <input
           name="ecd"
           type="date"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-zinc-500">
           Optional. Mark as In progress when you assign fielders; mark Completed when done.
         </p>
       </div>
       <div className="space-y-1 md:col-span-2">
-        <label className="block text-sm font-medium text-slate-700">Notes</label>
+        <label className="block text-sm font-medium text-zinc-300">Notes</label>
         <textarea
           name="notes"
           rows={2}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
 
-      <div className="md:col-span-2 mt-2 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="md:col-span-2 mt-2 rounded-lg border border-zinc-700 bg-zinc-900/50 p-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">
+            <h3 className="text-base font-semibold text-zinc-100">
               Assign fielders (optional)
             </h3>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-zinc-400">
               Add one or more fielders for this project. Leave name blank to skip a row.
             </p>
           </div>
@@ -222,16 +222,16 @@ function FielderRow({
   ).sort((a, b) => a.fielderName.localeCompare(b.fielderName));
 
   return (
-    <div className="rounded border border-slate-200 bg-white p-4 grid gap-4 md:grid-cols-2">
+    <div className="rounded border border-zinc-700 bg-zinc-900 p-4 grid gap-4 md:grid-cols-2">
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Fielder name (stored uppercase)</label>
+        <label className="block text-sm font-medium text-zinc-300">Fielder name (stored uppercase)</label>
         <input
           name={`${prefix}name`}
           list={`fielderNames-${index}`}
           value={fielderName}
           onChange={(e) => setFielderName(e.target.value)}
           placeholder="e.g. Nivas"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
         <datalist id={`fielderNames-${index}`}>
           {uniqueFielderNames.map((name) => (
@@ -240,7 +240,7 @@ function FielderRow({
         </datalist>
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Rate per SQFT {isInternal && "(optional – owner earnings)"}
         </label>
         <input
@@ -249,11 +249,11 @@ function FielderRow({
           min="0"
           step="0.001"
           placeholder={isInternal ? "e.g. 0.02" : "e.g. 0.025"}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">Commission %</label>
+        <label className="block text-sm font-medium text-zinc-300">Commission %</label>
         <input
           name={`${prefix}commission`}
           type="number"
@@ -261,7 +261,7 @@ function FielderRow({
           step="0.01"
           disabled={isInternal || hasManager}
           placeholder="Optional"
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white disabled:bg-slate-100 disabled:text-slate-500"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900 disabled:bg-zinc-800/50 disabled:text-zinc-500"
         />
       </div>
       <div className="space-y-1 md:col-span-2 flex flex-wrap items-center gap-4">
@@ -278,9 +278,9 @@ function FielderRow({
                 setFielderName("Basheer");
               }
             }}
-            className="rounded border-slate-300"
+            className="rounded border-zinc-600"
           />
-          <span className="text-sm font-medium text-slate-700">Owner / company (no payout)</span>
+          <span className="text-sm font-medium text-zinc-300">Owner / company (no payout)</span>
         </label>
         <label className="flex items-center gap-2">
           <input
@@ -288,18 +288,18 @@ function FielderRow({
             checked={hasManager}
             onChange={(e) => setHasManager(e.target.checked)}
             disabled={isInternal}
-            className="rounded border-slate-300"
+            className="rounded border-zinc-600"
           />
-          <span className="text-sm font-medium text-slate-700">Managed by another fielder</span>
+          <span className="text-sm font-medium text-zinc-300">Managed by another fielder</span>
         </label>
       </div>
       {hasManager && (
         <>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">Managed by</label>
+            <label className="block text-sm font-medium text-zinc-300">Managed by</label>
             <select
               name={`${prefix}managedBy`}
-              className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
             >
               <option value="">Select manager</option>
               {managerOptions.map((a) => (
@@ -310,21 +310,21 @@ function FielderRow({
             </select>
           </div>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">Manager rate per SQFT</label>
+            <label className="block text-sm font-medium text-zinc-300">Manager rate per SQFT</label>
             <input
               name={`${prefix}managerRate`}
               type="number"
               min="0"
               step="0.001"
               placeholder="e.g. 0.025"
-              className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
             />
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-zinc-500">
               Worker rate + manager commission per SQFT. E.g. Naveen 0.020, Nivas commission 0.005 → enter 0.025. Company pays worker 0.020; the 0.005 is split by the % below.
             </p>
           </div>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-zinc-300">
               Company keeps % of manager commission
             </label>
             <input
@@ -334,9 +334,9 @@ function FielderRow({
               max="100"
               step="0.01"
               placeholder="e.g. 50"
-              className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
             />
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-zinc-500">
               E.g. 50 = company keeps 50% of the manager commission, manager (Nivas) gets the other 50%.
             </p>
           </div>

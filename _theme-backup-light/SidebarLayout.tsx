@@ -80,7 +80,7 @@ export function SidebarLayout({
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <div className="dashboard-layout flex min-h-screen text-zinc-100">
+    <div className="dashboard-layout flex min-h-screen text-slate-900">
       <SessionTimeout />
       <a href="#main-content" className="skip-link no-print">
         Skip to main content
@@ -99,7 +99,7 @@ export function SidebarLayout({
         <button
           type="button"
           onClick={() => setCollapsed(false)}
-          className="no-print fixed left-0 top-5 z-30 rounded-r-xl border-0 bg-gradient-to-b from-zinc-800 to-zinc-900 px-3 py-3.5 text-white shadow-xl hover:from-zinc-700 hover:to-zinc-800 transition-all"
+          className="no-print fixed left-0 top-5 z-30 rounded-r-xl border-0 bg-gradient-to-b from-slate-800 to-slate-900 px-3 py-3.5 text-white shadow-xl hover:from-slate-700 hover:to-slate-800 transition-all"
           aria-label="Show sidebar"
         >
           <span className="text-lg">→</span>
@@ -119,14 +119,14 @@ export function SidebarLayout({
             <h1 className="font-display text-2xl font-bold tracking-tight text-white">
               UrbanLink Networks
             </h1>
-            <p className="mt-0.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-[0.25em]">
+            <p className="mt-0.5 text-[10px] font-semibold text-slate-400 uppercase tracking-[0.25em]">
               Admin
             </p>
           </div>
-        <button
-          type="button"
-          onClick={() => (isLg ? setCollapsed(true) : closeMobileMenu())}
-          className="shrink-0 rounded-xl p-2.5 text-zinc-400 hover:bg-white/5 hover:text-white transition-colors"
+          <button
+            type="button"
+            onClick={() => (isLg ? setCollapsed(true) : closeMobileMenu())}
+            className="shrink-0 rounded-xl p-2.5 text-slate-500 hover:bg-white/5 hover:text-white transition-colors"
             aria-label={isLg ? "Collapse sidebar" : "Close menu"}
           >
             ←
@@ -149,32 +149,32 @@ export function SidebarLayout({
           <button
             type="button"
             onClick={() => setCompactDensity((v) => !v)}
-            className={`w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${compactDensity ? "bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/25" : "text-zinc-400 hover:bg-white/5 hover:text-white"}`}
+            className={`w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${compactDensity ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
           >
             {compactDensity ? "✓ Compact tables" : "Comfortable tables"}
           </button>
-          <p className="mt-1.5 px-2 text-[11px] text-zinc-500 uppercase tracking-wider">
+          <p className="mt-1.5 px-2 text-[11px] text-slate-500 uppercase tracking-wider">
             Table density
           </p>
         </div>
         <form method="POST" action="/api/auth/logout" className="mt-6">
           <button
             type="submit"
-            className="w-full rounded-xl border border-zinc-600/80 bg-transparent px-4 py-3 text-sm font-medium text-zinc-400 hover:bg-white/5 hover:text-white hover:border-zinc-500 transition-colors"
+            className="w-full rounded-xl border border-slate-600/80 bg-transparent px-4 py-3 text-sm font-medium text-slate-400 hover:bg-white/5 hover:text-white hover:border-slate-500 transition-colors"
           >
             Log out
           </button>
         </form>
       </aside>
       <main id="main-content" tabIndex={-1} className={`flex-1 min-w-0 ${compactDensity ? "table-density-compact" : ""}`}>
-        <header className="sticky top-0 z-20 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl">
+        <header className="sticky top-0 z-20 border-b border-slate-200/50 bg-white/80 backdrop-blur-xl">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
             <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-5">
               {!isLg && (
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(true)}
-                  className="header-menu-btn no-print shrink-0 rounded-xl p-2.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+                  className="header-menu-btn no-print shrink-0 rounded-xl p-2.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                   aria-label="Open menu"
                 >
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -182,17 +182,17 @@ export function SidebarLayout({
                   </svg>
                 </button>
               )}
-              <div className="flex h-9 w-1 shrink-0 overflow-hidden rounded-full bg-gradient-to-b from-emerald-500 to-emerald-600 min-w-[4px]" aria-hidden />
+              <div className="flex h-9 w-1 shrink-0 overflow-hidden rounded-full bg-gradient-to-b from-indigo-500 to-indigo-600 min-w-[4px]" aria-hidden />
               <div className="min-w-0">
                 {backLink && (
                   <Link
                     href={backLink.href}
-                    className="block text-[11px] font-semibold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 transition-colors mb-0.5"
+                    className="block text-[11px] font-semibold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors mb-0.5"
                   >
                     ← {backLink.label}
                   </Link>
                 )}
-                <h2 className="font-display text-xl font-semibold tracking-tight text-zinc-100 sm:text-2xl truncate">
+                <h2 className="font-display text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl truncate">
                   {title}
                 </h2>
               </div>
@@ -223,12 +223,12 @@ function SidebarLink({ href, label, active, onNavigate }: SidebarLinkProps) {
       onClick={onNavigate}
       className={`relative rounded-xl pl-5 pr-4 py-3 text-sm font-medium transition-all ${
         active
-          ? "bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/25"
-          : "text-zinc-400 hover:bg-white/5 hover:text-white"
+          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25"
+          : "text-slate-400 hover:bg-white/5 hover:text-white"
       }`}
     >
       {active && (
-        <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1 rounded-full bg-emerald-400 h-5" aria-hidden />
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1 rounded-full bg-indigo-300 h-5" aria-hidden />
       )}
       <span className={active ? "relative" : ""}>{label}</span>
     </Link>

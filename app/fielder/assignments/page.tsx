@@ -47,7 +47,7 @@ export default async function FielderAssignmentsPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 print-content">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-display text-xl font-semibold text-slate-900">
+        <h2 className="font-display text-xl font-semibold text-zinc-100">
           My assignments
         </h2>
         <PrintButton label="Print" />
@@ -69,11 +69,11 @@ export default async function FielderAssignmentsPage() {
           </thead>
           <tbody>
             {rows.map(({ assignment: a, sqft, totalRequired, paid, pending: rowPending, dueStatus }) => (
-              <tr key={a.id} className="border-t text-slate-800">
+              <tr key={a.id} className="border-t text-zinc-200">
                 <td className="px-3 py-2">
                   {a.project.projectCode}
                   {a.archivedAt && (
-                    <span className="ml-2 text-xs text-slate-500">
+                    <span className="ml-2 text-xs text-zinc-500">
                       (archived)
                     </span>
                   )}
@@ -114,11 +114,11 @@ export default async function FielderAssignmentsPage() {
       </div>
 
       {rows.length === 0 && (
-        <p className="text-slate-600">No assignments yet.</p>
+        <p className="text-zinc-400">No assignments yet.</p>
       )}
 
       <section className="space-y-3">
-        <h3 className="text-base font-semibold text-slate-900">
+        <h3 className="text-base font-semibold text-zinc-100">
           Additional work assigned to me
         </h3>
         {additionalWork.length > 0 ? (
@@ -137,7 +137,7 @@ export default async function FielderAssignmentsPage() {
               </thead>
               <tbody>
                 {additionalWork.map((w) => (
-                  <tr key={w.id} className="border-t text-slate-800">
+                  <tr key={w.id} className="border-t text-zinc-200">
                     <td className="px-3 py-2">
                       {w.type === "ADDITIONAL_FIELDING" ? "Additional fielding" : "Correction"}
                     </td>
@@ -159,13 +159,13 @@ export default async function FielderAssignmentsPage() {
             </table>
           </div>
         ) : (
-          <p className="text-slate-600">No additional work assigned yet.</p>
+          <p className="text-zinc-400">No additional work assigned yet.</p>
         )}
       </section>
 
       <Link
         href="/fielder"
-        className="text-sm text-slate-600 underline hover:text-slate-900"
+        className="text-sm text-zinc-400 underline hover:text-zinc-100"
       >
         ← My statement
       </Link>

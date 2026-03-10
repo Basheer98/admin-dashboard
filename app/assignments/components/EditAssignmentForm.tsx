@@ -76,31 +76,31 @@ export function EditAssignmentForm({
       className="grid gap-4 md:grid-cols-2"
     >
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Fielder name
         </label>
         <input
           name="fielderName"
           defaultValue={assignment.fielderName}
           disabled
-          className="w-full rounded-md border border-slate-200 bg-slate-100 px-3 py-2.5 text-base text-slate-600"
+          className="w-full rounded-md border border-zinc-700 bg-zinc-800/50 px-3 py-2.5 text-base text-zinc-400"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Due date (optional)
         </label>
         <input
           name="dueDate"
           type="date"
           defaultValue={assignment.dueDate ?? ""}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Rate per SQFT {isInternal && "(optional – for tracking owner earnings)"}
         </label>
         <input
@@ -111,17 +111,17 @@ export function EditAssignmentForm({
           defaultValue={Number(assignment.ratePerSqft)}
           required={!isInternal}
           placeholder={isInternal ? "e.g. 0.02" : undefined}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
         />
         {isInternal && (
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-zinc-500">
             Optional. Used to show &quot;Owner earnings&quot; / internal work value on your report.
           </p>
         )}
       </div>
 
       <div className="space-y-1">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-zinc-300">
           Commission %
         </label>
         <input
@@ -135,10 +135,10 @@ export function EditAssignmentForm({
               : 0
           }
           disabled={isInternal || hasManager}
-          className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white disabled:bg-slate-100 disabled:text-slate-500"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900 disabled:bg-zinc-800/50 disabled:text-zinc-500"
         />
         {hasManager && (
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-zinc-500">
             Commission not applicable when managed by another fielder
           </p>
         )}
@@ -155,13 +155,13 @@ export function EditAssignmentForm({
               setIsInternal(next);
               if (next) setHasManager(false);
             }}
-            className="rounded border-slate-300"
+            className="rounded border-zinc-600"
           />
-          <span className="text-sm font-medium text-slate-700">
+          <span className="text-sm font-medium text-zinc-300">
             Owner / company work (no payout)
           </span>
         </label>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-zinc-500">
           When enabled, this assignment will not contribute to payouts/pending.
         </p>
       </div>
@@ -172,10 +172,10 @@ export function EditAssignmentForm({
             type="checkbox"
             checked={hasManager}
             onChange={(e) => setHasManager(e.target.checked)}
-            className="rounded border-slate-300"
+            className="rounded border-zinc-600"
             disabled={isInternal}
           />
-          <span className="text-sm font-medium text-slate-700">
+          <span className="text-sm font-medium text-zinc-300">
             This fielder is managed by another fielder
           </span>
         </label>
@@ -184,13 +184,13 @@ export function EditAssignmentForm({
       {hasManager ? (
         <>
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-zinc-300">
               Managed by
             </label>
             <select
               name="managedByFielderId"
               defaultValue={assignment.managedByFielderId ?? ""}
-              className="w-full h-11 rounded-md border border-slate-300 px-3 text-base leading-tight text-black focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
             >
               <option value="">None</option>
               {projectAssignments.map((a) => (
@@ -202,7 +202,7 @@ export function EditAssignmentForm({
           </div>
 
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-zinc-300">
               Manager rate per SQFT
             </label>
             <input
@@ -215,15 +215,15 @@ export function EditAssignmentForm({
                   ? Number(assignment.managerRatePerSqft)
                   : ""
               }
-              className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
             />
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-zinc-500">
               Worker rate + manager commission per SQFT. E.g. worker 0.020, manager commission 0.005 → enter 0.025.
             </p>
           </div>
 
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">
+            <label className="block text-sm font-medium text-zinc-300">
               Company keeps % of manager commission
             </label>
             <input
@@ -237,9 +237,9 @@ export function EditAssignmentForm({
                   ? Number(assignment.managerCommissionShare) * 100
                   : ""
               }
-              className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-black placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
             />
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-zinc-500">
               E.g. 50 = company keeps 50%, manager gets the other 50%.
             </p>
           </div>
@@ -253,12 +253,12 @@ export function EditAssignmentForm({
       )}
 
       <div className="md:col-span-2 flex items-center justify-between">
-        <div className="text-sm text-slate-600 space-y-1">
+        <div className="text-sm text-zinc-400 space-y-1">
           {hasManager && managerInfo ? (
             <>
               <p>
                 Manager rate:{" "}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-zinc-100">
                   {managerInfo.rate.toLocaleString(undefined, {
                     minimumFractionDigits: 3,
                     maximumFractionDigits: 3,
@@ -267,7 +267,7 @@ export function EditAssignmentForm({
               </p>
               <p>
                 Worker rate:{" "}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-zinc-100">
                   {workerRate.toLocaleString(undefined, {
                     minimumFractionDigits: 3,
                     maximumFractionDigits: 3,
@@ -276,7 +276,7 @@ export function EditAssignmentForm({
               </p>
               <p>
                 Manager commission:{" "}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-zinc-100">
                   {((managerInfo.rate - workerRate) * sqft).toLocaleString(
                     undefined,
                     {
@@ -288,7 +288,7 @@ export function EditAssignmentForm({
               </p>
               <p>
                 Company share back:{" "}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-zinc-100">
                   {companyShareBack.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -297,7 +297,7 @@ export function EditAssignmentForm({
               </p>
               <p>
                 Manager net commission:{" "}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-zinc-100">
                   {managerInfo.netCommission.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -309,7 +309,7 @@ export function EditAssignmentForm({
             <>
               <p>
                 Base payout:{" "}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-zinc-100">
                   {totalPayoutBase.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -319,7 +319,7 @@ export function EditAssignmentForm({
               {assignment.commissionPercentage && (
                 <p>
                   Commission amount:{" "}
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-zinc-100">
                     {(totalPayoutBase *
                       Number(assignment.commissionPercentage)).toLocaleString(
                       undefined,
@@ -335,7 +335,7 @@ export function EditAssignmentForm({
           )}
           <p>
             Total required payout:{" "}
-            <span className="font-medium text-slate-900">
+            <span className="font-medium text-zinc-100">
               {totalRequired.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -344,7 +344,7 @@ export function EditAssignmentForm({
           </p>
           <p>
             Total paid:{" "}
-            <span className="font-medium text-slate-900">
+            <span className="font-medium text-zinc-100">
               {totalPaid.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -353,7 +353,7 @@ export function EditAssignmentForm({
           </p>
           <p>
             Pending:{" "}
-            <span className="font-medium text-slate-900">
+            <span className="font-medium text-zinc-100">
               {pending.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -363,7 +363,7 @@ export function EditAssignmentForm({
         </div>
         <button
           type="submit"
-          className="rounded-md btn-primary px-4 py-2 text-sm font-medium text-white  focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          className="rounded-md btn-primary px-4 py-2 text-sm font-medium text-white  focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
         >
           Save changes
         </button>

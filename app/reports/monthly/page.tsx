@@ -67,7 +67,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
     <SidebarLayout title="Monthly summary" current="reports-monthly" headerAction={<PrintButton />}>
       <div className="flex flex-1 flex-col gap-8">
         <section className="card no-print p-6">
-          <h2 className="mb-3 text-base font-semibold text-slate-900">
+          <h2 className="mb-3 text-base font-semibold text-zinc-100">
             Select month
           </h2>
           <form method="get" action="/reports/monthly" className="flex items-end gap-3">
@@ -87,35 +87,35 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
         </section>
 
         <div className="card print-content p-6 print:shadow-none">
-          <h1 className="text-xl font-bold text-slate-900">
+          <h1 className="text-xl font-bold text-zinc-100">
             Monthly summary — {monthLabel}
           </h1>
-          <p className="mt-1 text-sm text-slate-500 no-print">
+          <p className="mt-1 text-sm text-zinc-500 no-print">
             Revenue from projects whose ECD falls in this month (or created this month if no ECD); payouts from payments recorded this month.
           </p>
 
           <section className="mt-6 grid gap-4 sm:grid-cols-3">
             <div>
-              <p className="text-sm font-medium text-slate-500">Revenue</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <p className="text-sm font-medium text-zinc-500">Revenue</p>
+              <p className="mt-1 text-2xl font-semibold text-zinc-100">
                 {showInr
                   ? formatWithInr(revenue, { showInr: true })
                   : `$${formatCurrency(revenue)}`}
               </p>
-              <p className="text-xs text-slate-500">(projects created in {monthLabel})</p>
+              <p className="text-xs text-zinc-500">(projects created in {monthLabel})</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Payouts</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <p className="text-sm font-medium text-zinc-500">Payouts</p>
+              <p className="mt-1 text-2xl font-semibold text-zinc-100">
                 {showInr
                   ? formatWithInr(payouts, { showInr: true })
                   : `$${formatCurrency(payouts)}`}
               </p>
-              <p className="text-xs text-slate-500">(payments in {monthLabel})</p>
+              <p className="text-xs text-zinc-500">(payments in {monthLabel})</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Profit</p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900">
+              <p className="text-sm font-medium text-zinc-500">Profit</p>
+              <p className="mt-1 text-2xl font-semibold text-zinc-100">
                 {showInr
                   ? formatWithInr(profit, { showInr: true })
                   : `$${formatCurrency(profit)}`}
@@ -124,7 +124,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
           </section>
 
           <section className="mt-8">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-zinc-100">
               Projects for {monthLabel}
             </h2>
             <div className="mt-2 overflow-x-auto">
@@ -141,7 +141,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                   {projectsInMonth.map((p) => {
                     const rev = p.totalSqft * Number(p.companyRatePerSqft);
                     return (
-                      <tr key={p.id} className="border-t text-slate-800">
+                      <tr key={p.id} className="border-t text-zinc-200">
                         <td className="px-3 py-2">{p.projectCode}</td>
                         <td className="px-3 py-2">{p.clientName}</td>
                         <td className="px-3 py-2">{p.invoiceNumber?.trim() ?? "—"}</td>
@@ -151,7 +151,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                   })}
                   {projectsInMonth.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-3 py-2 text-slate-500">
+                      <td colSpan={4} className="px-3 py-2 text-zinc-500">
                         None
                       </td>
                     </tr>
@@ -162,7 +162,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
           </section>
 
           <section className="mt-8">
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-zinc-100">
               Payments in {monthLabel}
             </h2>
             <div className="mt-2 overflow-x-auto">
@@ -179,7 +179,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                 </thead>
                 <tbody>
                   {paymentsWithDetailsInMonth.map((p) => (
-                    <tr key={p.id} className="border-t text-slate-800">
+                    <tr key={p.id} className="border-t text-zinc-200">
                       <td className="px-3 py-2">
                         {new Date(p.paymentDate).toLocaleDateString()}
                       </td>
@@ -192,7 +192,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                   ))}
                   {paymentsWithDetailsInMonth.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-3 py-2 text-slate-500">
+                      <td colSpan={6} className="px-3 py-2 text-zinc-500">
                         None
                       </td>
                     </tr>
@@ -202,7 +202,7 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
             </div>
           </section>
 
-          <p className="mt-6 text-xs text-slate-500">
+          <p className="mt-6 text-xs text-zinc-500">
             Generated {new Date().toLocaleString()}
           </p>
         </div>

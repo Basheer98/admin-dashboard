@@ -22,7 +22,7 @@ export default async function EditAssignmentPage({ params }: PageProps) {
   if (!assignment) {
     return (
       <SidebarLayout title="Assignment not found" current="assignments">
-        <p className="text-sm text-slate-700">Assignment not found.</p>
+        <p className="text-sm text-zinc-300">Assignment not found.</p>
       </SidebarLayout>
     );
   }
@@ -40,9 +40,9 @@ export default async function EditAssignmentPage({ params }: PageProps) {
         />
         <section className="card p-6">
           <div className="mb-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-zinc-400">
               Project:{" "}
-              <span className="font-medium text-slate-900">
+              <span className="font-medium text-zinc-100">
                 {assignment.project.projectCode} – {assignment.project.clientName}
               </span>
             </p>

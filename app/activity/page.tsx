@@ -8,7 +8,7 @@ export default async function ActivityPage() {
   return (
     <SidebarLayout title="Activity log" current="activity" headerAction={<PrintButton />}>
       <div className="flex flex-1 flex-col gap-8 print-content">
-        <p className="text-sm text-slate-600 no-print">
+        <p className="text-sm text-zinc-400 no-print">
           Simple audit trail: project creation and payment logging.
         </p>
         <section className="card overflow-x-auto max-h-[70vh] overflow-y-auto">
@@ -22,12 +22,12 @@ export default async function ActivityPage() {
             </thead>
             <tbody>
               {activities.map((a) => (
-                <tr key={a.id} className="border-t border-slate-200 text-slate-800">
-                  <td className="whitespace-nowrap px-3 py-2 text-slate-500">
+                <tr key={a.id} className="border-t border-zinc-700 text-zinc-200">
+                  <td className="whitespace-nowrap px-3 py-2 text-zinc-500">
                     {new Date(a.createdAt).toLocaleString()}
                   </td>
                   <td className="px-3 py-2">{a.description}</td>
-                  <td className="max-w-xs px-3 py-2 text-slate-500">
+                  <td className="max-w-xs px-3 py-2 text-zinc-500">
                     {a.metadata?.changes && typeof a.metadata.changes === "object" ? (
                       <span className="text-xs">
                         {Object.entries(a.metadata.changes as Record<string, { old: unknown; new: unknown }>)
@@ -46,7 +46,7 @@ export default async function ActivityPage() {
                 <tr>
                   <td
                     colSpan={3}
-                    className="px-3 py-4 text-center text-slate-500"
+                    className="px-3 py-4 text-center text-zinc-500"
                   >
                     No activity yet.
                   </td>
