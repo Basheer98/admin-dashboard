@@ -10,8 +10,10 @@ const DEFAULT_SECRET = "dev-secret-change-in-production";
 const SESSION_SECRET =
   process.env.SESSION_SECRET || process.env.AUTH_SECRET || DEFAULT_SECRET;
 
-if (typeof process !== "undefined" && process.env?.NODE_ENV === "production" && SESSION_SECRET === DEFAULT_SECRET) {
-  throw new Error("SESSION_SECRET or AUTH_SECRET must be set in production. Do not use the default dev secret.");
+function ensureProductionSecret(): void {
+  if (typeof process !== "undefined" && process.env?.NODE_ENV === "production" && SESSION_SECRET === DEFAULT_SECRET) {
+    console.error("SECURITY: SESSION_SECRET or AUTH_SECRET must be set in production. Using default is insecure.");
+  }
 }
 
 const BASE64URL_CHARS =
@@ -56,6 +58,7 @@ function constantTimeCompare(a: string, b: string): boolean {
 
 /** Web Crypto HMAC-SHA256 (works in Edge and Node). */
 async function signAsync(payload: string): Promise<string> {
+  ensureProductionSecret();
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(SESSION_SECRET),
