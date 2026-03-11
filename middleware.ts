@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sessionCookieName, verifySession } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 
-const PUBLIC_PATHS = ["/login", "/api/auth/login"];
+const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/mobile"];
 
 const FIELDER_PATH_PREFIX = "/fielder";
 
