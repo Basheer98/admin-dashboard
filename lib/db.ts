@@ -1147,6 +1147,7 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
       notes: row.notes != null ? String(row.notes) : null,
       qfield: row.qfield != null ? String(row.qfield) : null,
       invoiceNumber: row.invoiceNumber != null ? String(row.invoiceNumber) : row.invoice_number != null ? String(row.invoice_number) : null,
+      workType: row.workType != null ? String(row.workType) : row.work_type != null ? String(row.work_type) : null,
       createdAt: toTimestamp(row.createdAt ?? row.created_at) ?? now,
       updatedAt: toTimestamp(row.updatedAt ?? row.updated_at) ?? now,
       archivedAt: toTimestamp(row.archivedAt ?? row.archived_at),
