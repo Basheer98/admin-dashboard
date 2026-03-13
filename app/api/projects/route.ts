@@ -29,6 +29,8 @@ export async function POST(request: Request) {
     const qfield = qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2" ? qfieldRaw : null;
     const invoiceNumberRaw = String(formData.get("invoiceNumber") ?? "").trim();
     const invoiceNumber = invoiceNumberRaw || null;
+    const workTypeRaw = String(formData.get("workType") ?? "").trim();
+    const workType = workTypeRaw || null;
 
     const redirectTo = String(formData.get("redirectTo") ?? "/projects");
 
@@ -38,11 +40,12 @@ export async function POST(request: Request) {
       location,
       totalSqft: totalSqftStr ? Number(totalSqftStr) : undefined,
       companyRatePerSqft: rateStr ? Number(rateStr) : undefined,
-      status: statusStr || "NOT_STARTED",
+      status: statusStr || "ASSIGNED",
       ecd,
       notes,
       qfield,
       invoiceNumber,
+      workType,
     });
     if (!parsed.success) {
       return NextResponse.redirect(getRedirectUrl(request, "/projects", { error: "invalid" }));
@@ -59,6 +62,7 @@ export async function POST(request: Request) {
     notes: parsed.data.notes,
     qfield: parsed.data.qfield,
     invoiceNumber: parsed.data.invoiceNumber,
+    workType: parsed.data.workType,
   });
 
     await insertAuditLog({

@@ -45,9 +45,20 @@ export type ProjectRow = {
   notes: string | null;
   qfield: string | null;
   invoiceNumber: string | null;
+  workType: string | null;
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+};
+
+export type ProjectIssueRow = {
+  id: number;
+  projectId: number;
+  reportedBy: string;
+  description: string;
+  createdAt: string;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
 };
 
 export type FielderAssignmentRow = {
@@ -85,7 +96,7 @@ export type ListPaymentsOptions = { includeVoided?: boolean };
 const projectCols = `
   id, project_code AS "projectCode", client_name AS "clientName", location,
   total_sqft AS "totalSqft", company_rate_per_sqft AS "companyRatePerSqft",
-  status, ecd, notes, qfield, invoice_number AS "invoiceNumber",
+  status, ecd, notes, qfield, invoice_number AS "invoiceNumber", work_type AS "workType",
   created_at::text AS "createdAt", updated_at::text AS "updatedAt", archived_at::text AS "archivedAt"
 `;
 
@@ -227,10 +238,11 @@ export async function insertProject(input: {
   notes: string | null;
   qfield?: string | null;
   invoiceNumber?: string | null;
+  workType?: string | null;
 }): Promise<ProjectRow> {
   const row = await queryOneRow<ProjectRow>(
-    `INSERT INTO projects (project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, qfield, invoice_number)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `INSERT INTO projects (project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, qfield, invoice_number, work_type)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING ${projectCols}`,
     [
       input.projectCode,
@@ -243,6 +255,7 @@ export async function insertProject(input: {
       input.notes,
       input.qfield ?? null,
       input.invoiceNumber ?? null,
+      input.workType ?? null,
     ],
   );
   if (!row) throw new Error("insertProject failed");
@@ -268,6 +281,7 @@ export async function updateProject(
     notes: string | null;
     qfield?: string | null;
     invoiceNumber?: string | null;
+    workType?: string | null;
     archivedAt?: string | null;
   },
 ): Promise<void> {
@@ -275,8 +289,9 @@ export async function updateProject(
     `UPDATE projects SET
        project_code = $2, client_name = $3, location = $4, total_sqft = $5,
        company_rate_per_sqft = $6, status = $7, ecd = $8, notes = $9, qfield = $10, invoice_number = $11,
+       work_type = $12,
        updated_at = NOW(),
-       archived_at = COALESCE($12, archived_at)
+       archived_at = COALESCE($13, archived_at)
      WHERE id = $1`,
     [
       id,
@@ -290,9 +305,31 @@ export async function updateProject(
       input.notes,
       input.qfield ?? null,
       input.invoiceNumber ?? null,
+      input.workType ?? null,
       input.archivedAt ?? null,
     ],
   );
+}
+
+export async function insertProjectIssue(input: {
+  projectId: number;
+  reportedBy: string;
+  description: string;
+}): Promise<void> {
+  await query(
+    `INSERT INTO project_issues (project_id, reported_by, description) VALUES ($1, $2, $3)`,
+    [input.projectId, input.reportedBy, input.description],
+  );
+}
+
+export async function getProjectIssuesByProjectId(projectId: number): Promise<ProjectIssueRow[]> {
+  const rows = await query<ProjectIssueRow>(
+    `SELECT id, project_id AS "projectId", reported_by AS "reportedBy", description,
+            created_at::text AS "createdAt", resolved_at::text AS "resolvedAt", resolved_by AS "resolvedBy"
+     FROM project_issues WHERE project_id = $1 ORDER BY created_at DESC`,
+    [projectId],
+  );
+  return rows as ProjectIssueRow[];
 }
 
 export async function archiveProject(id: number): Promise<void> {

@@ -8,36 +8,7 @@ import {
 import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate, fielderPaymentPostSchema } from "@/lib/validations";
-
-function getTotalRequiredAndPending(
-  a: {
-    project: { totalSqft: number };
-    ratePerSqft: number | string;
-    isInternal: boolean;
-    managedByFielderId: number | null;
-    managerRatePerSqft: number | string | null;
-    commissionPercentage: number | string | null;
-    payments: { amount: string | number }[];
-  },
-): { totalRequired: number; pending: number } {
-  const sqft = a.project.totalSqft;
-  const workerRate = Number(a.ratePerSqft);
-  let totalRequired = 0;
-  if (!a.isInternal) {
-    if (a.managedByFielderId && a.managerRatePerSqft) {
-      totalRequired = workerRate * sqft;
-    } else {
-      const base = workerRate * sqft;
-      const commission = a.commissionPercentage
-        ? base * Number(a.commissionPercentage)
-        : 0;
-      totalRequired = base + commission;
-    }
-  }
-  const paid = a.payments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const pending = a.isInternal ? 0 : Math.max(totalRequired - paid, 0);
-  return { totalRequired, pending };
-}
+import { calcAssignmentPayout } from "@/lib/payouts";
 
 export async function POST(
   request: Request,
@@ -100,7 +71,7 @@ export async function POST(
 
   const assignmentsWithPending = fielderAssignments
     .map((a) => {
-      const { totalRequired, pending } = getTotalRequiredAndPending(a);
+      const { totalRequired, pending } = calcAssignmentPayout(a);
       return { assignment: a, totalRequired, pending };
     })
     .filter((x) => x.pending > 0)

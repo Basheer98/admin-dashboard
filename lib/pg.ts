@@ -48,6 +48,23 @@ export async function runSchema(): Promise<void> {
     DO $$ BEGIN ALTER TABLE projects ADD COLUMN invoice_number TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   await p.query(`
+    DO $$ BEGIN ALTER TABLE projects ADD COLUMN work_type TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    UPDATE projects SET status = 'ASSIGNED' WHERE status = 'NOT_STARTED';
+  `);
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS project_issues (
+      id SERIAL PRIMARY KEY,
+      project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      reported_by TEXT NOT NULL,
+      description TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      resolved_at TIMESTAMPTZ NULL,
+      resolved_by TEXT NULL
+    );
+  `);
+  await p.query(`
     CREATE TABLE IF NOT EXISTS assignments (
       id SERIAL PRIMARY KEY,
       project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,

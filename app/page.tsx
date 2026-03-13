@@ -463,6 +463,14 @@ export default async function Home({ searchParams }: PageProps) {
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const dataAsOf = new Date();
 
+  const activeProjects = allProjects.filter((p) => !p.archivedAt);
+  const statusCounts = {
+    ASSIGNED: activeProjects.filter((p) => p.status === "ASSIGNED" || p.status === "NOT_STARTED").length,
+    IN_PROGRESS: activeProjects.filter((p) => p.status === "IN_PROGRESS").length,
+    SUBMITTED: activeProjects.filter((p) => p.status === "SUBMITTED").length,
+    COMPLETED: activeProjects.filter((p) => p.status === "COMPLETED").length,
+  };
+
   return (
     <SidebarLayout
       title="Dashboard"
@@ -499,6 +507,38 @@ export default async function Home({ searchParams }: PageProps) {
             )}
           </div>
         </div>
+
+        {/* Project status overview — always reflects current state, not filtered */}
+        <section className="space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+            Project status overview
+          </h2>
+          <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+            <Link href="/projects?status=ASSIGNED" className="card p-5 hover:border-zinc-600 transition-colors">
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Assigned</p>
+              <p className="mt-2 text-3xl font-bold text-zinc-100">{statusCounts.ASSIGNED}</p>
+            </Link>
+            <Link href="/projects?status=IN_PROGRESS" className="card p-5 hover:border-zinc-600 transition-colors">
+              <p className="text-xs font-semibold uppercase tracking-wider text-amber-500">In Progress</p>
+              <p className="mt-2 text-3xl font-bold text-zinc-100">{statusCounts.IN_PROGRESS}</p>
+            </Link>
+            <Link href="/projects?status=SUBMITTED" className="card p-5 hover:border-zinc-600 transition-colors">
+              <p className="text-xs font-semibold uppercase tracking-wider text-blue-400">Submitted</p>
+              <p className="mt-2 text-3xl font-bold text-zinc-100">{statusCounts.SUBMITTED}</p>
+              {statusCounts.SUBMITTED > 0 && (
+                <p className="mt-1 text-xs text-blue-400">Pending review</p>
+              )}
+            </Link>
+            <Link href="/projects?status=COMPLETED" className="card p-5 hover:border-zinc-600 transition-colors">
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-500">Completed</p>
+              <p className="mt-2 text-3xl font-bold text-zinc-100">{statusCounts.COMPLETED}</p>
+            </Link>
+            <Link href="/projects" className="card p-5 hover:border-zinc-600 transition-colors">
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Total active</p>
+              <p className="mt-2 text-3xl font-bold text-zinc-100">{activeProjects.length}</p>
+            </Link>
+          </div>
+        </section>
 
         <section className="grid gap-6 md:grid-cols-3">
           <div className="card-highlight p-7">

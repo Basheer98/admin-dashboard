@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { FielderAssignmentRow, ProjectRow } from "@/lib/db";
+import { PROJECT_STATUS_VALUES, getProjectStatusLabel } from "@/lib/projectStatus";
 
 const MAX_FIELDER_ROWS = 20;
 
@@ -119,15 +120,23 @@ export function AddProjectForm({
         </p>
       </div>
       <div className="space-y-1">
+        <label className="block text-sm font-medium text-zinc-300">Work type (optional)</label>
+        <input
+          name="workType"
+          placeholder="e.g. Fiber Verification, OSP Fielding"
+          className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
+        />
+      </div>
+      <div className="space-y-1">
         <label className="block text-sm font-medium text-zinc-300">Status</label>
         <select
           name="status"
           className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
-          defaultValue="NOT_STARTED"
+          defaultValue="ASSIGNED"
         >
-          <option value="NOT_STARTED">Not started</option>
-          <option value="IN_PROGRESS">In progress</option>
-          <option value="COMPLETED">Completed</option>
+          {PROJECT_STATUS_VALUES.map((v) => (
+            <option key={v} value={v}>{getProjectStatusLabel(v)}</option>
+          ))}
         </select>
       </div>
       <div className="space-y-1">
