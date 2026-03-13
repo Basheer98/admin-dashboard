@@ -42,7 +42,7 @@ export async function POST(request: Request, { params }: Params) {
 
   const reportedBy = session.role === "fielder"
     ? (session.fielderName ?? "Unknown")
-    : (session.email ?? "Admin");
+    : "Admin";
 
   await insertProjectIssue({ projectId: id, reportedBy, description });
 
