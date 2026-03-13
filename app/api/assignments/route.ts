@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { insertAssignment, insertAuditLog } from "@/lib/db";
+import { insertAssignment, insertAuditLog, getProjectById } from "@/lib/db";
+import { sendPushToFielder } from "@/lib/push";
 import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeFielderName } from "@/lib/normalize";
@@ -64,6 +65,16 @@ export async function POST(request: Request) {
       entityId: String(newId),
       details: { projectId, fielderName: parsed.data.fielderName },
     });
+
+    const project = await getProjectById(projectId);
+    if (project) {
+      sendPushToFielder(
+        parsed.data.fielderName,
+        "New job assigned",
+        `${project.projectCode} – ${project.clientName}`,
+        { projectId, screen: "project" },
+      ).catch(() => {});
+    }
 
     const path = redirectTo.startsWith("http") ? new URL(redirectTo).pathname : (redirectTo.startsWith("/") ? redirectTo : "/assignments");
     return NextResponse.redirect(getRedirectUrl(request, path, {

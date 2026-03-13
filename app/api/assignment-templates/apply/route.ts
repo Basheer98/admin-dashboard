@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { applyAssignmentTemplateToProject, insertAuditLog } from "@/lib/db";
+import { applyAssignmentTemplateToProject, getAssignmentTemplateById, getProjectById, insertAuditLog } from "@/lib/db";
+import { sendPushToFielder } from "@/lib/push";
 import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 
@@ -30,6 +31,20 @@ export async function POST(request: Request) {
       projectId,
       templateId,
     );
+    const [template, project] = await Promise.all([
+      getAssignmentTemplateById(templateId),
+      getProjectById(projectId),
+    ]);
+    if (template && project && created > 0) {
+      for (const it of template.items) {
+        sendPushToFielder(
+          it.fielderName,
+          "New job assigned",
+          `${project.projectCode} – ${project.clientName}`,
+          { projectId, screen: "project" },
+        ).catch(() => {});
+      }
+    }
     await insertAuditLog({
       ...actor,
       action: "assignment_template.apply",

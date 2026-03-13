@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProjectById, getAssignmentsByProjectId, getProjectIssuesByProjectId } from "@/lib/db";
+import { getProjectById, getAssignmentsByProjectId, getProjectIssuesByProjectId, queryOne } from "@/lib/db";
 import { getMobileSession, unauthorized } from "@/lib/mobileAuth";
 import { getProjectStatusLabel } from "@/lib/projectStatus";
 import { calcAssignmentPayout } from "@/lib/payouts";
@@ -31,6 +31,13 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Not assigned" }, { status: 403 });
   }
 
+  // Explicitly fetch qfield in case project row mapping misses it
+  const qfieldRow = await queryOne<{ qfield: string | null }>(
+    "SELECT qfield FROM projects WHERE id = $1",
+    [id],
+  );
+  const qfield = qfieldRow?.qfield ?? (project as { qfield?: string | null }).qfield ?? null;
+
   const { totalRequired } = calcAssignmentPayout({ ...myAssignment, project, payments: [] });
 
   return NextResponse.json({
@@ -39,6 +46,7 @@ export async function GET(request: Request, { params }: Params) {
     projectCode: project.projectCode,
     clientName: project.clientName,
     location: project.location ?? "",
+    qfield,
     workType: project.workType ?? null,
     status: project.status,
     statusLabel: getProjectStatusLabel(project.status),

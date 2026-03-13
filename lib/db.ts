@@ -949,6 +949,15 @@ export async function getFielderLoginByEmail(email: string): Promise<FielderLogi
   return row as FielderLoginRow | null ?? null;
 }
 
+export async function getFielderLoginByFielderName(fielderName: string): Promise<FielderLoginRow | null> {
+  const normalized = fielderName.trim().toUpperCase();
+  const row = await queryOne<FielderLoginRow>(
+    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName" FROM fielder_logins WHERE UPPER(TRIM(fielder_name)) = $1',
+    [normalized],
+  );
+  return row as FielderLoginRow | null ?? null;
+}
+
 const BCRYPT_ROUNDS = 10;
 
 export async function insertFielderLogin(input: {
@@ -971,6 +980,25 @@ export async function updateFielderLoginPassword(id: number, newPassword: string
     "UPDATE fielder_logins SET password_hash = $2 WHERE id = $1",
     [id, passwordHash],
   );
+}
+
+export async function savePushToken(fielderName: string, expoPushToken: string): Promise<void> {
+  const normalized = fielderName.trim().toUpperCase();
+  await query(
+    `INSERT INTO fielder_push_tokens (fielder_name, expo_push_token, updated_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (fielder_name) DO UPDATE SET expo_push_token = $2, updated_at = NOW()`,
+    [normalized, expoPushToken],
+  );
+}
+
+export async function getPushTokenForFielder(fielderName: string): Promise<string | null> {
+  const normalized = fielderName.trim().toUpperCase();
+  const row = await queryOne<{ expo_push_token: string }>(
+    "SELECT expo_push_token FROM fielder_push_tokens WHERE fielder_name = $1",
+    [normalized],
+  );
+  return (row as { expo_push_token: string } | undefined)?.expo_push_token ?? null;
 }
 
 export async function getSettings(): Promise<SettingsRow> {

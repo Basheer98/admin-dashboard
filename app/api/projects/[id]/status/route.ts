@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProjectById, updateProject, getAssignmentsByProjectId, insertAuditLog } from "@/lib/db";
+import { sendPushToFielder } from "@/lib/push";
+import { getProjectStatusLabel } from "@/lib/projectStatus";
 import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 
@@ -41,7 +43,22 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const actor = getAuditActor(session);
+  const oldStatus = project.status;
   await updateProject(id, { ...project, status: newStatus });
+  if (oldStatus !== newStatus && session.role !== "fielder") {
+    const assignments = await getAssignmentsByProjectId(id);
+    const statusLabel = getProjectStatusLabel(newStatus);
+    for (const a of assignments) {
+      if (!a.archivedAt) {
+        sendPushToFielder(
+          a.fielderName,
+          "Job status updated",
+          `${project.projectCode}: ${statusLabel}`,
+          { projectId: id, screen: "project" },
+        ).catch(() => {});
+      }
+    }
+  }
   await insertAuditLog({
     ...actor,
     action: "project.update",

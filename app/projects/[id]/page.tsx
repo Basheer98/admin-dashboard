@@ -106,13 +106,17 @@ export default async function EditProjectPage({ params }: PageProps) {
 
             <div className="space-y-1">
               <label className="block text-sm font-medium text-zinc-300">
-                Location (optional)
+                Address (optional)
               </label>
               <input
                 name="location"
                 defaultValue={project.location ?? ""}
+                placeholder="e.g. 123 Main St, City, State"
                 className="w-full rounded-md border border-zinc-600 px-3 py-2.5 text-base text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
               />
+              <p className="mt-1 text-sm text-zinc-500">
+                Full address shown to fielders in the app. Tappable to open in maps.
+              </p>
             </div>
 
             <div className="space-y-1">
@@ -159,7 +163,7 @@ export default async function EditProjectPage({ params }: PageProps) {
                 <option value="Qfield-2">Qfield-2</option>
               </select>
               <p className="mt-1 text-sm text-zinc-500">
-                Which QField this project is stored in.
+                QField-1 or Qfield-2. Shown to fielders in the app project details.
               </p>
             </div>
             <div className="space-y-1">

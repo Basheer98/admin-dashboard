@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { insertAssignment, insertProject, insertAuditLog } from "@/lib/db";
+import { sendPushToFielder } from "@/lib/push";
 import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode, normalizeFielderName } from "@/lib/normalize";
@@ -26,7 +27,14 @@ export async function POST(request: Request) {
     const ecd = ecdRaw || null;
     const notes = String(formData.get("notes") ?? "").trim() || null;
     const qfieldRaw = String(formData.get("qfield") ?? "").trim();
-    const qfield = qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2" ? qfieldRaw : null;
+    const qfield =
+      qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2"
+        ? qfieldRaw
+        : qfieldRaw.toLowerCase() === "qfield-1"
+          ? "Qfield-1"
+          : qfieldRaw.toLowerCase() === "qfield-2"
+            ? "Qfield-2"
+            : null;
     const invoiceNumberRaw = String(formData.get("invoiceNumber") ?? "").trim();
     const invoiceNumber = invoiceNumberRaw || null;
     const workTypeRaw = String(formData.get("workType") ?? "").trim();
@@ -120,6 +128,12 @@ export async function POST(request: Request) {
       managerRatePerSqft,
       managerCommissionShare,
     });
+    sendPushToFielder(
+      name,
+      "New job assigned",
+      `${project.projectCode} – ${project.clientName}`,
+      { projectId: project.id, screen: "project" },
+    ).catch(() => {});
   }
 
   const path = redirectTo?.startsWith("http")

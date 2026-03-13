@@ -154,6 +154,13 @@ export async function runSchema(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS fielder_push_tokens (
+      fielder_name TEXT NOT NULL PRIMARY KEY,
+      expo_push_token TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
   schemaDone = true;
 }
 

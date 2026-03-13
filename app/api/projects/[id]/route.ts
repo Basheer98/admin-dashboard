@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { getProjectById, updateProject, insertActivity, insertAuditLog } from "@/lib/db";
+import { getProjectById, updateProject, getAssignmentsByProjectId, insertActivity, insertAuditLog } from "@/lib/db";
+import { sendPushToFielder } from "@/lib/push";
+import { getProjectStatusLabel } from "@/lib/projectStatus";
 import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { normalizeProjectCode } from "@/lib/normalize";
@@ -38,7 +40,14 @@ export async function POST(request: Request, { params }: Params) {
   const ecd = ecdRaw || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const qfieldRaw = String(formData.get("qfield") ?? "").trim();
-  const qfield = qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2" ? qfieldRaw : null;
+  const qfield =
+    qfieldRaw === "Qfield-1" || qfieldRaw === "Qfield-2"
+      ? qfieldRaw
+      : qfieldRaw.toLowerCase() === "qfield-1"
+        ? "Qfield-1"
+        : qfieldRaw.toLowerCase() === "qfield-2"
+          ? "Qfield-2"
+          : null;
   const invoiceNumberRaw = String(formData.get("invoiceNumber") ?? "").trim();
   const invoiceNumber = invoiceNumberRaw || null;
   const workTypeRaw = String(formData.get("workType") ?? "").trim();
@@ -75,6 +84,21 @@ export async function POST(request: Request, { params }: Params) {
     invoiceNumber: parsed.data.invoiceNumber,
     workType: parsed.data.workType,
   });
+
+  if (oldProject && oldProject.status !== parsed.data.status) {
+    const assignments = await getAssignmentsByProjectId(id);
+    const statusLabel = getProjectStatusLabel(parsed.data.status);
+    for (const a of assignments) {
+      if (!a.archivedAt) {
+        sendPushToFielder(
+          a.fielderName,
+          "Job status updated",
+          `${parsed.data.projectCode}: ${statusLabel}`,
+          { projectId: id, screen: "project" },
+        ).catch(() => {});
+      }
+    }
+  }
 
   if (oldProject) {
     const changes: string[] = [];
