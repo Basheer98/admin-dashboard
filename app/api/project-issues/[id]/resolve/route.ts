@@ -41,7 +41,7 @@ export async function POST(request: Request, { params }: Params) {
   await insertActivity({
     type: "project_issue_resolved",
     description: `Resolved issue #${id} on project ${effectiveProjectId}`,
-    metadata: { issueId: id, projectId: effectiveProjectId, resolvedBy: session.name ?? "Admin" },
+    metadata: { issueId: id, projectId: effectiveProjectId, resolvedBy: actor.actorName },
   });
   await insertAuditLog({
     ...actor,
