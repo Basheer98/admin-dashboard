@@ -31,13 +31,13 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const effectiveProjectId = projectId ?? row.project_id;
+  const actor = getAuditActor(session);
 
   await query(
     "UPDATE project_issues SET resolved_at = NOW(), resolved_by = $2 WHERE id = $1",
-    [id, session.name ?? "Admin"],
+    [id, actor.actorName],
   );
 
-  const actor = getAuditActor(session);
   await insertActivity({
     type: "project_issue_resolved",
     description: `Resolved issue #${id} on project ${effectiveProjectId}`,
