@@ -1,4 +1,4 @@
-import { getAllProjects, getProjectById, getAllAssignmentTemplates } from "@/lib/db";
+import { getAllProjects, getProjectById, getAllAssignmentTemplates, getProjectIssuesByProjectId } from "@/lib/db";
 import Link from "next/link";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { ClientNameField } from "./components/ClientNameField";
@@ -15,10 +15,11 @@ type PageProps = {
 export default async function EditProjectPage({ params }: PageProps) {
   const { id: idStr } = await params;
   const id = Number(idStr);
-  const [project, allProjects, templates] = await Promise.all([
+  const [project, allProjects, templates, issues] = await Promise.all([
     getProjectById(id),
     getAllProjects({ includeArchived: true }),
     getAllAssignmentTemplates(),
+    getProjectIssuesByProjectId(id),
   ]);
   const uniqueClientNames = Array.from(
     new Set(allProjects.map((p) => p.clientName).filter(Boolean))
@@ -272,6 +273,65 @@ export default async function EditProjectPage({ params }: PageProps) {
             <DeleteProjectButton projectId={project.id} />
             <ArchiveProjectForm projectId={project.id} archivedAt={project.archivedAt} />
           </div>
+        </section>
+
+        {/* Issues logged by fielders/admins */}
+        <section className="card p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-zinc-100">Issues</h2>
+            <p className="text-xs text-zinc-500">
+              Logged from the fielder app or dashboard. Use this to track and resolve problems on site.
+            </p>
+          </div>
+
+          {issues.length === 0 ? (
+            <p className="text-sm text-zinc-400">No issues have been logged for this project.</p>
+          ) : (
+            <div className="space-y-3">
+              {issues.map((issue) => (
+                <div
+                  key={issue.id}
+                  className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm flex flex-col gap-1"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-200">
+                        {issue.resolvedAt ? "Resolved" : "Open"}
+                      </span>
+                      <span className="text-xs text-zinc-400">
+                        Reported by <span className="font-medium text-zinc-200">{issue.reportedBy}</span>
+                        {" · "}
+                        {new Date(issue.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    {!issue.resolvedAt && (
+                      <form
+                        method="POST"
+                        action={`/api/project-issues/${issue.id}/resolve`}
+                        className="flex items-center gap-2"
+                      >
+                        <input type="hidden" name="projectId" value={project.id} />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition-colors"
+                        >
+                          Mark resolved
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                  <p className="text-zinc-100 whitespace-pre-wrap">{issue.description}</p>
+                  {issue.resolvedAt && (
+                    <p className="text-xs text-zinc-500 mt-1">
+                      Resolved by <span className="font-medium text-zinc-200">{issue.resolvedBy ?? "Unknown"}</span>
+                      {" · "}
+                      {new Date(issue.resolvedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
     </div>
