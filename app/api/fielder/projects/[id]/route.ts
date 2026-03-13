@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getProjectById, getAssignmentsByProjectId, getProjectIssuesByProjectId, queryOne } from "@/lib/db";
+import { getProjectById, getAssignmentsByProjectId, getProjectIssuesByProjectId } from "@/lib/db";
+import { queryOne } from "@/lib/pg";
 import { getMobileSession, unauthorized } from "@/lib/mobileAuth";
 import { getProjectStatusLabel } from "@/lib/projectStatus";
 import { calcAssignmentPayout } from "@/lib/payouts";

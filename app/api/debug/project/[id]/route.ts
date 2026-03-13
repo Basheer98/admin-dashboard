@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { queryOne, query } from "@/lib/db";
+import { queryOne, query } from "@/lib/pg";
 import { getSessionFromRequest } from "@/lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
