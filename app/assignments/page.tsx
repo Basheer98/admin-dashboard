@@ -146,16 +146,16 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
               <thead>
                 <tr>
-                  <th className="px-3 py-2">Fielder</th>
-                  <th className="px-3 py-2">Project</th>
-                  <th className="px-3 py-2">Invoice</th>
-                  <th className="px-3 py-2">Rate / SQFT</th>
-                  <th className="px-3 py-2">Commission %</th>
-                  <th className="px-3 py-2">Due</th>
-                  <th className="px-3 py-2">Total payout</th>
-                  <th className="px-3 py-2">Total paid</th>
-                  <th className="px-3 py-2">Pending</th>
-                  <th className="px-3 py-2"></th>
+                  <th className="px-3 py-2 text-left">Fielder</th>
+                  <th className="px-3 py-2 text-left">Project</th>
+                  <th className="px-3 py-2 text-left">Invoice</th>
+                  <th className="px-3 py-2 text-right">Rate / SQFT</th>
+                  <th className="px-3 py-2 text-right">Commission %</th>
+                  <th className="px-3 py-2 text-left">Due</th>
+                  <th className="px-3 py-2 text-right">Total payout</th>
+                  <th className="px-3 py-2 text-right">Total paid</th>
+                  <th className="px-3 py-2 text-right">Pending</th>
+                  <th className="px-3 py-2 text-left"></th>
                 </tr>
               </thead>
               <tbody>
@@ -213,7 +213,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                   const dueStatus = getDueDateStatus(a.dueDate ?? null);
 
                   return (
-                    <tr key={a.id} className="border-t border-zinc-700 text-zinc-200">
+                    <tr key={a.id} className="border-t border-zinc-700/50 text-zinc-200">
                       <td className="px-3 py-2">
                         {a.fielderName}
                         {a.isInternal && (
@@ -277,13 +277,13 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                           "—"
                         )}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="cell-numeric px-3 py-2">
                         {formatCurrency(totalRequired)}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="cell-numeric px-3 py-2">
                         {formatCurrency(totalPaid)}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="cell-numeric px-3 py-2">
                         {formatCurrency(pending)}
                       </td>
                       <td className="px-3 py-2 flex flex-wrap gap-2">

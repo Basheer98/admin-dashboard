@@ -410,26 +410,30 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                       <td className="px-3 py-2">
                         <Link
                           href={`/projects/${p.id}`}
-                          className="font-medium text-emerald-400 hover:underline"
+                          className="font-medium text-zinc-300 hover:text-white transition-colors"
                         >
                           {p.projectCode}
                         </Link>
                       </td>
-                      <td className="px-3 py-2">{p.clientName}</td>
+                      <td className="px-3 py-2 max-w-[10rem]">
+                        <span className="block truncate" title={p.clientName ?? ""}>{p.clientName ?? "—"}</span>
+                      </td>
                       <td className="px-3 py-2">{p.invoiceNumber?.trim() ?? "—"}</td>
                       <td className="px-3 py-2">{p.qfield ?? "—"}</td>
-                      <td className="px-3 py-2">{p.location}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{p.totalSqft}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <td className="px-3 py-2 max-w-[14rem]">
+                        <span className="block truncate" title={(p.location ?? "") || undefined}>{(p.location ?? "").trim() || "—"}</span>
+                      </td>
+                      <td className="cell-numeric px-3 py-2">{p.totalSqft.toLocaleString()}</td>
+                      <td className="cell-numeric px-3 py-2">
                         {formatRate(Number(p.companyRatePerSqft))}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <td className="cell-numeric px-3 py-2">
                         {formatCurrency(revenue)}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <td className="cell-numeric px-3 py-2">
                         {formatCurrency(profit)}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <td className="cell-numeric px-3 py-2">
                         {revenue > 0 ? `${marginPct.toFixed(1)}%` : "—"}
                       </td>
                       <td className="px-3 py-2">

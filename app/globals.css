@@ -282,12 +282,12 @@ a[href]:focus-visible {
   }
 }
 
-/* Sticky table header – dark */
+/* Sticky table header – dark, clearer hierarchy */
 .table-sticky thead th {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgb(var(--surface-elevated) / 0.95);
+  background: rgb(var(--surface-elevated) / 0.98);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   font-weight: 600;
@@ -297,7 +297,10 @@ a[href]:focus-visible {
   color: var(--foreground-muted);
   padding-top: 0.875rem;
   padding-bottom: 0.875rem;
-  box-shadow: 0 1px 0 0 rgb(var(--border));
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  border-bottom: 1px solid rgb(var(--border));
+  box-shadow: 0 1px 0 0 rgb(var(--border-light));
 }
 
 /* Row hover */
@@ -323,4 +326,24 @@ a[href]:focus-visible {
   padding-bottom: 0.375rem;
   padding-left: 0.5rem;
   padding-right: 0.5rem;
+}
+
+/* Table cells: truncate long text with native tooltip */
+.cell-truncate {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cell-truncate-wide {
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Numeric table cells: right-align, tabular figures */
+.cell-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }

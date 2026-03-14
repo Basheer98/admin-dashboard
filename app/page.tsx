@@ -938,23 +938,23 @@ export default async function Home({ searchParams }: PageProps) {
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
               <thead>
                 <tr>
-                  <th className="px-3 py-2">Project</th>
-                  <th className="px-3 py-2">Client</th>
-                  <th className="px-3 py-2">Invoice</th>
-                  <th className="px-3 py-2">QField</th>
-                  <th className="px-3 py-2">Revenue</th>
-                  <th className="px-3 py-2">Payouts</th>
-                  <th className="px-3 py-2">Commissions</th>
-                  <th className="px-3 py-2">Paid</th>
-                  <th className="px-3 py-2">Pending</th>
-                  <th className="px-3 py-2">Profit</th>
-                  <th className="px-3 py-2">Margin %</th>
-                  <th className="px-3 py-2"></th>
+                  <th className="px-3 py-2 text-left">Project</th>
+                  <th className="px-3 py-2 text-left">Client</th>
+                  <th className="px-3 py-2 text-left">Invoice</th>
+                  <th className="px-3 py-2 text-left">QField</th>
+                  <th className="px-3 py-2 text-right">Revenue</th>
+                  <th className="px-3 py-2 text-right">Payouts</th>
+                  <th className="px-3 py-2 text-right">Commissions</th>
+                  <th className="px-3 py-2 text-right">Paid</th>
+                  <th className="px-3 py-2 text-right">Pending</th>
+                  <th className="px-3 py-2 text-right">Profit</th>
+                  <th className="px-3 py-2 text-right">Margin %</th>
+                  <th className="px-3 py-2 text-left"></th>
                 </tr>
               </thead>
               <tbody>
                 {projectRows.map((row) => (
-                  <tr key={row.projectCode} className="border-t text-zinc-200">
+                  <tr key={row.projectCode} className="border-t border-zinc-700/50 text-zinc-200">
                     <td className="px-3 py-2">
                       <Link
                         href={`/projects/${row.projectId}`}
@@ -963,28 +963,30 @@ export default async function Home({ searchParams }: PageProps) {
                         {row.projectCode}
                       </Link>
                     </td>
-                    <td className="px-3 py-2">{row.clientName}</td>
+                    <td className="px-3 py-2 max-w-[10rem]">
+                      <span className="block truncate" title={row.clientName ?? ""}>{row.clientName ?? "—"}</span>
+                    </td>
                     <td className="px-3 py-2">{row.invoiceNumber?.trim() ?? "—"}</td>
                     <td className="px-3 py-2">{row.qfield ?? "—"}</td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {formatCurrency(row.revenue)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {formatCurrency(row.payoutsBase)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {formatCurrency(row.commissions)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {formatCurrency(row.totalPaid)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {formatCurrency(row.pending)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {formatCurrency(row.profit)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {row.revenue > 0 ? `${row.marginPct.toFixed(1)}%` : "—"}
                     </td>
                     <td className="px-3 py-2">
@@ -1026,23 +1028,23 @@ export default async function Home({ searchParams }: PageProps) {
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
               <thead>
                 <tr>
-                  <th className="px-3 py-2">Month</th>
-                  <th className="px-3 py-2">Revenue</th>
-                  <th className="px-3 py-2">Payouts</th>
-                  <th className="px-3 py-2">Profit</th>
+                  <th className="px-3 py-2 text-left">Month</th>
+                  <th className="px-3 py-2 text-right">Revenue</th>
+                  <th className="px-3 py-2 text-right">Payouts</th>
+                  <th className="px-3 py-2 text-right">Profit</th>
                 </tr>
               </thead>
               <tbody>
                 {monthlyRows.map((row) => (
-                  <tr key={row.monthKey} className="border-t text-zinc-200">
+                  <tr key={row.monthKey} className="border-t border-zinc-700/50 text-zinc-200">
                     <td className="px-3 py-2">{row.label}</td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {formatCurrency(row.revenue)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {formatCurrency(row.payouts)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="cell-numeric px-3 py-2">
                       {formatCurrency(row.profit)}
                     </td>
                   </tr>
