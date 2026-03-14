@@ -334,14 +334,14 @@ export default async function EditProjectPage({ params }: PageProps) {
                         <td className="px-3 py-2 flex flex-wrap gap-2">
                           <Link
                             href={`/assignments/${a.id}`}
-                            className="text-sm text-emerald-400 underline hover:no-underline"
+                            className="link-action link-action-edit"
                           >
                             Edit
                           </Link>
                           {!a.archivedAt && (
                             <Link
                               href={`/payments?projectId=${a.projectId}&assignmentId=${a.id}`}
-                              className="text-sm text-zinc-300 underline hover:no-underline"
+                              className="link-action link-action-payment"
                             >
                               Log payment
                             </Link>

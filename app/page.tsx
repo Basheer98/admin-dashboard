@@ -822,17 +822,17 @@ export default async function Home({ searchParams }: PageProps) {
             <h2 className="text-lg font-bold tracking-tight text-zinc-100">
               Project ECD summary
             </h2>
-            <div className="card border-amber-200/50 bg-amber-50/40 p-6">
-              <p className="mb-4 text-sm font-medium text-zinc-300">
+            <div className="card p-6 border-l-4 border-l-amber-500/80">
+              <p className="mb-4 text-sm font-medium text-zinc-400">
                 {projectsOverdue.length > 0 && (
                   <span>
-                    <strong>{projectsOverdue.length}</strong> project{projectsOverdue.length !== 1 ? "s" : ""} overdue (past ECD)
+                    <strong className="text-zinc-100">{projectsOverdue.length}</strong> project{projectsOverdue.length !== 1 ? "s" : ""} overdue
                     {projectsDueThisWeek.length > 0 && " · "}
                   </span>
                 )}
                 {projectsDueThisWeek.length > 0 && (
                   <span>
-                    <strong>{projectsDueThisWeek.length}</strong> due this week
+                    <strong className="text-zinc-100">{projectsDueThisWeek.length}</strong> due this week
                   </span>
                 )}
               </p>
@@ -840,18 +840,18 @@ export default async function Home({ searchParams }: PageProps) {
                 {[...projectsOverdue, ...projectsDueThisWeek].map((p) => {
                   const status = getProjectEcdStatus(p.ecd ?? null, p.status);
                   return (
-                    <li key={p.id} className="flex items-center gap-2 text-sm">
+                    <li key={p.id} className="flex flex-wrap items-center gap-2 text-sm">
                       <span
                         className={
                           status === "overdue"
-                            ? "rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800"
-                            : "rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800"
+                            ? "rounded-md bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400"
+                            : "rounded-md bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400"
                         }
                       >
                         {status === "overdue" ? "Overdue" : "Due soon"}
                       </span>
                       <span className="text-zinc-300">
-                        <Link href={`/projects/${p.id}`} className="font-medium text-emerald-400 hover:underline">
+                        <Link href={`/projects/${p.id}`} className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
                           {p.projectCode}
                         </Link>
                         {" – "}{p.clientName}
@@ -864,7 +864,7 @@ export default async function Home({ searchParams }: PageProps) {
                       </span>
                       <Link
                         href={`/projects/${p.id}`}
-                        className="text-zinc-300 underline hover:text-zinc-100"
+                        className="link-action link-action-edit ml-auto"
                       >
                         Edit
                       </Link>
@@ -881,24 +881,24 @@ export default async function Home({ searchParams }: PageProps) {
             <h2 className="text-lg font-bold tracking-tight text-zinc-100">
               Assignment due dates (due soon / overdue)
             </h2>
-            <div className="card border-amber-200/50 bg-amber-50/40 p-6">
+            <div className="card p-6 border-l-4 border-l-amber-500/80">
               <ul className="space-y-2">
                 {dueSoonOrOverdue.map((a) => {
                   const status = getDueDateStatus(a.dueDate ?? null);
                   return (
-                    <li key={a.id} className="flex items-center gap-2 text-sm">
+                    <li key={a.id} className="flex flex-wrap items-center gap-2 text-sm">
                       <span
                         className={
                           status === "overdue"
-                            ? "rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800"
-                            : "rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800"
+                            ? "rounded-md bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400"
+                            : "rounded-md bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400"
                         }
                       >
                         {status === "overdue" ? "Overdue" : "Due soon"}
                       </span>
                       <span className="text-zinc-300">
                         {a.fielderName}{" – "}
-                        <Link href={`/projects/${a.projectId}`} className="font-medium text-emerald-400 hover:underline">
+                        <Link href={`/projects/${a.projectId}`} className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
                           {a.project.projectCode}
                         </Link>
                         {a.dueDate && (
@@ -908,12 +908,20 @@ export default async function Home({ searchParams }: PageProps) {
                           </span>
                         )}
                       </span>
-                      <Link
-                        href={`/assignments/${a.id}`}
-                        className="text-zinc-300 underline hover:text-zinc-100"
-                      >
-                        Edit
-                      </Link>
+                      <div className="flex items-center gap-2 ml-auto">
+                        <Link
+                          href={`/assignments/${a.id}`}
+                          className="link-action link-action-edit"
+                        >
+                          Edit
+                        </Link>
+                        <Link
+                          href={`/payments?projectId=${a.projectId}&assignmentId=${a.id}`}
+                          className="link-action link-action-payment"
+                        >
+                          Log payment
+                        </Link>
+                      </div>
                     </li>
                   );
                 })}
@@ -981,8 +989,14 @@ export default async function Home({ searchParams }: PageProps) {
                     </td>
                     <td className="px-3 py-2">
                       <Link
+                        href={`/projects/${row.projectId}`}
+                        className="link-action link-action-edit mr-1.5"
+                      >
+                        Edit
+                      </Link>
+                      <Link
                         href={`/payments?projectId=${row.projectId}`}
-                        className="text-sm text-zinc-300 underline hover:text-zinc-100"
+                        className="link-action link-action-payment"
                       >
                         Log payment
                       </Link>

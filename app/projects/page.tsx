@@ -443,12 +443,12 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                           <span className="flex items-center gap-2">
                             {new Date(p.ecd).toLocaleDateString()}
                             {ecdStatus === "overdue" && (
-                              <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+                              <span className="rounded-md bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
                                 Overdue
                               </span>
                             )}
                             {ecdStatus === "due-soon" && (
-                              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                              <span className="rounded-md bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-400">
                                 Due soon
                               </span>
                             )}
@@ -460,14 +460,14 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                       <td className="px-3 py-2 flex flex-wrap gap-2">
                         <Link
                           href={`/projects/${p.id}`}
-                          className="text-sm text-zinc-300 underline hover:text-zinc-100"
+                          className="link-action link-action-edit"
                         >
                           Edit
                         </Link>
                         {!showArchived && (
                           <Link
                             href={`/payments?projectId=${p.id}`}
-                            className="text-sm text-zinc-300 underline hover:text-zinc-100"
+                            className="link-action link-action-payment"
                           >
                             Log payment
                           </Link>
