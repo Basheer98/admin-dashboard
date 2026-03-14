@@ -39,6 +39,7 @@ export async function GET(request: Request, { params }: Params) {
   );
   const qfield = qfieldRow?.qfield ?? (project as { qfield?: string | null }).qfield ?? null;
 
+  const openIssues = issues.filter((i) => !i.resolvedAt);
   const { totalRequired } = calcAssignmentPayout({ ...myAssignment, project, payments: [] });
 
   return NextResponse.json({
@@ -59,7 +60,7 @@ export async function GET(request: Request, { params }: Params) {
     totalRequired,
     dueDate: myAssignment.dueDate ?? null,
     isInternal: myAssignment.isInternal,
-    issues: issues.map((i) => ({
+    issues: openIssues.map((i) => ({
       id: i.id,
       description: i.description,
       reportedBy: i.reportedBy,

@@ -6,6 +6,7 @@ import { normalizeProjectCode } from "./normalize";
 
 export type SettingsRow = {
   usdToInrRate: number | null;
+  adminPhone: string | null;
 };
 
 export type ActivityRow = {
@@ -1002,18 +1003,22 @@ export async function getPushTokenForFielder(fielderName: string): Promise<strin
 }
 
 export async function getSettings(): Promise<SettingsRow> {
-  const row = await queryOne<{ usdToInrRate: number | null }>(
-    'SELECT usd_to_inr_rate AS "usdToInrRate" FROM settings WHERE id = 1',
+  const row = await queryOne<{ usdToInrRate: number | null; adminPhone: string | null }>(
+    'SELECT usd_to_inr_rate AS "usdToInrRate", admin_phone AS "adminPhone" FROM settings WHERE id = 1',
   );
-  return { usdToInrRate: row?.usdToInrRate ?? null };
+  return { usdToInrRate: row?.usdToInrRate ?? null, adminPhone: row?.adminPhone ?? null };
 }
 
-export async function updateSettings(input: { usdToInrRate?: number | null }): Promise<void> {
+export async function updateSettings(input: {
+  usdToInrRate?: number | null;
+  adminPhone?: string | null;
+}): Promise<void> {
   const current = await getSettings();
-  const value = input.usdToInrRate !== undefined ? input.usdToInrRate : current.usdToInrRate;
+  const usdToInrRate = input.usdToInrRate !== undefined ? input.usdToInrRate : current.usdToInrRate;
+  const adminPhone = input.adminPhone !== undefined ? input.adminPhone : current.adminPhone;
   await query(
-    "UPDATE settings SET usd_to_inr_rate = $1 WHERE id = 1",
-    [value],
+    "UPDATE settings SET usd_to_inr_rate = $1, admin_phone = $2 WHERE id = 1",
+    [usdToInrRate, adminPhone ?? null],
   );
 }
 
@@ -1227,7 +1232,7 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
   return {
     version: 1,
     exportedAt: now,
-    settings: { usdToInrRate: legacy.settings?.usdToInrRate ?? null },
+    settings: { usdToInrRate: legacy.settings?.usdToInrRate ?? null, adminPhone: null },
     projects,
     assignments,
     payments,
@@ -1352,9 +1357,10 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
     );
   }
 
-    await client.query("UPDATE settings SET usd_to_inr_rate = $1 WHERE id = 1", [
-      backup.settings.usdToInrRate,
-    ]);
+    await client.query(
+      "UPDATE settings SET usd_to_inr_rate = $1, admin_phone = $2 WHERE id = 1",
+      [backup.settings.usdToInrRate, backup.settings.adminPhone ?? null],
+    );
 
     const logins = backup.fielderLogins ?? [];
     for (const f of logins) {

@@ -6,10 +6,21 @@ import type { ProjectRow, FielderAssignmentRow } from "@/lib/db";
 type AssignmentFormProps = {
   projects: ProjectRow[];
   assignments: Array<FielderAssignmentRow & { project: ProjectRow }>;
+  /** When set, project dropdown is hidden and this project is used */
+  presetProjectId?: number;
+  /** Redirect path after save (e.g. /projects/123) */
+  redirectTo?: string;
 };
 
-export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+export function AssignmentForm({
+  projects,
+  assignments,
+  presetProjectId,
+  redirectTo,
+}: AssignmentFormProps) {
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(
+    presetProjectId ? String(presetProjectId) : "",
+  );
   const [fielderName, setFielderName] = useState<string>("");
   const [hasManager, setHasManager] = useState(false);
   const [isInternal, setIsInternal] = useState(false);
@@ -18,25 +29,32 @@ export function AssignmentForm({ projects, assignments }: AssignmentFormProps) {
 
   return (
     <form method="POST" action="/api/assignments" className="grid gap-4 md:grid-cols-2">
-      <div className="space-y-1">
-        <label className="block text-sm font-medium text-zinc-300">
-          Project
-        </label>
-        <select
-          name="projectId"
-          required
-          value={selectedProjectId}
-          onChange={(e) => setSelectedProjectId(e.target.value)}
-          className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
-        >
-          <option value="">Select project</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.projectCode} – {p.clientName}
-            </option>
-          ))}
-        </select>
-      </div>
+      {presetProjectId ? (
+        <>
+          <input type="hidden" name="projectId" value={presetProjectId} />
+          {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
+        </>
+      ) : (
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-zinc-300">
+            Project
+          </label>
+          <select
+            name="projectId"
+            required
+            value={selectedProjectId}
+            onChange={(e) => setSelectedProjectId(e.target.value)}
+            className="w-full h-11 rounded-md border border-zinc-600 px-3 text-base leading-tight text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-zinc-900"
+          >
+            <option value="">Select project</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.projectCode} – {p.clientName}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="space-y-1">
         <label className="block text-sm font-medium text-zinc-300">

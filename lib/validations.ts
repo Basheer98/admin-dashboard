@@ -91,6 +91,7 @@ export const projectPatchSchema = z.object({
 // --- Settings ---
 export const settingsPostSchema = z.object({
   usdToInrRate: z.number().positive().nullable(),
+  adminPhone: z.string().max(30).nullable(),
 });
 
 // --- Additional work ---

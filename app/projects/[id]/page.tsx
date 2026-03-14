@@ -1,10 +1,12 @@
-import { getAllProjects, getProjectById, getAllAssignmentTemplates, getProjectIssuesByProjectId } from "@/lib/db";
+import { getAllProjects, getProjectById, getAllAssignmentTemplates, getProjectIssuesByProjectId, getAssignmentsWithDetails } from "@/lib/db";
 import Link from "next/link";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { ClientNameField } from "./components/ClientNameField";
+import { AssignmentForm } from "@/app/assignments/components/AssignmentForm";
 import { DeleteProjectButton } from "./components/DeleteProjectButton";
 import { ArchiveProjectForm } from "./components/ArchiveProjectForm";
 import { PROJECT_STATUS_VALUES, getProjectStatusLabel } from "@/lib/projectStatus";
+import { formatCurrency, formatRate } from "@/lib/currency";
 
 type PageProps = {
   params: Promise<{
@@ -15,12 +17,14 @@ type PageProps = {
 export default async function EditProjectPage({ params }: PageProps) {
   const { id: idStr } = await params;
   const id = Number(idStr);
-  const [project, allProjects, templates, issues] = await Promise.all([
+  const [project, allProjects, templates, issues, allAssignments] = await Promise.all([
     getProjectById(id),
     getAllProjects({ includeArchived: true }),
     getAllAssignmentTemplates(),
     getProjectIssuesByProjectId(id),
+    getAssignmentsWithDetails({ includeArchived: true }),
   ]);
+  const projectAssignments = allAssignments.filter((a) => a.projectId === id);
   const uniqueClientNames = Array.from(
     new Set(allProjects.map((p) => p.clientName).filter(Boolean))
   );
@@ -272,6 +276,92 @@ export default async function EditProjectPage({ params }: PageProps) {
           <div className="mt-6 flex flex-wrap items-center gap-3 border-t pt-5 no-print">
             <DeleteProjectButton projectId={project.id} />
             <ArchiveProjectForm projectId={project.id} archivedAt={project.archivedAt} />
+          </div>
+        </section>
+
+        {/* Assigned fielders */}
+        <section className="card p-6 space-y-4">
+          <h2 className="text-base font-semibold text-zinc-100">Assigned fielders</h2>
+          <p className="text-sm text-zinc-400">
+            Add, edit, or remove fielders on this project. Use Edit to change rates or manager.
+          </p>
+          {projectAssignments.length > 0 && (
+            <div className="overflow-x-auto rounded-lg border border-zinc-700">
+              <table className="min-w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-700 bg-zinc-800/50">
+                    <th className="px-3 py-2 text-zinc-300">Fielder</th>
+                    <th className="px-3 py-2 text-zinc-300">Rate / SQFT</th>
+                    <th className="px-3 py-2 text-zinc-300">Status</th>
+                    <th className="px-3 py-2 text-zinc-300">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectAssignments.map((a) => {
+                    const sqft = a.project.totalSqft;
+                    const workerRate = Number(a.ratePerSqft);
+                    let totalRequired = 0;
+                    if (!a.isInternal) {
+                      if (a.managedByFielderId && a.managerRatePerSqft) {
+                        totalRequired = workerRate * sqft;
+                      } else {
+                        const base = workerRate * sqft;
+                        const commissionFraction = a.commissionPercentage ? Number(a.commissionPercentage) : 0;
+                        totalRequired = base + base * commissionFraction;
+                      }
+                    }
+                    const totalPaid = a.payments.reduce((s, p) => s + Number(p.amount), 0);
+                    const pending = a.isInternal ? 0 : Math.max(totalRequired - totalPaid, 0);
+                    const managerAssignment = a.managedByFielderId
+                      ? allAssignments.find((m) => m.id === a.managedByFielderId)
+                      : null;
+                    return (
+                      <tr key={a.id} className="border-t border-zinc-700 text-zinc-200">
+                        <td className="px-3 py-2">
+                          {a.fielderName}
+                          {a.isInternal && <span className="ml-2 text-xs text-zinc-500">(owner)</span>}
+                          {a.archivedAt && <span className="ml-2 text-xs text-zinc-500">(archived)</span>}
+                          {managerAssignment && (
+                            <span className="block text-xs text-zinc-500">managed by {managerAssignment.fielderName}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          {a.isInternal ? "—" : formatRate(workerRate)}
+                        </td>
+                        <td className="px-3 py-2">
+                          {a.isInternal ? "—" : `$${formatCurrency(pending)} pending`}
+                        </td>
+                        <td className="px-3 py-2 flex flex-wrap gap-2">
+                          <Link
+                            href={`/assignments/${a.id}`}
+                            className="text-sm text-emerald-400 underline hover:no-underline"
+                          >
+                            Edit
+                          </Link>
+                          {!a.archivedAt && (
+                            <Link
+                              href={`/payments?projectId=${a.projectId}&assignmentId=${a.id}`}
+                              className="text-sm text-zinc-300 underline hover:no-underline"
+                            >
+                              Log payment
+                            </Link>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-zinc-300">Add fielder to project</h3>
+            <AssignmentForm
+              projects={[project]}
+              assignments={allAssignments}
+              presetProjectId={project.id}
+              redirectTo={`/projects/${project.id}`}
+            />
           </div>
         </section>
 

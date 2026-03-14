@@ -201,6 +201,21 @@ export default async function SettingsPage({ searchParams }: PageProps) {
                 className="input"
               />
             </div>
+            <div className="space-y-1">
+              <label className="label">
+                Admin phone (for Contact admin in fielder app)
+              </label>
+              <input
+                type="tel"
+                name="adminPhone"
+                placeholder="e.g. +1 234 567 8900"
+                defaultValue={settings.adminPhone ?? ""}
+                className="input"
+              />
+              <p className="mt-1 text-xs text-zinc-500">
+                Fielders can tap &quot;Contact admin&quot; in Profile to call this number.
+              </p>
+            </div>
             <button type="submit" className="btn-primary px-5 py-2.5">
               Save
             </button>

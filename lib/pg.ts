@@ -113,6 +113,9 @@ export async function runSchema(): Promise<void> {
     );
     INSERT INTO settings (id, usd_to_inr_rate) VALUES (1, NULL)
     ON CONFLICT (id) DO NOTHING;
+  `);
+  await p.query(`
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN admin_phone TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
     CREATE TABLE IF NOT EXISTS activity_log (
       id SERIAL PRIMARY KEY,
       type TEXT NOT NULL,
