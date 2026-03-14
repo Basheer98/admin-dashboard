@@ -503,7 +503,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                   <Link
                     key={n}
                     href={`/projects?${new URLSearchParams({ ...projectPreserveParams, sort: sortKey, order, pageSize: String(n), page: "1" }).toString()}`}
-                    className={`rounded-lg px-2.5 py-1 text-sm font-medium transition-colors ${pageSize === n ? "bg-emerald-500 text-white" : "text-zinc-400 hover:bg-zinc-800/50"}`}
+                    className={`rounded-lg px-2.5 py-1 text-sm font-medium transition-colors ${pageSize === n ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-zinc-800/50"}`}
                   >
                     {n}
                   </Link>

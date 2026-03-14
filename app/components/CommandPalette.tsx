@@ -242,7 +242,7 @@ export function CommandPalette() {
                       data-index={globalIdx}
                       onClick={() => setOpen(false)}
                       className={`mx-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                        selectedIndex === globalIdx ? "bg-emerald-500/20 text-emerald-300" : "text-zinc-200 hover:bg-zinc-800"
+                        selectedIndex === globalIdx ? "bg-white/10 text-white" : "text-zinc-200 hover:bg-zinc-800"
                       }`}
                       onMouseEnter={() => setSelectedIndex(globalIdx)}
                     >
@@ -267,7 +267,7 @@ export function CommandPalette() {
                   data-index={i}
                   onClick={() => setOpen(false)}
                   className={`mx-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                    selectedIndex === i ? "bg-emerald-500/20 text-emerald-300" : "text-zinc-200 hover:bg-zinc-800"
+                    selectedIndex === i ? "bg-white/10 text-white" : "text-zinc-200 hover:bg-zinc-800"
                   }`}
                   onMouseEnter={() => setSelectedIndex(i)}
                 >
@@ -287,7 +287,7 @@ export function CommandPalette() {
                       data-index={idx}
                       onClick={() => setOpen(false)}
                       className={`mx-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                        selectedIndex === idx ? "bg-emerald-500/20 text-emerald-300" : "text-zinc-200 hover:bg-zinc-800"
+                        selectedIndex === idx ? "bg-white/10 text-white" : "text-zinc-200 hover:bg-zinc-800"
                       }`}
                       onMouseEnter={() => setSelectedIndex(idx)}
                     >

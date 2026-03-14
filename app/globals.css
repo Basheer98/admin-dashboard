@@ -111,9 +111,9 @@ textarea:focus-visible {
   outline-offset: 0;
 }
 
-/* Links – green on hover */
+/* Links – light on hover (black theme) */
 a[href]:not(.no-accent):hover {
-  color: rgb(var(--accent));
+  color: var(--foreground);
 }
 a[href]:focus-visible {
   outline: 2px solid rgb(var(--accent) / 0.6);
@@ -210,9 +210,9 @@ a[href]:focus-visible {
   color: var(--foreground-muted);
 }
 .link-action-edit:hover {
-  background: rgb(var(--accent));
-  border-color: rgb(var(--accent));
-  color: #0a0a0a;
+  background: rgb(var(--surface-elevated));
+  border-color: rgb(82 82 91);
+  color: var(--foreground);
 }
 .link-action-payment {
   background: transparent;
@@ -221,7 +221,7 @@ a[href]:focus-visible {
 }
 .link-action-payment:hover {
   background: rgb(var(--surface-elevated));
-  border-color: rgb(var(--border));
+  border-color: rgb(82 82 91);
   color: var(--foreground);
 }
 

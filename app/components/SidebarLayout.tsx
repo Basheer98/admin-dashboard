@@ -149,7 +149,7 @@ export function SidebarLayout({
           <button
             type="button"
             onClick={() => setCompactDensity((v) => !v)}
-            className={`w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${compactDensity ? "bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/25" : "text-zinc-400 hover:bg-white/5 hover:text-white"}`}
+            className={`w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${compactDensity ? "bg-white/10 text-white" : "text-zinc-400 hover:bg-white/5 hover:text-white"}`}
           >
             {compactDensity ? "✓ Compact tables" : "Comfortable tables"}
           </button>
@@ -182,12 +182,12 @@ export function SidebarLayout({
                   </svg>
                 </button>
               )}
-              <div className="flex h-9 w-1 shrink-0 overflow-hidden rounded-full bg-gradient-to-b from-emerald-500 to-emerald-600 min-w-[4px]" aria-hidden />
+              <div className="flex h-9 w-1 shrink-0 overflow-hidden rounded-full bg-gradient-to-b from-zinc-400 to-zinc-500 min-w-[4px]" aria-hidden />
               <div className="min-w-0">
                 {backLink && (
                   <Link
                     href={backLink.href}
-                    className="block text-[11px] font-semibold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 transition-colors mb-0.5"
+                    className="block text-[11px] font-semibold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors mb-0.5"
                   >
                     ← {backLink.label}
                   </Link>
@@ -231,12 +231,12 @@ function SidebarLink({ href, label, active, onNavigate }: SidebarLinkProps) {
       onClick={onNavigate}
       className={`relative rounded-xl pl-5 pr-4 py-3 text-sm font-medium transition-all ${
         active
-          ? "bg-emerald-500 text-zinc-950 shadow-lg shadow-emerald-500/25"
+          ? "bg-white/10 text-white shadow-sm"
           : "text-zinc-400 hover:bg-white/5 hover:text-white"
       }`}
     >
       {active && (
-        <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1 rounded-full bg-emerald-400 h-5" aria-hidden />
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1 rounded-full bg-zinc-300 h-5" aria-hidden />
       )}
       <span className={active ? "relative" : ""}>{label}</span>
     </Link>

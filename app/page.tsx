@@ -83,7 +83,7 @@ function DatePresetLink({
       href={`/?from=${from}&to=${to}${statusQ}${invoiceQ}`}
       className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
         isActive
-          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+          ? "bg-white/10 text-white border border-zinc-600"
           : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700"
       }`}
     >
@@ -500,7 +500,7 @@ export default async function Home({ searchParams }: PageProps) {
                 {hasStatusFilter && ` with status "${filterStatus}"`}
                 . Payments below are only for these projects.
                 {" "}
-                <Link href="/" className="font-medium text-emerald-400 hover:underline">
+                <Link href="/" className="font-medium text-zinc-300 hover:text-white transition-colors">
                   Show all data
                 </Link>
               </>
@@ -663,7 +663,7 @@ export default async function Home({ searchParams }: PageProps) {
               href={filterStatus ? `/?status=${encodeURIComponent(filterStatus)}` : filterInvoice ? `/?invoice=${encodeURIComponent(filterInvoice)}` : "/"}
               className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
                 !hasDateFilter
-                  ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+                  ? "bg-white/10 text-white border border-zinc-600"
                   : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700"
               }`}
             >
@@ -683,7 +683,7 @@ export default async function Home({ searchParams }: PageProps) {
                     : "/"}
                   className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
                     !filterInvoice
-                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+                      ? "bg-white/10 text-white border border-zinc-600"
                       : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700"
                   }`}
                 >
@@ -698,7 +698,7 @@ export default async function Home({ searchParams }: PageProps) {
                       href={q ? `/?${q}` : `/?invoice=${encodeURIComponent(inv)}`}
                       className={`rounded-full px-4 py-2.5 text-sm font-medium transition-all ${
                         isActive
-                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+                          ? "bg-white/10 text-white border border-zinc-600"
                           : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700/50 border border-zinc-700"
                       }`}
                     >
@@ -713,7 +713,7 @@ export default async function Home({ searchParams }: PageProps) {
                     key={inv}
                     href={`/api/invoices/${encodeURIComponent(inv)}/pdf`}
                     download
-                    className="text-emerald-400 hover:underline mr-3"
+                    className="text-zinc-300 hover:text-white mr-3"
                   >
                     Download PDF for {inv}
                   </a>
@@ -851,7 +851,7 @@ export default async function Home({ searchParams }: PageProps) {
                         {status === "overdue" ? "Overdue" : "Due soon"}
                       </span>
                       <span className="text-zinc-300">
-                        <Link href={`/projects/${p.id}`} className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
+                        <Link href={`/projects/${p.id}`} className="font-medium text-zinc-300 hover:text-white transition-colors">
                           {p.projectCode}
                         </Link>
                         {" – "}{p.clientName}
@@ -898,7 +898,7 @@ export default async function Home({ searchParams }: PageProps) {
                       </span>
                       <span className="text-zinc-300">
                         {a.fielderName}{" – "}
-                        <Link href={`/projects/${a.projectId}`} className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
+                        <Link href={`/projects/${a.projectId}`} className="font-medium text-zinc-300 hover:text-white transition-colors">
                           {a.project.projectCode}
                         </Link>
                         {a.dueDate && (
@@ -958,7 +958,7 @@ export default async function Home({ searchParams }: PageProps) {
                     <td className="px-3 py-2">
                       <Link
                         href={`/projects/${row.projectId}`}
-                        className="font-medium text-emerald-400 hover:underline"
+                        className="font-medium text-zinc-300 hover:text-white transition-colors"
                       >
                         {row.projectCode}
                       </Link>
