@@ -4,6 +4,8 @@ import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
 import { Bell, AlertCircle, CheckCircle2 } from "lucide-react";
 
+const LAST_SEEN_KEY = "admin-dashboard-notifications-last-seen";
+
 type NotificationItem = {
   id: string;
   type: "issue" | "status";
@@ -13,6 +15,23 @@ type NotificationItem = {
   actorName: string;
   createdAt: string;
 };
+
+function getLastSeenAt(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(LAST_SEEN_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function setLastSeenAt(iso: string): void {
+  try {
+    localStorage.setItem(LAST_SEEN_KEY, iso);
+  } catch {
+    // ignore
+  }
+}
 
 function relativeTime(iso: string): string {
   const d = new Date(iso);
@@ -28,6 +47,7 @@ function relativeTime(iso: string): string {
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
+  const [lastSeenAt, setLastSeenAtState] = useState("");
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +61,7 @@ export function NotificationBell() {
   };
 
   useEffect(() => {
+    setLastSeenAtState(getLastSeenAt());
     fetchNotifications(false);
     const interval = setInterval(() => fetchNotifications(false), 60000);
     return () => clearInterval(interval);
@@ -50,29 +71,54 @@ export function NotificationBell() {
     if (open) fetchNotifications(true);
   }, [open]);
 
+  const markAllAsSeen = () => {
+    if (items.length > 0) {
+      const latest = items.reduce((max, n) =>
+        n.createdAt > max ? n.createdAt : max,
+        items[0].createdAt,
+      );
+      setLastSeenAt(latest);
+      setLastSeenAtState(latest);
+    }
+  };
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        if (open) markAllAsSeen();
         setOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [open, items]);
+
+  const handleClose = () => {
+    markAllAsSeen();
+    setOpen(false);
+  };
+
+  const cutoff = lastSeenAt ? new Date(lastSeenAt).getTime() : 0;
+  const unseenItems = items.filter((n) => new Date(n.createdAt).getTime() > cutoff);
+  const displayItems = open ? unseenItems : items;
+  const badgeCount = unseenItems.length;
 
   return (
     <div ref={containerRef} className="relative shrink-0">
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          if (open) markAllAsSeen();
+          setOpen((o) => !o);
+        }}
         className="relative rounded-xl p-2.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
-        aria-label={items.length ? `${items.length} notifications` : "Notifications"}
+        aria-label={badgeCount ? `${badgeCount} new notifications` : "Notifications"}
         aria-expanded={open}
       >
         <Bell className="h-5 w-5" strokeWidth={2} />
-        {items.length > 0 && (
+        {badgeCount > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-white">
-            {items.length > 99 ? "99+" : items.length}
+            {badgeCount > 99 ? "99+" : badgeCount}
           </span>
         )}
       </button>
@@ -84,18 +130,22 @@ export function NotificationBell() {
         >
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800">
             <h3 className="text-sm font-semibold text-zinc-100">Notifications</h3>
-            <span className="text-xs text-zinc-500">Fielder activity</span>
+            <span className="text-xs text-zinc-500">
+              {badgeCount > 0 ? `${badgeCount} new` : "Fielder activity"}
+            </span>
           </div>
 
           <div className="max-h-[min(70vh,400px)] overflow-y-auto">
             {loading ? (
               <div className="px-4 py-8 text-center text-sm text-zinc-500">Loading…</div>
-            ) : items.length === 0 ? (
+            ) : displayItems.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-zinc-500">
-                No recent notifications
+                {items.length === 0
+                  ? "No recent notifications"
+                  : "No new notifications — you're all caught up"}
               </div>
             ) : (
-              items.map((n) => {
+              displayItems.map((n) => {
                 const href = n.type === "issue"
                   ? `/projects/${n.projectId}#issues`
                   : `/projects/${n.projectId}`;
@@ -103,7 +153,7 @@ export function NotificationBell() {
                   <Link
                     key={n.id}
                     href={href}
-                    onClick={() => setOpen(false)}
+                    onClick={handleClose}
                     className="flex gap-3 px-4 py-3 hover:bg-zinc-800/80 transition-colors border-b border-zinc-800/50 last:border-0"
                   >
                     <span className="mt-0.5 shrink-0">
@@ -132,17 +182,15 @@ export function NotificationBell() {
               })
             )}
           </div>
-          {items.length > 0 && (
-            <div className="border-t border-zinc-800 px-4 py-2">
-              <Link
-                href="/activity"
-                onClick={() => setOpen(false)}
-                className="block text-center text-xs font-medium text-zinc-400 hover:text-emerald-400 transition-colors"
-              >
-                View all activity
-              </Link>
-            </div>
-          )}
+          <div className="border-t border-zinc-800 px-4 py-2">
+            <Link
+              href="/activity"
+              onClick={handleClose}
+              className="block text-center text-xs font-medium text-zinc-400 hover:text-emerald-400 transition-colors"
+            >
+              View all activity
+            </Link>
+          </div>
         </div>
       )}
     </div>
