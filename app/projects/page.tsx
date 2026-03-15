@@ -7,6 +7,7 @@ import { FilterChips } from "@/app/components/FilterChips";
 import { SortLink } from "@/app/components/SortLink";
 import Link from "next/link";
 import { AddProjectForm } from "./components/AddProjectForm";
+import { EmptyState } from "@/app/components/EmptyState";
 import { PrintButton } from "@/app/components/PrintButton";
 
 type PageProps = {
@@ -296,7 +297,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
           </form>
         </section>
         {!showArchived && (
-          <section className="card p-6 no-print">
+          <section id="add-project" className="card p-6 no-print">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
               Add project
             </h2>
@@ -331,6 +332,14 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
               </a>
             </div>
           </div>
+          {totalCount === 0 ? (
+            <EmptyState
+              title="No projects yet"
+              description="Add your first project to start tracking revenue, fielders, and payments."
+              action={{ href: showArchived ? "/projects" : "/projects#add-project", label: "Add project" }}
+            />
+          ) : (
+          <>
           <form id="bulk-invoice-form" method="POST" action="/api/projects/bulk-invoice" className="no-print mb-3 flex flex-wrap items-center gap-2">
             <label className="text-sm font-medium text-zinc-300">Set invoice for selected:</label>
             <input
@@ -480,19 +489,6 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                     </tr>
                   );
                 })}
-                {paginatedProjects.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={9}
-                      className="px-3 py-4 text-center text-zinc-500"
-                    >
-                      No projects yet.{" "}
-                      <Link href="/projects" className="font-medium text-zinc-100 underline">
-                        Add a project
-                      </Link>
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
@@ -539,6 +535,8 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                 )}
               </div>
             </div>
+          )}
+          </>
           )}
         </section>
       </div>

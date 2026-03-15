@@ -4,6 +4,7 @@ import { formatCurrency, formatRate } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import Link from "next/link";
 import { AssignmentForm } from "./components/AssignmentForm";
+import { EmptyState } from "@/app/components/EmptyState";
 
 type PageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -123,7 +124,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
         </section>
 
         {!showArchived && (
-          <section className="card p-6">
+          <section id="assign" className="card p-6">
             <h2 className="mb-4 text-base font-semibold text-zinc-100">
               Assign fielder to project
             </h2>
@@ -142,6 +143,13 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
           <h2 className="text-base font-semibold text-zinc-100">
             {showArchived ? "Archived assignments" : "Fielder assignments"}
           </h2>
+          {assignmentsFiltered.length === 0 ? (
+            <EmptyState
+              title={showArchived ? "No archived assignments" : "No fielder assignments yet"}
+              description={showArchived ? "Archived assignments will appear here." : "Assign fielders to projects to track payouts and commissions."}
+              action={!showArchived ? { href: "/assignments#assign", label: "Assign fielder" } : undefined}
+            />
+          ) : (
           <div className="card overflow-x-auto">
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
               <thead>
@@ -305,19 +313,10 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                     </tr>
                   );
                 })}
-                {assignmentsFiltered.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={10}
-                      className="px-3 py-4 text-center text-zinc-500"
-                    >
-                      No fielder assignments yet.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
+          )}
         </section>
       </div>
     </SidebarLayout>

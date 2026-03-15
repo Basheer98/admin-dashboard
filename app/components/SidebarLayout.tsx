@@ -2,6 +2,19 @@
 
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
+import {
+  LayoutDashboard,
+  FolderOpen,
+  Users,
+  FileBarChart,
+  CreditCard,
+  Briefcase,
+  Calendar,
+  DollarSign,
+  ListTodo,
+  FileSearch,
+  Settings,
+} from "lucide-react";
 import { SessionTimeout } from "./SessionTimeout";
 import { GlobalSearch } from "./GlobalSearch";
 
@@ -133,17 +146,17 @@ export function SidebarLayout({
           </button>
         </div>
         <nav className="flex flex-1 flex-col gap-1">
-          <SidebarLink href="/" label="Dashboard" active={current === "dashboard"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/projects" label="Projects" active={current === "projects"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/assignments" label="Fielders" active={current === "assignments"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/fielders" label="Fielder reports" active={current === "fielders"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/payments" label="Payments" active={current === "payments"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/additional-work" label="Additional work" active={current === "additional"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/reports/monthly" label="Monthly summary" active={current === "reports" || current === "reports-monthly"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/reports/manager-commissions" label="Manager commissions" active={current === "reports" || current === "reports-manager-commissions"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/activity" label="Activity log" active={current === "activity"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/audit" label="Audit trail" active={current === "audit"} onNavigate={!isLg ? closeMobileMenu : undefined} />
-          <SidebarLink href="/settings" label="Settings" active={current === "settings"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/" icon={LayoutDashboard} label="Dashboard" active={current === "dashboard"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/projects" icon={FolderOpen} label="Projects" active={current === "projects"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/assignments" icon={Users} label="Fielders" active={current === "assignments"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/fielders" icon={FileBarChart} label="Fielder reports" active={current === "fielders"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/payments" icon={CreditCard} label="Payments" active={current === "payments"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/additional-work" icon={Briefcase} label="Additional work" active={current === "additional"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/reports/monthly" icon={Calendar} label="Monthly summary" active={current === "reports" || current === "reports-monthly"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/reports/manager-commissions" icon={DollarSign} label="Manager commissions" active={current === "reports" || current === "reports-manager-commissions"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/activity" icon={ListTodo} label="Activity log" active={current === "activity"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/audit" icon={FileSearch} label="Audit trail" active={current === "audit"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/settings" icon={Settings} label="Settings" active={current === "settings"} onNavigate={!isLg ? closeMobileMenu : undefined} />
         </nav>
         <div className="mt-6 rounded-xl bg-white/5 border border-white/5 p-2.5">
           <button
@@ -219,17 +232,18 @@ export function SidebarLayout({
 
 type SidebarLinkProps = {
   href: string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   label: string;
   active: boolean;
   onNavigate?: () => void;
 };
 
-function SidebarLink({ href, label, active, onNavigate }: SidebarLinkProps) {
+function SidebarLink({ href, icon: Icon, label, active, onNavigate }: SidebarLinkProps) {
   return (
     <Link
       href={href}
       onClick={onNavigate}
-      className={`relative rounded-xl pl-5 pr-4 py-3 text-sm font-medium transition-all ${
+      className={`relative flex items-center gap-3 rounded-xl pl-5 pr-4 py-3 text-sm font-medium transition-all ${
         active
           ? "bg-white/10 text-white shadow-sm"
           : "text-zinc-400 hover:bg-white/5 hover:text-white"
@@ -238,6 +252,7 @@ function SidebarLink({ href, label, active, onNavigate }: SidebarLinkProps) {
       {active && (
         <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1 rounded-full bg-zinc-300 h-5" aria-hidden />
       )}
+      <Icon className="h-[18px] w-[18px] shrink-0 opacity-80" strokeWidth={2} aria-hidden />
       <span className={active ? "relative" : ""}>{label}</span>
     </Link>
   );

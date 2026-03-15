@@ -1,53 +1,40 @@
 import Link from "next/link";
-import React from "react";
+import { FileText, type LucideIcon } from "lucide-react";
 
 type EmptyStateProps = {
+  icon?: LucideIcon;
   title: string;
   description?: string;
-  /** Primary CTA: { label, href } or { label, onClick } for client actions */
-  action?: { label: string; href: string } | { label: string; onClick: () => void };
-  /** Optional icon (emoji or character) */
-  icon?: string;
+  action?: { href: string; label: string };
   className?: string;
 };
 
 export function EmptyState({
+  icon,
   title,
   description,
   action,
-  icon = "📋",
   className = "",
 }: EmptyStateProps) {
+  const IconComponent = icon ?? FileText;
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-700 bg-zinc-900/50/50 py-14 px-6 text-center ${className}`}
+      className={`flex flex-col items-center justify-center rounded-xl border border-zinc-700/60 border-dashed bg-zinc-900/40 px-8 py-12 text-center ${className}`}
     >
-      <span className="mb-4 text-5xl opacity-80" aria-hidden>
-        {icon}
-      </span>
-      <h3 className="text-lg font-bold tracking-tight text-zinc-100">{title}</h3>
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-800/80 text-zinc-500">
+        <IconComponent className="h-7 w-7" strokeWidth={1.5} aria-hidden />
+      </div>
+      <h3 className="mt-4 text-base font-semibold text-zinc-200">{title}</h3>
       {description && (
-        <p className="mt-2 max-w-sm text-sm text-zinc-400">{description}</p>
+        <p className="mt-1 max-w-sm text-sm text-zinc-500">{description}</p>
       )}
       {action && (
-        <div className="mt-6">
-          {"href" in action ? (
-            <Link
-              href={action.href}
-              className="btn-primary inline-flex items-center px-5 py-2.5 text-sm"
-            >
-              {action.label}
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={action.onClick}
-              className="btn-primary inline-flex items-center px-5 py-2.5 text-sm"
-            >
-              {action.label}
-            </button>
-          )}
-        </div>
+        <Link
+          href={action.href}
+          className="btn-primary mt-4 inline-flex items-center gap-2 px-5 py-2.5 text-sm"
+        >
+          {action.label}
+        </Link>
       )}
     </div>
   );

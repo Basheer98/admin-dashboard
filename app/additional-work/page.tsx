@@ -118,7 +118,6 @@ export default async function AdditionalWorkPage({ searchParams }: PageProps) {
             title="No additional work yet"
             description="Track additional fielding jobs or corrections for your projects or external references."
             action={{ label: "Add additional fielding / correction", href: "/additional-work/new" }}
-            icon="📋"
           />
         )}
       </div>

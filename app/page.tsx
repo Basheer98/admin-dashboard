@@ -13,6 +13,9 @@ import Link from "next/link";
 import { RevenueVsPayoutsChart } from "@/app/components/charts/RevenueVsPayoutsChart";
 import { PayoutsByFielderChart } from "@/app/components/charts/PayoutsByFielderChart";
 import { SqftByFielderChart } from "@/app/components/charts/SqftByFielderChart";
+import { EmptyState } from "@/app/components/EmptyState";
+import { FolderOpen, FileText } from "lucide-react";
+import { ProgressBar } from "@/app/components/ProgressBar";
 
 export const dynamic = "force-dynamic";
 
@@ -556,7 +559,12 @@ export default async function Home({ searchParams }: PageProps) {
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-zinc-100">
               {showInr ? formatWithInr(totalRequiredPayouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : `$${formatCurrency(totalRequiredPayouts)}`}
             </p>
-            <p className="mt-1 text-xs text-zinc-500">From fielder rates × SQFT (not from logged payments)</p>
+            {totalRequiredPayouts > 0 && (
+              <div className="mt-3">
+                <ProgressBar value={totalPaid} max={totalRequiredPayouts} showLabel />
+              </div>
+            )}
+            <p className="mt-2 text-xs text-zinc-500">From fielder rates × SQFT (not from logged payments)</p>
           </div>
           <div className="card-highlight p-7">
             <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
@@ -934,6 +942,14 @@ export default async function Home({ searchParams }: PageProps) {
           <h2 className="text-lg font-bold tracking-tight text-zinc-100">
             Projects overview
           </h2>
+          {projectRows.length === 0 ? (
+            <EmptyState
+              icon={FolderOpen}
+              title="No projects yet"
+              description="Add your first project to start tracking revenue, payouts, and fielders."
+              action={{ href: "/projects", label: "Add project" }}
+            />
+          ) : (
           <div className="card overflow-x-auto">
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
               <thead>
@@ -1005,25 +1021,24 @@ export default async function Home({ searchParams }: PageProps) {
                     </td>
                   </tr>
                 ))}
-                {projectRows.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={12}
-                      className="px-3 py-4 text-center text-zinc-500"
-                    >
-                      No projects yet.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
+          )}
         </section>
 
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-zinc-100">
             Monthly summary
           </h2>
+          {monthlyRows.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No financial activity yet"
+              description="Revenue and payouts will appear here once you add projects and log payments."
+              action={{ href: "/projects", label: "Add project" }}
+            />
+          ) : (
           <div className="card overflow-x-auto">
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
               <thead>
@@ -1049,19 +1064,10 @@ export default async function Home({ searchParams }: PageProps) {
                     </td>
                   </tr>
                 ))}
-                {monthlyRows.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-3 py-4 text-center text-zinc-500"
-                    >
-                      No financial activity yet.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
+          )}
         </section>
       </div>
     </SidebarLayout>

@@ -54,7 +54,7 @@ body {
   letter-spacing: -0.02em;
 }
 
-/* Card – dark elevated surface */
+/* Card – dark elevated surface, subtle micro-interaction */
 .card {
   background: rgb(var(--surface-card) / 0.9);
   backdrop-filter: blur(12px);
@@ -62,6 +62,10 @@ body {
   border-radius: var(--radius-2xl);
   border: 1px solid rgb(var(--border-light));
   box-shadow: var(--shadow-glass);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  border-color: rgb(var(--border));
 }
 
 /* Premium highlight card – green top accent bar */
