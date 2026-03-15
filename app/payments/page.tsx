@@ -88,7 +88,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
   };
 
   return (
-    <SidebarLayout title="Payments" current="payments" headerAction={<PrintButton />}>
+    <SidebarLayout title="Payments" subtitle="Log and view fielder payments" current="payments" headerAction={<PrintButton />}>
       <div className="flex flex-1 flex-col gap-8">
         {voided && (
           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">

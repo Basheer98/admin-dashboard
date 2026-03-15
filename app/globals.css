@@ -13,6 +13,13 @@
   --border: 63 63 70;
   --border-light: 39 39 42;
   --radius: 0.75rem;
+  /* Spacing scale: 4/8/12/16/24/32px */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
   --radius-2xl: 1.5rem;
@@ -62,13 +69,25 @@ body {
   border-radius: var(--radius-2xl);
   border: 1px solid rgb(var(--border-light));
   box-shadow: var(--shadow-glass);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
 }
 .card:hover {
   border-color: rgb(var(--border));
+  box-shadow: 0 0 0 1px rgb(var(--border)), 0 4px 12px rgb(0 0 0 / 0.2);
 }
 
-/* Premium highlight card – green top accent bar */
+/* Card table – for detail tables, no lift */
+.card-table {
+  background: rgb(var(--surface-card) / 0.95);
+  border: 1px solid rgb(var(--border-light));
+  border-radius: var(--radius-2xl);
+  transition: border-color 0.2s;
+}
+.card-table:hover {
+  border-color: rgb(var(--border));
+}
+
+/* Premium highlight card – primary stats with accent bar */
 .card-highlight {
   background: rgb(var(--surface-card) / 0.9);
   backdrop-filter: blur(12px);
@@ -78,6 +97,13 @@ body {
   box-shadow: var(--shadow-glass);
   position: relative;
   overflow: hidden;
+}
+.card-highlight {
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.card-highlight:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgb(var(--border)), 0 6px 16px rgb(0 0 0 / 0.25);
 }
 .card-highlight::before {
   content: "";
@@ -89,7 +115,7 @@ body {
   background: linear-gradient(90deg, rgb(var(--accent)), rgb(74 222 128));
 }
 
-/* Primary button – green accent */
+/* Primary button – green accent, subtle lift on hover */
 .btn-primary {
   background: linear-gradient(180deg, rgb(var(--accent)) 0%, rgb(var(--accent-hover)) 100%);
   color: #0f0f0f;
@@ -97,10 +123,11 @@ body {
   border-radius: var(--radius);
   padding: 0.5rem 1rem;
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
-  transition: box-shadow 0.2s, transform 0.05s;
+  transition: box-shadow 0.2s, transform 0.1s;
 }
 .btn-primary:hover {
   box-shadow: 0 4px 12px rgb(var(--accent) / 0.4);
+  transform: translateY(-1px);
 }
 .btn-primary:focus-visible {
   outline: 2px solid rgb(var(--accent));
@@ -184,13 +211,15 @@ a[href]:focus-visible {
   box-shadow: 0 0 0 1px rgb(var(--accent) / 0.5);
 }
 .btn-secondary {
-  @apply rounded-lg border px-4 py-2 text-sm font-medium transition-colors;
+  @apply rounded-lg border px-4 py-2 text-sm font-medium;
   background: rgb(var(--surface-elevated));
   border-color: rgb(var(--border));
   color: var(--foreground);
+  transition: background 0.2s, transform 0.1s;
 }
 .btn-secondary:hover {
   background: rgb(var(--border));
+  transform: translateY(-1px);
 }
 .btn-secondary:focus-visible {
   outline: 2px solid rgb(var(--accent));
@@ -307,12 +336,12 @@ a[href]:focus-visible {
   box-shadow: 0 1px 0 0 rgb(var(--border-light));
 }
 
-/* Row hover */
+/* Row hover – subtle lift feel via stronger background */
 .table-hover tbody tr {
-  transition: background-color 0.1s;
+  transition: background-color 0.15s;
 }
 .table-hover tbody tr:hover {
-  background: rgb(var(--surface-elevated));
+  background: rgb(var(--surface-elevated) / 0.9);
 }
 
 /* Zebra striping */
@@ -350,4 +379,27 @@ a[href]:focus-visible {
 .cell-numeric {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* Section separator – subtle border between major sections */
+.section-separator {
+  padding-top: 2rem;
+  border-top: 1px solid rgb(var(--border-light) / 0.5);
+  margin-top: 0;
+}
+
+/* Page title block – H1 + optional subtitle */
+.page-title {
+  margin-bottom: var(--space-6);
+}
+.page-title h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+.page-title p {
+  margin-top: var(--space-1);
+  font-size: 0.875rem;
+  color: var(--foreground-muted);
 }

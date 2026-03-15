@@ -42,7 +42,7 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
   const hasProjects = projects.length > 0;
 
   return (
-    <SidebarLayout title="Fielders" current="assignments">
+    <SidebarLayout title="Fielders" subtitle="Assign fielders to projects" current="assignments">
       <div className="flex flex-1 flex-col gap-8">
         {showLogPaymentLink && (
           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">

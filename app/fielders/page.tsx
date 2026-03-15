@@ -122,7 +122,7 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
   }
 
   return (
-    <SidebarLayout title="Fielder reports" current="fielders">
+    <SidebarLayout title="Fielder reports" subtitle="Earnings and assignments by fielder" current="fielders">
       <div className="flex flex-1 flex-col gap-8">
         <p className="text-sm text-zinc-400">
           One page per fielder with all assignments, total owed, total paid, and

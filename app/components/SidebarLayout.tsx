@@ -20,6 +20,7 @@ import { GlobalSearch } from "./GlobalSearch";
 
 type SidebarLayoutProps = {
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
   current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "additional" | "activity" | "audit" | "settings" | "reports" | "reports-monthly" | "reports-manager-commissions";
   headerAction?: React.ReactNode;
@@ -31,6 +32,7 @@ const DENSITY_STORAGE_KEY = "admin-dashboard-table-density-compact";
 
 export function SidebarLayout({
   title,
+  subtitle,
   children,
   current,
   headerAction,
@@ -205,9 +207,12 @@ export function SidebarLayout({
                     ← {backLink.label}
                   </Link>
                 )}
-                <h2 className="font-display text-xl font-semibold tracking-tight text-zinc-100 sm:text-2xl truncate">
+                <h1 className="font-display text-xl font-semibold tracking-tight text-zinc-100 sm:text-2xl truncate">
                   {title}
-                </h2>
+                </h1>
+                {subtitle && (
+                  <p className="mt-0.5 text-sm text-zinc-500 truncate">{subtitle}</p>
+                )}
               </div>
               <div className="hidden sm:flex flex-1 min-w-0 max-w-xs items-center gap-2">
                 <GlobalSearch />

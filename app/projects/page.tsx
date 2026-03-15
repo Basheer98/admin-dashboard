@@ -6,7 +6,7 @@ import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { FilterChips } from "@/app/components/FilterChips";
 import { SortLink } from "@/app/components/SortLink";
 import Link from "next/link";
-import { AddProjectForm } from "./components/AddProjectForm";
+import { AddProjectSection } from "./components/AddProjectSection";
 import { EmptyState } from "@/app/components/EmptyState";
 import { PrintButton } from "@/app/components/PrintButton";
 
@@ -163,7 +163,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
   const sortPreserveParams = { ...projectPreserveParams, pageSize: String(pageSize) };
 
   return (
-    <SidebarLayout title="Projects" current="projects" headerAction={<PrintButton />}>
+    <SidebarLayout title="Projects" subtitle="Manage projects and assignments" current="projects" headerAction={<PrintButton />}>
       <div className="flex flex-1 flex-col gap-8 print-content">
         {success && (
           <div className="no-print rounded-2xl border border-emerald-500/40 bg-zinc-900 px-5 py-4 text-sm font-semibold text-emerald-300 shadow-lg">
@@ -297,16 +297,11 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
           </form>
         </section>
         {!showArchived && (
-          <section id="add-project" className="card p-6 no-print">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-              Add project
-            </h2>
-            <AddProjectForm
+          <AddProjectSection
             assignments={assignmentsWithDetails}
             uniqueFielderNames={uniqueFielderNames}
             uniqueClientNames={uniqueClientNames}
           />
-          </section>
         )}
 
         {hasFilters && (

@@ -477,6 +477,7 @@ export default async function Home({ searchParams }: PageProps) {
   return (
     <SidebarLayout
       title="Dashboard"
+      subtitle="Revenue and payments at a glance"
       current="dashboard"
     >
       <div className="flex flex-1 flex-col gap-8">
@@ -938,7 +939,7 @@ export default async function Home({ searchParams }: PageProps) {
           </section>
         )}
 
-        <section className="space-y-4">
+        <section className="section-separator space-y-4">
           <h2 className="text-lg font-bold tracking-tight text-zinc-100">
             Projects overview
           </h2>
@@ -950,7 +951,7 @@ export default async function Home({ searchParams }: PageProps) {
               action={{ href: "/projects", label: "Add project" }}
             />
           ) : (
-          <div className="card overflow-x-auto">
+          <div className="card card-table overflow-x-auto">
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
               <thead>
                 <tr>
@@ -1027,7 +1028,7 @@ export default async function Home({ searchParams }: PageProps) {
           )}
         </section>
 
-        <section className="space-y-3">
+        <section className="section-separator space-y-3">
           <h2 className="text-base font-semibold text-zinc-100">
             Monthly summary
           </h2>
@@ -1039,7 +1040,7 @@ export default async function Home({ searchParams }: PageProps) {
               action={{ href: "/projects", label: "Add project" }}
             />
           ) : (
-          <div className="card overflow-x-auto">
+          <div className="card card-table overflow-x-auto">
             <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
               <thead>
                 <tr>
