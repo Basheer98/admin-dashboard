@@ -2,7 +2,6 @@ import { getAssignmentsWithDetails } from "@/lib/db";
 import { getDueDateStatus } from "@/lib/dueDate";
 import { formatCurrency, formatRate } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
-import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { PrintButton } from "@/app/components/PrintButton";
 import Link from "next/link";
 
@@ -51,8 +50,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
 
   if (fielderAssignments.length === 0 && managerCommissionOwed <= 0) {
     return (
-      <SidebarLayout title="Fielder report" current="fielders" backLink={{ href: "/fielders", label: "Fielder reports" }}>
-        <Breadcrumbs items={[{ label: "Fielder reports", href: "/fielders" }, { label: displayName }]} />
+      <SidebarLayout title="Fielder report" current="fielders" backLink={{ href: "/fielders", label: "Fielder reports" }} breadcrumbs={[{ label: "Fielder reports", href: "/fielders" }, { label: displayName }]}>
         <p className="mt-4 text-zinc-400">
           No assignments found for fielder &quot;{displayName}&quot;.
         </p>
@@ -109,9 +107,8 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
   const pending = Math.max(totalOwed - totalPaid, 0);
 
   return (
-    <SidebarLayout title={`Fielder statement: ${displayName}`} current="fielders" backLink={{ href: "/fielders", label: "Fielder reports" }} headerAction={<PrintButton label="Print statement" />}>
+    <SidebarLayout title={`Fielder statement: ${displayName}`} current="fielders" backLink={{ href: "/fielders", label: "Fielder reports" }} breadcrumbs={[{ label: "Fielder reports", href: "/fielders" }, { label: displayName }]} headerAction={<PrintButton label="Print statement" />}>
       <div className="flex flex-1 flex-col gap-8 print-content">
-        <Breadcrumbs items={[{ label: "Fielder reports", href: "/fielders" }, { label: displayName }]} />
         <div className="no-print flex items-center justify-between gap-4">
           <Link
             href="/fielders"

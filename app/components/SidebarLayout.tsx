@@ -17,10 +17,15 @@ import {
 } from "lucide-react";
 import { SessionTimeout } from "./SessionTimeout";
 import { GlobalSearch } from "./GlobalSearch";
+import { Breadcrumbs } from "./Breadcrumbs";
+import { NotificationBell } from "./NotificationBell";
+
+import type { BreadcrumbItem } from "./Breadcrumbs";
 
 type SidebarLayoutProps = {
   title: string;
   subtitle?: string;
+  breadcrumbs?: BreadcrumbItem[];
   children: React.ReactNode;
   current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "additional" | "activity" | "audit" | "settings" | "reports" | "reports-monthly" | "reports-manager-commissions";
   headerAction?: React.ReactNode;
@@ -33,6 +38,7 @@ const DENSITY_STORAGE_KEY = "admin-dashboard-table-density-compact";
 export function SidebarLayout({
   title,
   subtitle,
+  breadcrumbs,
   children,
   current,
   headerAction,
@@ -147,7 +153,7 @@ export function SidebarLayout({
             ←
           </button>
         </div>
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-0.5" role="navigation" aria-label="Main">
           <SidebarLink href="/" icon={LayoutDashboard} label="Dashboard" active={current === "dashboard"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/projects" icon={FolderOpen} label="Projects" active={current === "projects"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/assignments" icon={Users} label="Fielders" active={current === "assignments"} onNavigate={!isLg ? closeMobileMenu : undefined} />
@@ -226,10 +232,20 @@ export function SidebarLayout({
                 </button>
               </div>
             </div>
-            {headerAction != null ? <div className="no-print shrink-0">{headerAction}</div> : null}
+            <div className="flex items-center gap-2 no-print shrink-0">
+              <NotificationBell />
+              {headerAction != null ? headerAction : null}
+            </div>
           </div>
         </header>
-        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">{children}</div>
+        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          {breadcrumbs && breadcrumbs.length > 0 && (
+            <div className="mb-6">
+              <Breadcrumbs items={breadcrumbs} />
+            </div>
+          )}
+          {children}
+        </div>
       </main>
     </div>
   );
@@ -248,16 +264,16 @@ function SidebarLink({ href, icon: Icon, label, active, onNavigate }: SidebarLin
     <Link
       href={href}
       onClick={onNavigate}
-      className={`relative flex items-center gap-3 rounded-xl pl-5 pr-4 py-3 text-sm font-medium transition-all ${
+      className={`relative flex items-center gap-3 rounded-xl pl-4 pr-4 py-2.5 text-sm font-medium transition-all ${
         active
-          ? "bg-white/10 text-white shadow-sm"
+          ? "bg-white/10 text-white"
           : "text-zinc-400 hover:bg-white/5 hover:text-white"
       }`}
     >
       {active && (
-        <span className="absolute left-2 top-1/2 -translate-y-1/2 w-1 rounded-full bg-zinc-300 h-5" aria-hidden />
+        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-0.5 rounded-full bg-zinc-400 h-4" aria-hidden />
       )}
-      <Icon className="h-[18px] w-[18px] shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+      <Icon className="h-[18px] w-[18px] shrink-0 opacity-90" strokeWidth={2} aria-hidden />
       <span className={active ? "relative" : ""}>{label}</span>
     </Link>
   );

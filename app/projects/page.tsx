@@ -1,7 +1,7 @@
 import { getAllAssignments, getAllProjects, getAssignmentsWithDetails } from "@/lib/db";
 import { getProjectEcdStatus } from "@/lib/dueDate";
 import { getProjectStatusLabel, PROJECT_STATUS_VALUES } from "@/lib/projectStatus";
-import { formatCurrency, formatRate } from "@/lib/currency";
+import { formatCurrency, formatRate, formatUsdSmart } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { FilterChips } from "@/app/components/FilterChips";
 import { SortLink } from "@/app/components/SortLink";
@@ -432,10 +432,10 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
                         {formatRate(Number(p.companyRatePerSqft))}
                       </td>
                       <td className="cell-numeric px-3 py-2">
-                        {formatCurrency(revenue)}
+                        {formatUsdSmart(revenue)}
                       </td>
                       <td className="cell-numeric px-3 py-2">
-                        {formatCurrency(profit)}
+                        {formatUsdSmart(profit)}
                       </td>
                       <td className="cell-numeric px-3 py-2">
                         {revenue > 0 ? `${marginPct.toFixed(1)}%` : "—"}

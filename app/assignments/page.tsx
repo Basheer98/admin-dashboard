@@ -1,6 +1,6 @@
 import { getAllProjects, getAssignmentsWithDetails } from "@/lib/db";
 import { getDueDateStatus } from "@/lib/dueDate";
-import { formatCurrency, formatRate } from "@/lib/currency";
+import { formatCurrency, formatRate, formatUsdSmart } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import Link from "next/link";
 import { AssignmentForm } from "./components/AssignmentForm";
@@ -289,10 +289,10 @@ export default async function AssignmentsPage({ searchParams }: PageProps) {
                         {formatCurrency(totalRequired)}
                       </td>
                       <td className="cell-numeric px-3 py-2">
-                        {formatCurrency(totalPaid)}
+                        {formatUsdSmart(totalPaid)}
                       </td>
                       <td className="cell-numeric px-3 py-2">
-                        {formatCurrency(pending)}
+                        {formatUsdSmart(pending)}
                       </td>
                       <td className="px-3 py-2 flex flex-wrap gap-2">
                         <Link

@@ -366,7 +366,7 @@ export default async function EditProjectPage({ params }: PageProps) {
         </section>
 
         {/* Issues logged by fielders/admins */}
-        <section className="card p-6 space-y-4">
+        <section id="issues" className="card p-6 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-zinc-100">Issues</h2>
             <p className="text-xs text-zinc-500">

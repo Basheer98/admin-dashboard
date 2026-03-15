@@ -4,7 +4,7 @@ import { AdditionalWorkForm } from "../components/AdditionalWorkForm";
 
 export default function NewAdditionalWorkPage() {
   return (
-    <SidebarLayout title="Add additional work" current="additional">
+    <SidebarLayout title="Add additional work" current="additional" breadcrumbs={[{ label: "Additional work", href: "/additional-work" }, { label: "Add" }]}>
       <div className="flex flex-1 flex-col gap-6">
         <nav className="text-sm">
           <Link href="/additional-work" className="text-zinc-300 hover:underline hover:text-zinc-100">

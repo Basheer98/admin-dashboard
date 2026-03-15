@@ -1,6 +1,5 @@
 import { getAdditionalWorkById, getAssignmentsByProjectId } from "@/lib/db";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
-import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import Link from "next/link";
 import { AdditionalWorkForm } from "../components/AdditionalWorkForm";
 
@@ -48,9 +47,8 @@ export default async function EditAdditionalWorkPage({ params, searchParams }: P
   }));
 
   return (
-    <SidebarLayout title="Edit additional work" current="additional" backLink={{ href: "/additional-work", label: "Additional work" }}>
+    <SidebarLayout title="Edit additional work" current="additional" backLink={{ href: "/additional-work", label: "Additional work" }} breadcrumbs={[{ label: "Additional work", href: "/additional-work" }, { label: `${row.type === "CORRECTION" ? "Correction" : "Additional fielding"} – ${row.projectNumber}` }]}>
       <div className="flex flex-1 flex-col gap-6">
-        <Breadcrumbs items={[{ label: "Additional work", href: "/additional-work" }, { label: `${row.type === "CORRECTION" ? "Correction" : "Additional fielding"} – ${row.projectNumber}` }]} />
         {saved && (
           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             Changes saved.

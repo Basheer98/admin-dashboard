@@ -1,6 +1,5 @@
 import { getAssignmentById, getAllAssignments } from "@/lib/db";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
-import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { EditAssignmentForm } from "../components/EditAssignmentForm";
 import { DeleteAssignmentButton } from "./components/DeleteAssignmentButton";
 import { ArchiveAssignmentForm } from "./components/ArchiveAssignmentForm";
@@ -30,14 +29,8 @@ export default async function EditAssignmentPage({ params }: PageProps) {
   const projectAssignments = allAssignments.filter((a) => a.id !== id);
 
   return (
-    <SidebarLayout title="Edit fielder assignment" current="assignments" backLink={{ href: "/assignments", label: "Fielders" }}>
+    <SidebarLayout title="Edit fielder assignment" current="assignments" backLink={{ href: "/assignments", label: "Fielders" }} breadcrumbs={[{ label: "Fielders", href: "/assignments" }, { label: `${assignment.project.projectCode} – ${assignment.fielderName}` }]}>
       <div className="flex flex-1 flex-col gap-6">
-        <Breadcrumbs
-          items={[
-            { label: "Fielders", href: "/assignments" },
-            { label: `${assignment.project.projectCode} – ${assignment.fielderName}` },
-          ]}
-        />
         <section className="card p-6">
           <div className="mb-4">
             <p className="text-sm text-zinc-400">

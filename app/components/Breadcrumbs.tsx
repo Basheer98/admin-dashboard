@@ -13,7 +13,7 @@ type BreadcrumbsProps = {
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
   if (items.length === 0) return null;
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-zinc-500">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-zinc-500 flex-wrap">
       {items.map((item, i) => (
         <span key={i} className="flex items-center gap-2">
           {i > 0 && (
@@ -22,7 +22,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
             </span>
           )}
           {item.href ? (
-            <Link href={item.href} className="hover:text-emerald-400 transition-colors">
+            <Link href={item.href} className="hover:text-white transition-colors">
               {item.label}
             </Link>
           ) : (

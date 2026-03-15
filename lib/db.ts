@@ -1083,6 +1083,100 @@ export async function insertAuditLog(input: {
   );
 }
 
+export type NotificationItem = {
+  id: string;
+  type: "issue" | "status";
+  message: string;
+  projectCode: string;
+  projectId: number;
+  actorName: string;
+  createdAt: string;
+};
+
+/** Fetches recent fielder activity: issues and status updates. Used for notifications bell. */
+export async function getRecentNotifications(limit = 30): Promise<NotificationItem[]> {
+  const items: NotificationItem[] = [];
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString();
+
+  const issueRows = await query<{
+    id: number;
+    projectId: number;
+    projectCode: string;
+    reportedBy: string;
+    description: string;
+    createdAt: string;
+  }>(
+    `SELECT pi.id, pi.project_id AS "projectId", p.project_code AS "projectCode",
+            pi.reported_by AS "reportedBy", pi.description,
+            pi.created_at::text AS "createdAt"
+     FROM project_issues pi
+     JOIN projects p ON p.id = pi.project_id
+     WHERE pi.resolved_at IS NULL AND pi.created_at >= $1::timestamptz
+     ORDER BY pi.created_at DESC LIMIT $2`,
+    [cutoffStr, Math.ceil(limit / 2)],
+  );
+
+  for (const r of issueRows) {
+    items.push({
+      id: `issue-${r.id}`,
+      type: "issue",
+      message: r.description.length > 80 ? r.description.slice(0, 80) + "…" : r.description,
+      projectCode: r.projectCode,
+      projectId: r.projectId,
+      actorName: r.reportedBy,
+      createdAt: r.createdAt,
+    });
+  }
+
+  const auditRows = await query<{
+    id: number;
+    actorName: string;
+    entityId: string;
+    details: string | null;
+    createdAt: string;
+    projectCode: string;
+  }>(
+    `SELECT a.id, a.actor_name AS "actorName", a.entity_id AS "entityId", a.details,
+            a.created_at::text AS "createdAt", p.project_code AS "projectCode"
+     FROM audit_log a
+     LEFT JOIN projects p ON p.id = (a.entity_id::int)
+     WHERE a.actor_type = 'fielder' AND a.entity_type = 'project'
+       AND a.action = 'project.update'
+       AND a.created_at >= $1::timestamptz
+       AND a.details IS NOT NULL
+     ORDER BY a.created_at DESC LIMIT $2`,
+    [cutoffStr, limit],
+  );
+
+  for (const r of auditRows) {
+    let details: Record<string, unknown> = {};
+    try {
+      if (r.details) details = JSON.parse(r.details) as Record<string, unknown>;
+    } catch {
+      // ignore
+    }
+    if (details.issue) continue;
+    const statusInfo = details.status as { old?: string; new?: string } | undefined;
+    const newStatus = statusInfo?.new ?? "";
+    if (!newStatus) continue;
+    const statusLabel = newStatus.replace(/_/g, " ");
+    items.push({
+      id: `audit-${r.id}`,
+      type: "status",
+      message: `marked as ${statusLabel}`,
+      projectCode: r.projectCode ?? `#${r.entityId}`,
+      projectId: parseInt(r.entityId, 10) || 0,
+      actorName: r.actorName,
+      createdAt: r.createdAt,
+    });
+  }
+
+  items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return items.slice(0, limit);
+}
+
 export async function getAuditEntries(filters: GetAuditEntriesFilters = {}): Promise<AuditLogRow[]> {
   const conditions: string[] = [];
   const params: unknown[] = [];
