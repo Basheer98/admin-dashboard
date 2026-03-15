@@ -128,7 +128,7 @@ export function SidebarLayout({
       )}
       <aside
         className={
-          "no-print flex w-64 flex-col bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 px-5 py-7 " +
+          "no-print flex w-64 flex-col bg-black px-5 py-7 " +
           (!isLg
             ? `fixed left-0 top-0 bottom-0 z-40 transform shadow-2xl transition-transform duration-200 ease-out ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`
             : `transition-[margin] duration-200 ${collapsed ? "-ml-64 w-0 overflow-hidden" : "shadow-2xl"}`
