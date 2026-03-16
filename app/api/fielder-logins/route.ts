@@ -30,6 +30,8 @@ export async function POST(request: Request) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const fielderName = String(formData.get("fielderName") ?? "").trim();
+  const role = String(formData.get("role") ?? "").trim();
+  const region = String(formData.get("region") ?? "").trim();
 
   const parsed = validate(createSchema, { email, password, fielderName });
   if (!parsed.success) {
@@ -39,7 +41,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const id = await insertFielderLogin(parsed.data);
+    const id = await insertFielderLogin({
+      ...parsed.data,
+      role: role || null,
+      region: region || null,
+    });
     await insertAuditLog({
       ...getAuditActor(session),
       action: "fielder_login.create",

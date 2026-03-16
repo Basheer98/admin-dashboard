@@ -31,6 +31,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const sequencesFixError = sp.fixed === "error";
   const flCreated = sp.flCreated === "1";
   const flReset = sp.flReset === "1";
+  const flUpdated = sp.flUpdated === "1";
   const flError = typeof sp.flError === "string" ? sp.flError : null;
   const [settings, fielderLogins] = await Promise.all([
     getSettings(),
@@ -95,6 +96,11 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             Password reset. Share the new password with the fielder.
           </div>
         )}
+        {flUpdated && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            Fielder role/region updated.
+          </div>
+        )}
         {flError === "invalid" && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Invalid fielder login: email, password (min 6 characters), and fielder name are required.
@@ -122,8 +128,8 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           <p className="mb-4 text-sm text-zinc-400">
             Create login accounts for fielders so they can view their own statement, assignments, and payments at the same URL. Fielder name must match the name used on assignments (e.g. NIVAS).
           </p>
-          <form method="POST" action="/api/fielder-logins" className="mb-6 grid max-w-xl gap-4 sm:grid-cols-3">
-            <div className="space-y-1">
+          <form method="POST" action="/api/fielder-logins" className="mb-6 grid max-w-3xl gap-4 sm:grid-cols-5">
+            <div className="space-y-1 sm:col-span-2">
               <label className="label">Email (login)</label>
               <input name="email" type="email" required placeholder="nivas@example.com" className="input" />
             </div>
@@ -135,7 +141,15 @@ export default async function SettingsPage({ searchParams }: PageProps) {
               <label className="label">Fielder name</label>
               <input name="fielderName" type="text" required placeholder="NIVAS" className="input" />
             </div>
-            <div className="sm:col-span-3">
+            <div className="space-y-1">
+              <label className="label">Role (optional)</label>
+              <input name="role" type="text" placeholder="Fiber Network Engineer" className="input" />
+            </div>
+            <div className="space-y-1">
+              <label className="label">Region (optional)</label>
+              <input name="region" type="text" placeholder="Colorado" className="input" />
+            </div>
+            <div className="sm:col-span-5">
               <button type="submit" className="btn-primary px-5 py-2.5">
                 Add fielder login
               </button>
@@ -147,16 +161,48 @@ export default async function SettingsPage({ searchParams }: PageProps) {
                 <tr>
                   <th className="px-3 py-2">Email</th>
                   <th className="px-3 py-2">Fielder name</th>
+                  <th className="px-3 py-2">Role</th>
+                  <th className="px-3 py-2">Region</th>
                   <th className="px-3 py-2">Reset password</th>
                 </tr>
               </thead>
               <tbody>
                 {fielderLogins.map((fl) => (
-                  <tr key={fl.id} className="border-t text-zinc-200">
+                  <tr key={fl.id} className="border-t text-zinc-200 align-top">
                     <td className="px-3 py-2">{fl.email}</td>
                     <td className="px-3 py-2">{fl.fielderName}</td>
                     <td className="px-3 py-2">
-                      <form method="POST" action={`/api/fielder-logins/${fl.id}/reset-password`} className="inline-flex flex-wrap items-center gap-2">
+                      <form
+                        method="POST"
+                        action={`/api/fielder-logins/${fl.id}/meta`}
+                        className="flex flex-col gap-1"
+                      >
+                        <input
+                          name="role"
+                          type="text"
+                          defaultValue={fl.role ?? ""}
+                          placeholder="Fiber Network Engineer"
+                          className="input h-8 text-xs"
+                        />
+                        <input
+                          name="region"
+                          type="text"
+                          defaultValue={fl.region ?? ""}
+                          placeholder="Colorado"
+                          className="input h-8 text-xs"
+                        />
+                        <button type="submit" className="btn-secondary py-1 text-xs mt-1">
+                          Save
+                        </button>
+                      </form>
+                    </td>
+                    <td className="px-3 py-2">{fl.region ?? "—"}</td>
+                    <td className="px-3 py-2">
+                      <form
+                        method="POST"
+                        action={`/api/fielder-logins/${fl.id}/reset-password`}
+                        className="inline-flex flex-wrap items-center gap-2"
+                      >
                         <input
                           name="newPassword"
                           type="password"

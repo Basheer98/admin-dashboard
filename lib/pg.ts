@@ -127,7 +127,9 @@ export async function runSchema(): Promise<void> {
       id SERIAL PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
-      fielder_name TEXT NOT NULL
+      fielder_name TEXT NOT NULL,
+      role TEXT NULL,
+      region TEXT NULL
     );
     CREATE TABLE IF NOT EXISTS assignment_templates (
       id SERIAL PRIMARY KEY,
@@ -156,6 +158,12 @@ export async function runSchema(): Promise<void> {
       details JSONB NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+  `);
+  await p.query(`
+    DO $$ BEGIN ALTER TABLE fielder_logins ADD COLUMN role TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN ALTER TABLE fielder_logins ADD COLUMN region TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   await p.query(`
     CREATE TABLE IF NOT EXISTS fielder_push_tokens (

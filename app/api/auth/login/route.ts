@@ -3,24 +3,46 @@ import { NextResponse } from "next/server";
 import { createSession, sessionCookieName } from "@/lib/auth";
 import { getFielderLoginByEmail } from "@/lib/db";
 import { getRedirectUrl } from "@/lib/redirectUrl";
+import { checkLoginRateLimit } from "@/lib/rateLimit";
+import { verifyCsrfWithBodyToken } from "@/lib/csrf";
 
 export async function POST(request: Request) {
+  const rate = checkLoginRateLimit(request);
+  if (!rate.ok) {
+    const isJson = (request.headers.get("content-type") ?? "").toLowerCase().includes("application/json");
+    if (isJson) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Try again later." },
+        { status: 429, headers: { "Retry-After": String(rate.retryAfter) } },
+      );
+    }
+    return NextResponse.redirect(new URL("/login?error=rate", request.url));
+  }
+
   const contentType = request.headers.get("content-type") ?? "";
   const isJson = contentType.toLowerCase().includes("application/json");
 
   let email: string;
   let password: string;
   let redirectTo = "/";
+  let bodyCsrfToken: string | null = null;
 
   if (isJson) {
     const body = await request.json().catch(() => ({}));
     email = String(body.email ?? "").trim().toLowerCase();
     password = String(body.password ?? "");
+    bodyCsrfToken = body.csrf_token != null ? String(body.csrf_token) : null;
   } else {
     const formData = await request.formData();
     email = String(formData.get("email") ?? "").trim();
-    password = String(formData.get("password") ?? "");
+    password = String(formData.get("password") ?? "").trim();
     redirectTo = String(formData.get("redirectTo") ?? "/");
+    bodyCsrfToken = formData.get("csrf_token") != null ? String(formData.get("csrf_token")) : null;
+  }
+
+  // CSRF: required for form POST (web). Fielder app (JSON) uses Bearer after login, so we allow JSON without CSRF.
+  if (!isJson && !verifyCsrfWithBodyToken(request, bodyCsrfToken)) {
+    return NextResponse.redirect(getRedirectUrl(request, "/login", { error: "invalid" }));
   }
 
   if (!email || !password) {

@@ -926,11 +926,13 @@ export type FielderLoginRow = {
   email: string;
   passwordHash: string;
   fielderName: string;
+  role: string | null;
+  region: string | null;
 };
 
 export async function getAllFielderLogins(): Promise<FielderLoginRow[]> {
   const rows = await query<FielderLoginRow>(
-    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName" FROM fielder_logins ORDER BY id',
+    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName", role, region FROM fielder_logins ORDER BY id',
   );
   return rows as FielderLoginRow[];
 }
@@ -944,7 +946,7 @@ export async function getAssignmentsForFielderByName(fielderName: string): Promi
 
 export async function getFielderLoginByEmail(email: string): Promise<FielderLoginRow | null> {
   const row = await queryOne<FielderLoginRow>(
-    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName" FROM fielder_logins WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))',
+    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName", role, region FROM fielder_logins WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))',
     [email],
   );
   return row as FielderLoginRow | null ?? null;
@@ -953,7 +955,7 @@ export async function getFielderLoginByEmail(email: string): Promise<FielderLogi
 export async function getFielderLoginByFielderName(fielderName: string): Promise<FielderLoginRow | null> {
   const normalized = fielderName.trim().toUpperCase();
   const row = await queryOne<FielderLoginRow>(
-    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName" FROM fielder_logins WHERE UPPER(TRIM(fielder_name)) = $1',
+    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName", role, region FROM fielder_logins WHERE UPPER(TRIM(fielder_name)) = $1',
     [normalized],
   );
   return row as FielderLoginRow | null ?? null;
@@ -965,14 +967,33 @@ export async function insertFielderLogin(input: {
   email: string;
   password: string;
   fielderName: string;
+  role?: string | null;
+  region?: string | null;
 }): Promise<number> {
   const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
   const row = await queryOneRow<{ id: number }>(
-    `INSERT INTO fielder_logins (email, password_hash, fielder_name) VALUES ($1, $2, $3) RETURNING id`,
-    [input.email.trim().toLowerCase(), passwordHash, input.fielderName.trim()],
+    `INSERT INTO fielder_logins (email, password_hash, fielder_name, role, region) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+    [
+      input.email.trim().toLowerCase(),
+      passwordHash,
+      input.fielderName.trim(),
+      input.role ? input.role.trim() : null,
+      input.region ? input.region.trim() : null,
+    ],
   );
   if (!row) throw new Error("insertFielderLogin failed");
   return row.id;
+}
+
+export async function updateFielderLoginMeta(
+  id: number,
+  role: string | null,
+  region: string | null,
+): Promise<void> {
+  await query(
+    "UPDATE fielder_logins SET role = $2, region = $3 WHERE id = $1",
+    [id, role, region],
+  );
 }
 
 export async function updateFielderLoginPassword(id: number, newPassword: string): Promise<void> {
@@ -1000,6 +1021,144 @@ export async function getPushTokenForFielder(fielderName: string): Promise<strin
     [normalized],
   );
   return (row as { expo_push_token: string } | undefined)?.expo_push_token ?? null;
+}
+
+export type FielderNotificationItem = {
+  id: string;
+  type: "new_assignment" | "project_updated" | "payment" | "issue_resolved";
+  message: string;
+  projectId: number;
+  projectCode: string;
+  amount?: number;
+  createdAt: string;
+};
+
+/** Notifications for the fielder app bell: new assignments, project updates, payments, issue resolved. */
+export async function getFielderNotifications(
+  fielderName: string,
+  limit = 30,
+): Promise<FielderNotificationItem[]> {
+  const normalized = fielderName.trim().toUpperCase();
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 60);
+  const cutoffStr = cutoff.toISOString();
+  const items: FielderNotificationItem[] = [];
+
+  const assignments = await getAssignmentsForFielderByName(fielderName);
+  const projectIds = [...new Set(assignments.map((a) => a.projectId))];
+  const assignmentIds = assignments.map((a) => a.id);
+  if (projectIds.length === 0) return [];
+
+  const projectIdList = projectIds.join(",");
+  const assignmentIdList = assignmentIds.join(",");
+
+  const assignmentRows = await query<{
+    id: number;
+    projectId: number;
+    projectCode: string;
+    createdAt: string;
+  }>(
+    `SELECT a.id, a.project_id AS "projectId", p.project_code AS "projectCode", a.created_at::text AS "createdAt"
+     FROM assignments a
+     JOIN projects p ON p.id = a.project_id
+     WHERE UPPER(TRIM(a.fielder_name)) = $1 AND a.created_at >= $2::timestamptz
+     ORDER BY a.created_at DESC LIMIT 15`,
+    [normalized, cutoffStr],
+  );
+  for (const r of assignmentRows) {
+    items.push({
+      id: `assign-${r.id}`,
+      type: "new_assignment",
+      message: `You were assigned to ${r.projectCode}`,
+      projectId: r.projectId,
+      projectCode: r.projectCode,
+      createdAt: r.createdAt,
+    });
+  }
+
+  const auditRows = await query<{
+    entityId: string;
+    createdAt: string;
+    projectCode: string;
+  }>(
+    `SELECT a.entity_id AS "entityId", a.created_at::text AS "createdAt", p.project_code AS "projectCode"
+     FROM audit_log a
+     LEFT JOIN projects p ON p.id = (a.entity_id::int)
+     WHERE a.actor_type = 'admin' AND a.entity_type = 'project' AND a.action = 'project.update'
+       AND (a.entity_id::int) IN (${projectIds.map((_, i) => `$${i + 1}`).join(",")})
+       AND a.created_at >= $${projectIds.length + 1}::timestamptz
+     ORDER BY a.created_at DESC LIMIT 15`,
+    [...projectIds, cutoffStr],
+  );
+  for (const r of auditRows) {
+    const projectId = parseInt(r.entityId, 10) || 0;
+    if (!projectId) continue;
+    items.push({
+      id: `audit-${r.entityId}-${r.createdAt}`,
+      type: "project_updated",
+      message: `${r.projectCode} was updated`,
+      projectId,
+      projectCode: r.projectCode ?? `#${r.entityId}`,
+      createdAt: r.createdAt,
+    });
+  }
+
+  if (assignmentIdList) {
+    const paymentRows = await query<{
+      id: number;
+      projectId: number;
+      projectCode: string;
+      amount: number;
+      createdAt: string;
+    }>(
+      `SELECT py.id, py.project_id AS "projectId", p.project_code AS "projectCode", py.amount, py.created_at::text AS "createdAt"
+       FROM payments py
+       JOIN projects p ON p.id = py.project_id
+       WHERE py.fielder_assignment_id IN (${assignmentIds.map((_, i) => `$${i + 1}`).join(",")})
+         AND py.voided_at IS NULL AND py.created_at >= $${assignmentIds.length + 1}::timestamptz
+       ORDER BY py.created_at DESC LIMIT 15`,
+      [...assignmentIds, cutoffStr],
+    );
+    for (const r of paymentRows) {
+      items.push({
+        id: `pay-${r.id}`,
+        type: "payment",
+        message: `Payment received for ${r.projectCode}`,
+        projectId: r.projectId,
+        projectCode: r.projectCode,
+        amount: Number(r.amount),
+        createdAt: r.createdAt,
+      });
+    }
+  }
+
+  const issueRows = await query<{
+    id: number;
+    projectId: number;
+    projectCode: string;
+    resolvedAt: string;
+  }>(
+    `SELECT pi.id, pi.project_id AS "projectId", p.project_code AS "projectCode", pi.resolved_at::text AS "resolvedAt"
+     FROM project_issues pi
+     JOIN projects p ON p.id = pi.project_id
+     WHERE pi.project_id IN (${projectIds.map((_, i) => `$${i + 1}`).join(",")})
+       AND pi.resolved_at IS NOT NULL AND pi.resolved_at >= $${projectIds.length + 1}::timestamptz
+     ORDER BY pi.resolved_at DESC LIMIT 15`,
+    [...projectIds, cutoffStr],
+  );
+  for (const r of issueRows) {
+    items.push({
+      id: `issue-${r.id}`,
+      type: "issue_resolved",
+      message: `Issue resolved on ${r.projectCode}`,
+      projectId: r.projectId,
+      projectCode: r.projectCode,
+      createdAt: r.resolvedAt,
+    });
+  }
+
+  items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return items.slice(0, limit);
 }
 
 export async function getSettings(): Promise<SettingsRow> {
@@ -1459,11 +1618,18 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
     const logins = backup.fielderLogins ?? [];
     for (const f of logins) {
       await client.query(
-      `INSERT INTO fielder_logins (id, email, password_hash, fielder_name)
-       VALUES ($1, $2, $3, $4)`,
-      [f.id, f.email, f.passwordHash, f.fielderName],
-    );
-  }
+        `INSERT INTO fielder_logins (id, email, password_hash, fielder_name, role, region)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          f.id,
+          f.email,
+          f.passwordHash,
+          f.fielderName,
+          (f as { role?: string | null }).role ?? null,
+          (f as { region?: string | null }).region ?? null,
+        ],
+      );
+    }
 
     const seqQueries = [
       "SELECT setval(pg_get_serial_sequence('projects', 'id'), COALESCE((SELECT MAX(id) FROM projects), 1))",

@@ -21,5 +21,7 @@ export async function GET(request: Request) {
     email: login.email,
     fielderName: login.fielderName,
     adminPhone: settings.adminPhone ?? null,
+    role: login.role ?? null,
+    region: login.region ?? null,
   });
 }
