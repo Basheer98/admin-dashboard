@@ -1,32 +1,6 @@
-import { cookies } from "next/headers";
-
 const CSRF_COOKIE = "csrf_token";
-const CSRF_MAX_AGE = 60 * 60; // 1 hour
 
-function randomToken(): string {
-  const bytes = new Uint8Array(24);
-  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-    crypto.getRandomValues(bytes);
-  }
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-/** Use in Server Components / server context to get or set CSRF cookie and return token for the form. */
-export async function getOrSetCsrfToken(): Promise<string> {
-  const store = await cookies();
-  let token = store.get(CSRF_COOKIE)?.value;
-  if (!token) {
-    token = randomToken();
-    store.set(CSRF_COOKIE, token, {
-      httpOnly: false, // so client fetch can send X-CSRF-Token header if needed
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: CSRF_MAX_AGE,
-    });
-  }
-  return token;
-}
+/** CSRF token is set via GET /api/auth/csrf (Route Handler). Login page fetches it client-side. */
 
 /** Read CSRF token from cookie (request headers). */
 function getCsrfFromCookie(request: Request): string | null {
