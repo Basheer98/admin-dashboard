@@ -39,6 +39,8 @@ export async function POST(request: Request) {
     const invoiceNumber = invoiceNumberRaw || null;
     const workTypeRaw = String(formData.get("workType") ?? "").trim();
     const workType = workTypeRaw || null;
+    const gdriveFolderUrlRaw = String(formData.get("gdriveFolderUrl") ?? "").trim();
+    const gdriveFolderUrl = gdriveFolderUrlRaw || null;
 
     const redirectTo = String(formData.get("redirectTo") ?? "/projects");
 
@@ -54,6 +56,7 @@ export async function POST(request: Request) {
       qfield,
       invoiceNumber,
       workType,
+      gdriveFolderUrl,
     });
     if (!parsed.success) {
       return NextResponse.redirect(getRedirectUrl(request, "/projects", { error: "invalid" }));
@@ -71,6 +74,7 @@ export async function POST(request: Request) {
     qfield: parsed.data.qfield,
     invoiceNumber: parsed.data.invoiceNumber,
     workType: parsed.data.workType,
+    gdriveFolderUrl: parsed.data.gdriveFolderUrl,
   });
 
     await insertAuditLog({

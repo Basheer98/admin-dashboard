@@ -39,6 +39,7 @@ export type ProjectRow = {
   projectCode: string;
   clientName: string;
   location: string;
+  gdriveFolderUrl: string | null;
   totalSqft: number;
   companyRatePerSqft: number;
   status: string;
@@ -90,12 +91,45 @@ export type PaymentRow = {
   voidedAt: string | null;
 };
 
+export type TripRow = {
+  id: number;
+  name: string;
+  state: string;
+  city: string | null;
+  teamMembers: string | null;
+  budgetCar: number | null;
+  budgetAccommodation: number | null;
+  budgetGas: number | null;
+  budgetTools: number | null;
+  projectId: number | null;
+  startDate: string;
+  endDate: string | null;
+  status: "PLANNED" | "ACTIVE" | "CLOSED";
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TripExpenseRow = {
+  id: number;
+  tripId: number;
+  expenseDate: string;
+  category: "CAR" | "ACCOMMODATION" | "GAS" | "TOOLS" | "OTHER";
+  amount: number;
+  currency: "USD" | "INR";
+  paidBy: string | null;
+  vendor: string | null;
+  notes: string | null;
+  createdAt: string;
+};
+
 export type ListProjectsOptions = { includeArchived?: boolean };
 export type ListAssignmentsOptions = { includeArchived?: boolean };
 export type ListPaymentsOptions = { includeVoided?: boolean };
 
 const projectCols = `
   id, project_code AS "projectCode", client_name AS "clientName", location,
+  gdrive_folder_url AS "gdriveFolderUrl",
   total_sqft AS "totalSqft", company_rate_per_sqft AS "companyRatePerSqft",
   status, ecd, notes, qfield, invoice_number AS "invoiceNumber", work_type AS "workType",
   created_at::text AS "createdAt", updated_at::text AS "updatedAt", archived_at::text AS "archivedAt"
@@ -113,6 +147,20 @@ const paymentCols = `
   id, project_id AS "projectId", fielder_assignment_id AS "fielderAssignmentId",
   amount, currency, method, payment_date AS "paymentDate", notes,
   created_at::text AS "createdAt", voided_at::text AS "voidedAt"
+`;
+
+const tripCols = `
+  id, name, state, city, team_members AS "teamMembers",
+  budget_car AS "budgetCar", budget_accommodation AS "budgetAccommodation",
+  budget_gas AS "budgetGas", budget_tools AS "budgetTools",
+  project_id AS "projectId", start_date AS "startDate",
+  end_date AS "endDate", status, notes, created_at::text AS "createdAt",
+  updated_at::text AS "updatedAt"
+`;
+
+const tripExpenseCols = `
+  id, trip_id AS "tripId", expense_date AS "expenseDate", category, amount,
+  currency, paid_by AS "paidBy", vendor, notes, created_at::text AS "createdAt"
 `;
 
 export async function getAllProjects(options?: ListProjectsOptions): Promise<ProjectRow[]> {
@@ -240,10 +288,11 @@ export async function insertProject(input: {
   qfield?: string | null;
   invoiceNumber?: string | null;
   workType?: string | null;
+  gdriveFolderUrl?: string | null;
 }): Promise<ProjectRow> {
   const row = await queryOneRow<ProjectRow>(
-    `INSERT INTO projects (project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, qfield, invoice_number, work_type)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `INSERT INTO projects (project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, qfield, invoice_number, work_type, gdrive_folder_url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      RETURNING ${projectCols}`,
     [
       input.projectCode,
@@ -257,6 +306,7 @@ export async function insertProject(input: {
       input.qfield ?? null,
       input.invoiceNumber ?? null,
       input.workType ?? null,
+      input.gdriveFolderUrl ?? null,
     ],
   );
   if (!row) throw new Error("insertProject failed");
@@ -283,6 +333,7 @@ export async function updateProject(
     qfield?: string | null;
     invoiceNumber?: string | null;
     workType?: string | null;
+    gdriveFolderUrl?: string | null;
     archivedAt?: string | null;
   },
 ): Promise<void> {
@@ -290,9 +341,9 @@ export async function updateProject(
     `UPDATE projects SET
        project_code = $2, client_name = $3, location = $4, total_sqft = $5,
        company_rate_per_sqft = $6, status = $7, ecd = $8, notes = $9, qfield = $10, invoice_number = $11,
-       work_type = $12,
+       work_type = $12, gdrive_folder_url = $13,
        updated_at = NOW(),
-       archived_at = COALESCE($13, archived_at)
+       archived_at = COALESCE($14, archived_at)
      WHERE id = $1`,
     [
       id,
@@ -307,6 +358,7 @@ export async function updateProject(
       input.qfield ?? null,
       input.invoiceNumber ?? null,
       input.workType ?? null,
+      input.gdriveFolderUrl ?? null,
       input.archivedAt ?? null,
     ],
   );
@@ -758,6 +810,174 @@ export async function getPaymentById(
   return { ...p, project, assignment: assignment as FielderAssignmentRow };
 }
 
+export async function getAllTrips(): Promise<Array<TripRow & { project?: ProjectRow; totalExpense: number }>> {
+  const rows = await query<TripRow>(
+    `SELECT ${tripCols} FROM trips ORDER BY start_date DESC, created_at DESC`,
+  );
+  const result: Array<TripRow & { project?: ProjectRow; totalExpense: number }> = [];
+  for (const row of rows as TripRow[]) {
+    const project = row.projectId ? await getProjectById(row.projectId) : undefined;
+    const totalRow = await queryOne<{ total: number }>(
+      `SELECT COALESCE(SUM(amount), 0) AS total FROM trip_expenses WHERE trip_id = $1`,
+      [row.id],
+    );
+    result.push({ ...row, project, totalExpense: Number(totalRow?.total ?? 0) });
+  }
+  return result;
+}
+
+export async function getTripById(
+  id: number,
+): Promise<(TripRow & { project?: ProjectRow; expenses: TripExpenseRow[]; totalExpense: number }) | undefined> {
+  const trip = await queryOne<TripRow>(`SELECT ${tripCols} FROM trips WHERE id = $1`, [id]);
+  if (!trip) return undefined;
+  const t = trip as TripRow;
+  const project = t.projectId ? await getProjectById(t.projectId) : undefined;
+  const expenses = await query<TripExpenseRow>(
+    `SELECT ${tripExpenseCols} FROM trip_expenses WHERE trip_id = $1 ORDER BY expense_date DESC, id DESC`,
+    [id],
+  );
+  const totalExpense = (expenses as TripExpenseRow[]).reduce((sum, e) => sum + Number(e.amount), 0);
+  return { ...t, project, expenses: expenses as TripExpenseRow[], totalExpense };
+}
+
+export async function insertTrip(input: {
+  name: string;
+  state: string;
+  city: string | null;
+  teamMembers: string | null;
+  budgetCar: number | null;
+  budgetAccommodation: number | null;
+  budgetGas: number | null;
+  budgetTools: number | null;
+  projectId: number | null;
+  startDate: string;
+  endDate: string | null;
+  status: "PLANNED" | "ACTIVE" | "CLOSED";
+  notes: string | null;
+}): Promise<TripRow> {
+  const row = await queryOneRow<TripRow>(
+    `INSERT INTO trips (name, state, city, team_members, budget_car, budget_accommodation, budget_gas, budget_tools, project_id, start_date, end_date, status, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+     RETURNING ${tripCols}`,
+    [
+      input.name,
+      input.state,
+      input.city,
+      input.teamMembers,
+      input.budgetCar,
+      input.budgetAccommodation,
+      input.budgetGas,
+      input.budgetTools,
+      input.projectId,
+      input.startDate,
+      input.endDate,
+      input.status,
+      input.notes,
+    ],
+  );
+  if (!row) throw new Error("insertTrip failed");
+  return row as TripRow;
+}
+
+export async function updateTrip(
+  id: number,
+  input: {
+    name: string;
+    state: string;
+    city: string | null;
+    teamMembers: string | null;
+    budgetCar: number | null;
+    budgetAccommodation: number | null;
+    budgetGas: number | null;
+    budgetTools: number | null;
+    projectId: number | null;
+    startDate: string;
+    endDate: string | null;
+    status: "PLANNED" | "ACTIVE" | "CLOSED";
+    notes: string | null;
+  },
+): Promise<void> {
+  await query(
+    `UPDATE trips SET
+       name = $2,
+       state = $3,
+       city = $4,
+       team_members = $5,
+       budget_car = $6,
+       budget_accommodation = $7,
+       budget_gas = $8,
+       budget_tools = $9,
+       project_id = $10,
+       start_date = $11,
+       end_date = $12,
+       status = $13,
+       notes = $14,
+       updated_at = NOW()
+     WHERE id = $1`,
+    [
+      id,
+      input.name,
+      input.state,
+      input.city,
+      input.teamMembers,
+      input.budgetCar,
+      input.budgetAccommodation,
+      input.budgetGas,
+      input.budgetTools,
+      input.projectId,
+      input.startDate,
+      input.endDate,
+      input.status,
+      input.notes,
+    ],
+  );
+}
+
+export async function insertTripExpense(input: {
+  tripId: number;
+  expenseDate: string;
+  category: "CAR" | "ACCOMMODATION" | "GAS" | "TOOLS" | "OTHER";
+  amount: number;
+  currency: "USD" | "INR";
+  paidBy: string | null;
+  vendor: string | null;
+  notes: string | null;
+}): Promise<TripExpenseRow> {
+  const row = await queryOneRow<TripExpenseRow>(
+    `INSERT INTO trip_expenses (trip_id, expense_date, category, amount, currency, paid_by, vendor, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING ${tripExpenseCols}`,
+    [
+      input.tripId,
+      input.expenseDate,
+      input.category,
+      input.amount,
+      input.currency,
+      input.paidBy,
+      input.vendor,
+      input.notes,
+    ],
+  );
+  if (!row) throw new Error("insertTripExpense failed");
+  return row as TripExpenseRow;
+}
+
+export async function getTripExpensesWithTrip(): Promise<Array<TripExpenseRow & { trip: TripRow }>> {
+  const rows = await query<TripExpenseRow>(
+    `SELECT ${tripExpenseCols} FROM trip_expenses ORDER BY expense_date DESC, id DESC`,
+  );
+  const trips = await query<TripRow>(`SELECT ${tripCols} FROM trips`);
+  const tripsById = new Map((trips as TripRow[]).map((t) => [t.id, t]));
+  const result: Array<TripExpenseRow & { trip: TripRow }> = [];
+  for (const row of rows as TripExpenseRow[]) {
+    const trip = tripsById.get(row.tripId);
+    if (!trip) continue;
+    result.push({ ...row, trip });
+  }
+  return result;
+}
+
 const additionalWorkCols = `
   id, type, project_number AS "projectNumber", our_project_id AS "ourProjectId",
   assigned_fielder_assignment_id AS "assignedFielderAssignmentId", distance,
@@ -928,11 +1148,12 @@ export type FielderLoginRow = {
   fielderName: string;
   role: string | null;
   region: string | null;
+  gdriveRootFolderUrl: string | null;
 };
 
 export async function getAllFielderLogins(): Promise<FielderLoginRow[]> {
   const rows = await query<FielderLoginRow>(
-    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName", role, region FROM fielder_logins ORDER BY id',
+    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName", role, region, gdrive_root_folder_url AS "gdriveRootFolderUrl" FROM fielder_logins ORDER BY id',
   );
   return rows as FielderLoginRow[];
 }
@@ -946,7 +1167,7 @@ export async function getAssignmentsForFielderByName(fielderName: string): Promi
 
 export async function getFielderLoginByEmail(email: string): Promise<FielderLoginRow | null> {
   const row = await queryOne<FielderLoginRow>(
-    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName", role, region FROM fielder_logins WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))',
+    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName", role, region, gdrive_root_folder_url AS "gdriveRootFolderUrl" FROM fielder_logins WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))',
     [email],
   );
   return row as FielderLoginRow | null ?? null;
@@ -955,7 +1176,7 @@ export async function getFielderLoginByEmail(email: string): Promise<FielderLogi
 export async function getFielderLoginByFielderName(fielderName: string): Promise<FielderLoginRow | null> {
   const normalized = fielderName.trim().toUpperCase();
   const row = await queryOne<FielderLoginRow>(
-    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName", role, region FROM fielder_logins WHERE UPPER(TRIM(fielder_name)) = $1',
+    'SELECT id, email, password_hash AS "passwordHash", fielder_name AS "fielderName", role, region, gdrive_root_folder_url AS "gdriveRootFolderUrl" FROM fielder_logins WHERE UPPER(TRIM(fielder_name)) = $1',
     [normalized],
   );
   return row as FielderLoginRow | null ?? null;
@@ -969,16 +1190,19 @@ export async function insertFielderLogin(input: {
   fielderName: string;
   role?: string | null;
   region?: string | null;
+  gdriveRootFolderUrl?: string | null;
 }): Promise<number> {
   const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
   const row = await queryOneRow<{ id: number }>(
-    `INSERT INTO fielder_logins (email, password_hash, fielder_name, role, region) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+    `INSERT INTO fielder_logins (email, password_hash, fielder_name, role, region, gdrive_root_folder_url)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
     [
       input.email.trim().toLowerCase(),
       passwordHash,
       input.fielderName.trim(),
       input.role ? input.role.trim() : null,
       input.region ? input.region.trim() : null,
+      input.gdriveRootFolderUrl ? input.gdriveRootFolderUrl.trim() : null,
     ],
   );
   if (!row) throw new Error("insertFielderLogin failed");
@@ -989,10 +1213,11 @@ export async function updateFielderLoginMeta(
   id: number,
   role: string | null,
   region: string | null,
+  gdriveRootFolderUrl: string | null,
 ): Promise<void> {
   await query(
-    "UPDATE fielder_logins SET role = $2, region = $3 WHERE id = $1",
-    [id, role, region],
+    "UPDATE fielder_logins SET role = $2, region = $3, gdrive_root_folder_url = $4 WHERE id = $1",
+    [id, role, region, gdriveRootFolderUrl],
   );
 }
 
@@ -1385,7 +1610,15 @@ export type BackupPayload = {
   payments: PaymentRow[];
   additionalWork: AdditionalWorkRow[];
   activityLog: ActivityRow[];
-  fielderLogins?: Array<{ id: number; email: string; passwordHash: string; fielderName: string }>;
+  fielderLogins?: Array<{
+    id: number;
+    email: string;
+    passwordHash: string;
+    fielderName: string;
+    role?: string | null;
+    region?: string | null;
+    gdriveRootFolderUrl?: string | null;
+  }>;
 };
 
 /** Old data.json shape (before Postgres). Used to import legacy backups into Postgres. */
@@ -1434,6 +1667,7 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
       qfield: row.qfield != null ? String(row.qfield) : null,
       invoiceNumber: row.invoiceNumber != null ? String(row.invoiceNumber) : row.invoice_number != null ? String(row.invoice_number) : null,
       workType: row.workType != null ? String(row.workType) : row.work_type != null ? String(row.work_type) : null,
+      gdriveFolderUrl: row.gdriveFolderUrl != null ? String(row.gdriveFolderUrl) : row.gdrive_folder_url != null ? String(row.gdrive_folder_url) : null,
       createdAt: toTimestamp(row.createdAt ?? row.created_at) ?? now,
       updatedAt: toTimestamp(row.updatedAt ?? row.updated_at) ?? now,
       archivedAt: toTimestamp(row.archivedAt ?? row.archived_at),
@@ -1504,6 +1738,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
     await client.query("BEGIN");
 
     await client.query("DELETE FROM payments");
+    await client.query("DELETE FROM trip_expenses");
+    await client.query("DELETE FROM trips");
     await client.query("DELETE FROM additional_work");
     await client.query("DELETE FROM assignments");
     await client.query("DELETE FROM audit_log");
@@ -1516,8 +1752,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
 
     for (const p of backup.projects) {
       await client.query(
-      `INSERT INTO projects (id, project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, qfield, invoice_number, created_at, updated_at, archived_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::timestamptz, $13::timestamptz, $14::timestamptz)`,
+      `INSERT INTO projects (id, project_code, client_name, location, total_sqft, company_rate_per_sqft, status, ecd, notes, qfield, invoice_number, gdrive_folder_url, created_at, updated_at, archived_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::timestamptz, $14::timestamptz, $15::timestamptz)`,
       [
         p.id,
         p.projectCode,
@@ -1530,6 +1766,7 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
         p.notes ?? null,
         p.qfield ?? null,
         p.invoiceNumber ?? null,
+        p.gdriveFolderUrl ?? null,
         p.createdAt ?? now,
         p.updatedAt ?? now,
         ts(p.archivedAt ?? null),
@@ -1618,8 +1855,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
     const logins = backup.fielderLogins ?? [];
     for (const f of logins) {
       await client.query(
-        `INSERT INTO fielder_logins (id, email, password_hash, fielder_name, role, region)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO fielder_logins (id, email, password_hash, fielder_name, role, region, gdrive_root_folder_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           f.id,
           f.email,
@@ -1627,6 +1864,7 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
           f.fielderName,
           (f as { role?: string | null }).role ?? null,
           (f as { region?: string | null }).region ?? null,
+          (f as { gdriveRootFolderUrl?: string | null }).gdriveRootFolderUrl ?? null,
         ],
       );
     }
@@ -1635,6 +1873,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
       "SELECT setval(pg_get_serial_sequence('projects', 'id'), COALESCE((SELECT MAX(id) FROM projects), 1))",
       "SELECT setval(pg_get_serial_sequence('assignments', 'id'), COALESCE((SELECT MAX(id) FROM assignments), 1))",
       "SELECT setval(pg_get_serial_sequence('payments', 'id'), COALESCE((SELECT MAX(id) FROM payments), 1))",
+      "SELECT setval(pg_get_serial_sequence('trips', 'id'), COALESCE((SELECT MAX(id) FROM trips), 1))",
+      "SELECT setval(pg_get_serial_sequence('trip_expenses', 'id'), COALESCE((SELECT MAX(id) FROM trip_expenses), 1))",
       "SELECT setval(pg_get_serial_sequence('additional_work', 'id'), COALESCE((SELECT MAX(id) FROM additional_work), 1))",
       "SELECT setval(pg_get_serial_sequence('activity_log', 'id'), COALESCE((SELECT MAX(id) FROM activity_log), 1))",
       "SELECT setval(pg_get_serial_sequence('audit_log', 'id'), COALESCE((SELECT MAX(id) FROM audit_log), 1))",
@@ -1661,6 +1901,8 @@ export async function resetSequences(): Promise<void> {
     "SELECT setval(pg_get_serial_sequence('projects', 'id'), COALESCE((SELECT MAX(id) FROM projects), 1))",
     "SELECT setval(pg_get_serial_sequence('assignments', 'id'), COALESCE((SELECT MAX(id) FROM assignments), 1))",
     "SELECT setval(pg_get_serial_sequence('payments', 'id'), COALESCE((SELECT MAX(id) FROM payments), 1))",
+    "SELECT setval(pg_get_serial_sequence('trips', 'id'), COALESCE((SELECT MAX(id) FROM trips), 1))",
+    "SELECT setval(pg_get_serial_sequence('trip_expenses', 'id'), COALESCE((SELECT MAX(id) FROM trip_expenses), 1))",
     "SELECT setval(pg_get_serial_sequence('additional_work', 'id'), COALESCE((SELECT MAX(id) FROM additional_work), 1))",
     "SELECT setval(pg_get_serial_sequence('activity_log', 'id'), COALESCE((SELECT MAX(id) FROM activity_log), 1))",
     "SELECT setval(pg_get_serial_sequence('audit_log', 'id'), COALESCE((SELECT MAX(id) FROM audit_log), 1))",

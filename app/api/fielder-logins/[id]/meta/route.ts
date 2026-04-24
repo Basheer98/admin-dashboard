@@ -24,15 +24,16 @@ export async function POST(
   const formData = await request.formData();
   const role = String(formData.get("role") ?? "").trim();
   const region = String(formData.get("region") ?? "").trim();
+  const gdriveRootFolderUrl = String(formData.get("gdriveRootFolderUrl") ?? "").trim();
 
   try {
-    await updateFielderLoginMeta(idNum, role || null, region || null);
+    await updateFielderLoginMeta(idNum, role || null, region || null, gdriveRootFolderUrl || null);
     await insertAuditLog({
       ...actor,
       action: "fielder_login.update_meta",
       entityType: "fielder_login",
       entityId: String(idNum),
-      details: { role: role || null, region: region || null },
+      details: { role: role || null, region: region || null, gdriveRootFolderUrl: gdriveRootFolderUrl || null },
     });
     return NextResponse.redirect(
       getRedirectUrl(request, "/settings", { flUpdated: "1" }),

@@ -149,6 +149,15 @@ export default async function SettingsPage({ searchParams }: PageProps) {
               <label className="label">Region (optional)</label>
               <input name="region" type="text" placeholder="Colorado" className="input" />
             </div>
+            <div className="space-y-1">
+              <label className="label">Google Drive folder (optional)</label>
+              <input
+                name="gdriveRootFolderUrl"
+                type="text"
+                placeholder="https://drive.google.com/drive/folders/..."
+                className="input"
+              />
+            </div>
             <div className="sm:col-span-5">
               <button type="submit" className="btn-primary px-5 py-2.5">
                 Add fielder login
@@ -163,6 +172,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
                   <th className="px-3 py-2">Fielder name</th>
                   <th className="px-3 py-2">Role</th>
                   <th className="px-3 py-2">Region</th>
+                  <th className="px-3 py-2">Drive folder</th>
                   <th className="px-3 py-2">Reset password</th>
                 </tr>
               </thead>
@@ -191,12 +201,22 @@ export default async function SettingsPage({ searchParams }: PageProps) {
                           placeholder="Colorado"
                           className="input h-8 text-xs"
                         />
+                        <input
+                          name="gdriveRootFolderUrl"
+                          type="text"
+                          defaultValue={fl.gdriveRootFolderUrl ?? ""}
+                          placeholder="Drive folder URL"
+                          className="input h-8 text-xs"
+                        />
                         <button type="submit" className="btn-secondary py-1 text-xs mt-1">
                           Save
                         </button>
                       </form>
                     </td>
                     <td className="px-3 py-2">{fl.region ?? "—"}</td>
+                    <td className="px-3 py-2">
+                      {fl.gdriveRootFolderUrl ? "Set" : "—"}
+                    </td>
                     <td className="px-3 py-2">
                       <form
                         method="POST"

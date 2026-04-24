@@ -44,6 +44,9 @@ export async function GET(request: Request) {
       email: r.email,
       passwordHash: r.passwordHash,
       fielderName: r.fielderName,
+      role: r.role,
+      region: r.region,
+      gdriveRootFolderUrl: r.gdriveRootFolderUrl,
     })),
   };
 

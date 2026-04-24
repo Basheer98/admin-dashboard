@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProjectById, getAssignmentsByProjectId, getProjectIssuesByProjectId } from "@/lib/db";
+import { getFielderLoginByFielderName, getProjectById, getAssignmentsByProjectId, getProjectIssuesByProjectId } from "@/lib/db";
 import { queryOne } from "@/lib/pg";
 import { getMobileSession, unauthorized } from "@/lib/mobileAuth";
 import { getProjectStatusLabel } from "@/lib/projectStatus";
@@ -14,10 +14,11 @@ export async function GET(request: Request, { params }: Params) {
   const { id: idStr } = await params;
   const id = Number(idStr);
 
-  const [project, assignments, issues] = await Promise.all([
+  const [project, assignments, issues, login] = await Promise.all([
     getProjectById(id),
     getAssignmentsByProjectId(id),
     getProjectIssuesByProjectId(id),
+    getFielderLoginByFielderName(session.fielderName),
   ]);
 
   if (!project) {
@@ -55,6 +56,8 @@ export async function GET(request: Request, { params }: Params) {
     ecd: project.ecd ?? null,
     notes: project.notes ?? null,
     invoiceNumber: project.invoiceNumber ?? null,
+    gdriveFolderUrl: project.gdriveFolderUrl ?? null,
+    uploadFolderUrl: login?.gdriveRootFolderUrl ?? null,
     totalSqft: project.totalSqft,
     ratePerSqft: Number(myAssignment.ratePerSqft),
     totalRequired,

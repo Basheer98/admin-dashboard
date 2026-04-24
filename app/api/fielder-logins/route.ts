@@ -32,6 +32,7 @@ export async function POST(request: Request) {
   const fielderName = String(formData.get("fielderName") ?? "").trim();
   const role = String(formData.get("role") ?? "").trim();
   const region = String(formData.get("region") ?? "").trim();
+  const gdriveRootFolderUrl = String(formData.get("gdriveRootFolderUrl") ?? "").trim();
 
   const parsed = validate(createSchema, { email, password, fielderName });
   if (!parsed.success) {
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
       ...parsed.data,
       role: role || null,
       region: region || null,
+      gdriveRootFolderUrl: gdriveRootFolderUrl || null,
     });
     await insertAuditLog({
       ...getAuditActor(session),

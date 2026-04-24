@@ -4,10 +4,11 @@ import {
   getAllPayments,
   getAssignmentsWithDetails,
   getSettings,
+  getTripExpensesWithTrip,
 } from "@/lib/db";
 import { getDueDateStatus, getProjectEcdStatus } from "@/lib/dueDate";
 import { getProjectStatusLabel, PROJECT_STATUS_VALUES } from "@/lib/projectStatus";
-import { formatCurrency, formatWithInr, formatUsdSmart } from "@/lib/currency";
+import { formatWithInr, formatUsdSmart } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import Link from "next/link";
 import { RevenueVsPayoutsChart } from "@/app/components/charts/RevenueVsPayoutsChart";
@@ -111,12 +112,13 @@ export default async function Home({ searchParams }: PageProps) {
   const hasStatusFilter = Boolean(filterStatus);
   const hasInvoiceFilter = Boolean(filterInvoice);
 
-  const [allProjects, allPayments, assignments, assignmentsWithDetails, settings] = await Promise.all([
+  const [allProjects, allPayments, assignments, assignmentsWithDetails, settings, tripExpensesWithTrip] = await Promise.all([
     getAllProjects(),
     getAllPayments(),
     getAllAssignments(),
     getAssignmentsWithDetails(),
     getSettings(),
+    getTripExpensesWithTrip(),
   ]);
   let projects = hasDateFilter
     ? allProjects.filter((p) => inDateRange(p.createdAt, from, to))
@@ -137,6 +139,11 @@ export default async function Home({ searchParams }: PageProps) {
     : allPayments;
   // Always scope payments to filtered projects so totals and charts match (date / status / invoice filter)
   payments = payments.filter((p) => projectIds.has(p.projectId));
+
+  const filteredTripExpenses = hasDateFilter
+    ? tripExpensesWithTrip.filter((e) => inDateRange(e.expenseDate, from, to))
+    : tripExpensesWithTrip;
+  const totalTripExpenses = filteredTripExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
   const totalRevenue = projects.reduce((sum, p) => {
     const projectRevenue = p.totalSqft * Number(p.companyRatePerSqft);
@@ -404,6 +411,22 @@ export default async function Home({ searchParams }: PageProps) {
     }))
     .sort((a, b) => (a.monthKey < b.monthKey ? -1 : 1));
 
+  const monthlyTripExpenseMap = new Map<string, { monthKey: string; label: string; total: number }>();
+  filteredTripExpenses.forEach((e) => {
+    const date = new Date(e.expenseDate);
+    if (Number.isNaN(date.getTime())) return;
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const key = `${year}-${month + 1}`;
+    const label = date.toLocaleDateString(undefined, { year: "numeric", month: "short" });
+    const existing = monthlyTripExpenseMap.get(key) ?? { monthKey: key, label, total: 0 };
+    existing.total += Number(e.amount);
+    monthlyTripExpenseMap.set(key, existing);
+  });
+  const monthlyTripExpenseRows = Array.from(monthlyTripExpenseMap.values()).sort((a, b) =>
+    a.monthKey < b.monthKey ? -1 : 1,
+  );
+
   const dueSoonOrOverdue = assignmentsWithDetails.filter((a) => {
     const status = getDueDateStatus(a.dueDate ?? null);
     return status === "overdue" || status === "due-soon";
@@ -607,6 +630,15 @@ export default async function Home({ searchParams }: PageProps) {
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
               {showInr ? formatWithInr(totalPending, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalPending)}
             </p>
+          </div>
+          <div className="card-highlight p-7 md:col-span-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+              Trip expenses
+            </p>
+            <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
+              {showInr ? formatWithInr(totalTripExpenses, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalTripExpenses)}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">Car, accommodation, gas, tools and other trip spends</p>
           </div>
           {totalInternalWorkValue > 0 && (
             <div className="card-highlight p-7 md:col-span-1">
@@ -1025,6 +1057,47 @@ export default async function Home({ searchParams }: PageProps) {
               </tbody>
             </table>
           </div>
+          )}
+        </section>
+
+        <section className="section-separator space-y-3">
+          <h2 className="text-base font-semibold text-zinc-100">
+            Monthly trip expenses
+          </h2>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-sm text-zinc-500">
+              Track deployment spending trends by month.
+            </p>
+            <Link href="/trips" className="text-sm text-zinc-300 underline hover:text-white">
+              Open trips
+            </Link>
+          </div>
+          {monthlyTripExpenseRows.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No trip expenses yet"
+              description="Create a trip and log car, stay, gas, and tools expenses."
+              action={{ href: "/trips", label: "Create trip" }}
+            />
+          ) : (
+            <div className="card card-table overflow-x-auto">
+              <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-3 py-2 text-left">Month</th>
+                    <th className="px-3 py-2 text-right">Trip expenses</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyTripExpenseRows.map((row) => (
+                    <tr key={row.monthKey} className="border-t border-zinc-700/50 text-zinc-200">
+                      <td className="px-3 py-2">{row.label}</td>
+                      <td className="cell-numeric px-3 py-2">{formatUsdSmart(row.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
 

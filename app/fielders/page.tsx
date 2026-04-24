@@ -7,14 +7,53 @@ type PageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
+function invoiceMatchesMonth(invoiceNumber: string | null | undefined, monthKey: string): boolean {
+  if (!invoiceNumber) return false;
+  const [yearStr, monthStr] = monthKey.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  if (!year || !month) return false;
+
+  const invoice = invoiceNumber.toLowerCase();
+  const monthDate = new Date(year, month - 1, 1);
+  const longMonth = monthDate.toLocaleDateString("en-US", { month: "long" }).toLowerCase();
+  const shortMonth = monthDate.toLocaleDateString("en-US", { month: "short" }).toLowerCase();
+  const m2 = String(month).padStart(2, "0");
+  const y4 = String(year);
+  const y2 = y4.slice(-2);
+
+  const patterns = [
+    `${longMonth} ${y4}`,
+    `${shortMonth} ${y4}`,
+    `${longMonth}-${y4}`,
+    `${shortMonth}-${y4}`,
+    `${longMonth}/${y4}`,
+    `${shortMonth}/${y4}`,
+    `${m2}/${y4}`,
+    `${m2}-${y4}`,
+    `${y4}-${m2}`,
+    `${y4}/${m2}`,
+    `${shortMonth}${y2}`,
+    `${shortMonth}${y4}`,
+  ];
+
+  return patterns.some((p) => invoice.includes(p));
+}
+
 export default async function FieldersReportListPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {};
   const filterName = typeof sp.name === "string" ? sp.name.trim() : "";
   const hasPendingOnly = sp.pending === "1";
+  const filterMonth = typeof sp.month === "string" ? sp.month.trim() : "";
   const minSqftParam = typeof sp.minSqft === "string" ? sp.minSqft.trim() : "";
   const minSqft = minSqftParam !== "" ? Number(minSqftParam) : NaN;
   const hasMinSqft = !Number.isNaN(minSqft) && minSqft > 0;
-  const assignments = await getAssignmentsWithDetails();
+  const allAssignments = await getAssignmentsWithDetails();
+  const assignments = filterMonth
+    ? allAssignments.filter((a) =>
+        invoiceMatchesMonth(a.project.invoiceNumber, filterMonth),
+      )
+    : allAssignments;
 
   const assignmentIdToFielderName = new Map(
     assignments.map((a) => [a.id, a.fielderName.trim().toUpperCase()]),
@@ -165,10 +204,19 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
                 className="input h-11 w-32"
               />
             </div>
+            <div className="space-y-1">
+              <label className="label">Month</label>
+              <input
+                type="month"
+                name="month"
+                defaultValue={filterMonth}
+                className="input h-11 w-40"
+              />
+            </div>
             <button type="submit" className="btn-primary h-11 px-4 py-2">
               Apply
             </button>
-            {(filterName || hasPendingOnly || hasMinSqft) && (
+            {(filterName || hasPendingOnly || hasMinSqft || filterMonth) && (
               <Link
                 href="/fielders"
                 className="btn-secondary inline-flex h-11 items-center px-4 py-2"
@@ -208,7 +256,7 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
                   </td>
                   <td className="px-3 py-2">
                     <Link
-                      href={`/fielders/${encodeURIComponent(f.name)}`}
+                      href={`/fielders/${encodeURIComponent(f.name)}${filterMonth ? `?month=${encodeURIComponent(filterMonth)}` : ""}`}
                       className="text-zinc-300 underline hover:text-zinc-100"
                     >
                       View report

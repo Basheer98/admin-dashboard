@@ -9,6 +9,7 @@ import {
   FileBarChart,
   CreditCard,
   Briefcase,
+  Plane,
   Calendar,
   DollarSign,
   ListTodo,
@@ -27,7 +28,7 @@ type SidebarLayoutProps = {
   subtitle?: string;
   breadcrumbs?: BreadcrumbItem[];
   children: React.ReactNode;
-  current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "additional" | "activity" | "audit" | "settings" | "reports" | "reports-monthly" | "reports-manager-commissions";
+  current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "additional" | "trips" | "activity" | "audit" | "settings" | "reports" | "reports-monthly" | "reports-manager-commissions";
   headerAction?: React.ReactNode;
   backLink?: { href: string; label: string };
 };
@@ -160,6 +161,7 @@ export function SidebarLayout({
           <SidebarLink href="/fielders" icon={FileBarChart} label="Fielder reports" active={current === "fielders"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/payments" icon={CreditCard} label="Payments" active={current === "payments"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/additional-work" icon={Briefcase} label="Additional work" active={current === "additional"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/trips" icon={Plane} label="Trips & expenses" active={current === "trips"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/reports/monthly" icon={Calendar} label="Monthly summary" active={current === "reports" || current === "reports-monthly"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/reports/manager-commissions" icon={DollarSign} label="Manager commissions" active={current === "reports" || current === "reports-manager-commissions"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/activity" icon={ListTodo} label="Activity log" active={current === "activity"} onNavigate={!isLg ? closeMobileMenu : undefined} />

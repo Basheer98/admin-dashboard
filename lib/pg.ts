@@ -51,6 +51,9 @@ export async function runSchema(): Promise<void> {
     DO $$ BEGIN ALTER TABLE projects ADD COLUMN work_type TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   await p.query(`
+    DO $$ BEGIN ALTER TABLE projects ADD COLUMN gdrive_folder_url TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
     UPDATE projects SET status = 'ASSIGNED' WHERE status = 'NOT_STARTED';
   `);
   await p.query(`
@@ -62,6 +65,43 @@ export async function runSchema(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       resolved_at TIMESTAMPTZ NULL,
       resolved_by TEXT NULL
+    );
+  `);
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS trips (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      state TEXT NOT NULL,
+      city TEXT NULL,
+      team_members TEXT NULL,
+      budget_car NUMERIC(12,2) NULL,
+      budget_accommodation NUMERIC(12,2) NULL,
+      budget_gas NUMERIC(12,2) NULL,
+      budget_tools NUMERIC(12,2) NULL,
+      project_id INTEGER NULL REFERENCES projects(id) ON DELETE SET NULL,
+      start_date TEXT NOT NULL,
+      end_date TEXT NULL,
+      status TEXT NOT NULL DEFAULT 'PLANNED',
+      notes TEXT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    DO $$ BEGIN ALTER TABLE trips ADD COLUMN team_members TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trips ADD COLUMN budget_car NUMERIC(12,2) NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trips ADD COLUMN budget_accommodation NUMERIC(12,2) NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trips ADD COLUMN budget_gas NUMERIC(12,2) NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trips ADD COLUMN budget_tools NUMERIC(12,2) NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    CREATE TABLE IF NOT EXISTS trip_expenses (
+      id SERIAL PRIMARY KEY,
+      trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+      expense_date TEXT NOT NULL,
+      category TEXT NOT NULL,
+      amount NUMERIC(12,2) NOT NULL,
+      currency TEXT NOT NULL DEFAULT 'INR',
+      paid_by TEXT NULL,
+      vendor TEXT NULL,
+      notes TEXT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
   await p.query(`
@@ -129,7 +169,8 @@ export async function runSchema(): Promise<void> {
       password_hash TEXT NOT NULL,
       fielder_name TEXT NOT NULL,
       role TEXT NULL,
-      region TEXT NULL
+      region TEXT NULL,
+      gdrive_root_folder_url TEXT NULL
     );
     CREATE TABLE IF NOT EXISTS assignment_templates (
       id SERIAL PRIMARY KEY,
@@ -164,6 +205,9 @@ export async function runSchema(): Promise<void> {
   `);
   await p.query(`
     DO $$ BEGIN ALTER TABLE fielder_logins ADD COLUMN region TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    DO $$ BEGIN ALTER TABLE fielder_logins ADD COLUMN gdrive_root_folder_url TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   await p.query(`
     CREATE TABLE IF NOT EXISTS fielder_push_tokens (

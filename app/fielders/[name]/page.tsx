@@ -10,15 +10,54 @@ type PageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
+function invoiceMatchesMonth(invoiceNumber: string | null | undefined, monthKey: string): boolean {
+  if (!invoiceNumber) return false;
+  const [yearStr, monthStr] = monthKey.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  if (!year || !month) return false;
+
+  const invoice = invoiceNumber.toLowerCase();
+  const monthDate = new Date(year, month - 1, 1);
+  const longMonth = monthDate.toLocaleDateString("en-US", { month: "long" }).toLowerCase();
+  const shortMonth = monthDate.toLocaleDateString("en-US", { month: "short" }).toLowerCase();
+  const m2 = String(month).padStart(2, "0");
+  const y4 = String(year);
+  const y2 = y4.slice(-2);
+
+  const patterns = [
+    `${longMonth} ${y4}`,
+    `${shortMonth} ${y4}`,
+    `${longMonth}-${y4}`,
+    `${shortMonth}-${y4}`,
+    `${longMonth}/${y4}`,
+    `${shortMonth}/${y4}`,
+    `${m2}/${y4}`,
+    `${m2}-${y4}`,
+    `${y4}-${m2}`,
+    `${y4}/${m2}`,
+    `${shortMonth}${y2}`,
+    `${shortMonth}${y4}`,
+  ];
+
+  return patterns.some((p) => invoice.includes(p));
+}
+
 export default async function FielderReportPage({ params, searchParams }: PageProps) {
   const { name: encodedName } = await params;
   const sp = searchParams ? await searchParams : {};
   const success = sp.success === "1";
   const error = typeof sp.error === "string" ? sp.error : null;
+  const filterMonth = typeof sp.month === "string" ? sp.month.trim() : "";
   const fielderNameFromUrl = decodeURIComponent(encodedName);
   const fielderNameNormalized = fielderNameFromUrl.trim().toUpperCase();
 
-  const assignments = await getAssignmentsWithDetails({ includeArchived: true });
+  const allAssignments = await getAssignmentsWithDetails({ includeArchived: true });
+  const assignments = filterMonth
+    ? allAssignments.filter((a) =>
+        invoiceMatchesMonth(a.project.invoiceNumber, filterMonth),
+      )
+    : allAssignments;
   const fielderAssignments = assignments.filter(
     (a) => a.fielderName.trim().toUpperCase() === fielderNameNormalized,
   );
@@ -111,12 +150,42 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
       <div className="flex flex-1 flex-col gap-8 print-content">
         <div className="no-print flex items-center justify-between gap-4">
           <Link
-            href="/fielders"
+            href={filterMonth ? `/fielders?month=${encodeURIComponent(filterMonth)}` : "/fielders"}
             className="text-sm text-zinc-300 underline hover:text-zinc-100"
           >
             ← Back to fielder reports
           </Link>
         </div>
+
+        <section className="card no-print p-4">
+          <form method="get" className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <label className="label">Month</label>
+              <input
+                type="month"
+                name="month"
+                defaultValue={filterMonth}
+                className="input h-11 w-44"
+              />
+            </div>
+            <button type="submit" className="btn-primary h-11 px-4 py-2">
+              Apply
+            </button>
+            {filterMonth && (
+              <Link
+                href={`/fielders/${encodeURIComponent(encodedName)}`}
+                className="btn-secondary inline-flex h-11 items-center px-4 py-2"
+              >
+                Clear
+              </Link>
+            )}
+          </form>
+          {filterMonth && (
+            <p className="mt-2 text-xs text-zinc-500">
+              Showing assignments from {new Date(filterMonth + "-01").toLocaleDateString(undefined, { month: "long", year: "numeric" })}.
+            </p>
+          )}
+        </section>
 
         {success && (
           <div className="no-print rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
