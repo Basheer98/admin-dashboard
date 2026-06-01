@@ -26,6 +26,9 @@ export async function GET(request: Request) {
     "Amount",
     "Currency",
     "Paid by",
+    "Receipt URL",
+    "Reimbursable",
+    "Reimbursed",
     "Vendor",
     "Notes",
   ];
@@ -37,6 +40,9 @@ export async function GET(request: Request) {
     escapeCsvCell(Number(e.amount).toFixed(2)),
     escapeCsvCell(e.currency),
     escapeCsvCell(e.paidBy ?? ""),
+    escapeCsvCell(e.receiptUrl ?? ""),
+    escapeCsvCell(e.reimbursable ? "Yes" : "No"),
+    escapeCsvCell(e.reimbursedAt ? "Yes" : "No"),
     escapeCsvCell(e.vendor ?? ""),
     escapeCsvCell(e.notes ?? ""),
   ].join(","));

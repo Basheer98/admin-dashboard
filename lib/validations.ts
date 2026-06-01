@@ -94,6 +94,10 @@ export const projectPatchSchema = z.object({
 export const settingsPostSchema = z.object({
   usdToInrRate: z.number().positive().nullable(),
   adminPhone: z.string().max(30).nullable(),
+  emailIngestEnabled: z.boolean().optional(),
+  emailIngestWebhookSecret: z.string().max(200).nullable().optional(),
+  emailIngestAutoApprove: z.boolean().optional(),
+  emailIngestAutoApproveMinConfidence: z.number().min(0).max(1).optional(),
 });
 
 // --- Additional work ---
@@ -150,6 +154,58 @@ export const tripExpensePostSchema = z.object({
   amount: z.number().positive(),
   currency: z.enum(["USD", "INR"]),
   paidBy: z.string().nullable(),
+  receiptUrl: z.string().url().nullable().optional(),
+  reimbursable: z.boolean().optional(),
   vendor: z.string().nullable(),
   notes: z.string().nullable(),
+});
+
+export const ticketPostSchema = z.object({
+  title: z.string().min(1),
+  category: z.enum(["PROJECT_BLOCKER", "TRAVEL", "TOOLS", "PAYMENT", "OTHER"]),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]),
+  description: z.string().min(1),
+  projectId: z.number().int().positive().nullable(),
+  tripId: z.number().int().positive().nullable(),
+});
+
+export const ticketPatchSchema = z.object({
+  status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]),
+  resolutionNote: z.string().nullable(),
+});
+
+// --- Invoices ---
+export const invoiceLineSchema = z.object({
+  projectCode: z.string().min(1),
+  clientName: z.string().nullable().optional(),
+  totalSqft: z.number().int().positive(),
+  ratePerSqft: z.number().nonnegative(),
+});
+
+export const invoicePostSchema = z.object({
+  invoiceNumber: z.string().min(1),
+  clientName: z.string().min(1),
+  issueDate: z.string().min(1),
+  dueDate: z.string().nullable(),
+  notes: z.string().nullable(),
+  syncProjectInvoiceNumber: z.boolean().optional(),
+  lines: z.array(invoiceLineSchema).min(1),
+});
+
+export const invoiceImportPreviewSchema = z.object({
+  headers: z.array(z.string()),
+  rows: z.array(z.array(z.string())),
+  mapping: z.record(z.string(), z.string()),
+  options: z.object({
+    invoiceNumber: z.string().min(1),
+    defaultClientName: z.string(),
+    defaultCompanyRate: z.number().nonnegative(),
+    defaultLocation: z.string(),
+    defaultStatus: z.string(),
+    syncProjectInvoiceNumber: z.boolean(),
+    projectConflict: z.enum(["update", "skip_project", "skip"]),
+    issueDate: z.string().min(1),
+    dueDate: z.string().nullable().optional(),
+    notes: z.string().nullable().optional(),
+  }),
 });

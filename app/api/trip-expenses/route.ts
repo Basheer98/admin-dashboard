@@ -26,7 +26,11 @@ export async function POST(request: Request) {
   const amountRaw = String(formData.get("amount") ?? "").trim();
   const currencyRaw = String(formData.get("currency") ?? "").trim();
   const currency = currencyRaw === "USD" ? "USD" : "INR";
-  const paidBy = String(formData.get("paidBy") ?? "").trim() || null;
+  const paidByRaw = String(formData.get("paidBy") ?? "").trim();
+  const paidBy = paidByRaw ? paidByRaw.toUpperCase() : null;
+  const receiptUrlRaw = String(formData.get("receiptUrl") ?? "").trim();
+  const receiptUrl = receiptUrlRaw || null;
+  const reimbursable = String(formData.get("reimbursable") ?? "") === "on" || (!!paidBy && paidBy !== "COMPANY");
   const vendor = String(formData.get("vendor") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
@@ -37,6 +41,8 @@ export async function POST(request: Request) {
     amount: amountRaw ? Number(amountRaw) : undefined,
     currency,
     paidBy,
+    receiptUrl,
+    reimbursable,
     vendor,
     notes,
   });
@@ -59,6 +65,7 @@ export async function POST(request: Request) {
       tripId: trip.id,
       category: expense.category,
       amount: expense.amount,
+      reimbursable: expense.reimbursable,
     },
   });
 

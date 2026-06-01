@@ -42,6 +42,24 @@ export default async function FielderLayout({
           >
             My payments
           </Link>
+          <Link
+            href="/fielder/reimbursements"
+            className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-white/10 hover:text-white"
+          >
+            My reimbursements
+          </Link>
+          <Link
+            href="/fielder/travel"
+            className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-white/10 hover:text-white"
+          >
+            My travel
+          </Link>
+          <Link
+            href="/fielder/tickets"
+            className="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 hover:bg-white/10 hover:text-white"
+          >
+            My tickets
+          </Link>
         </nav>
         <form method="POST" action="/api/auth/logout" className="mt-auto pt-6">
           <button

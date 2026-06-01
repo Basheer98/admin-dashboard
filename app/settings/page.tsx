@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { getSettings, getAllFielderLogins } from "@/lib/db";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
+import { getDriveConfigStatus } from "@/lib/drive";
 
 const LAST_BACKUP_COOKIE = "last_backup_at";
 
@@ -33,6 +34,9 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const flReset = sp.flReset === "1";
   const flUpdated = sp.flUpdated === "1";
   const flError = typeof sp.flError === "string" ? sp.flError : null;
+  const driveTest = typeof sp.driveTest === "string" ? sp.driveTest : "";
+  const driveFolder = typeof sp.driveFolder === "string" ? sp.driveFolder : "";
+  const driveError = typeof sp.driveError === "string" ? sp.driveError : "";
   const [settings, fielderLogins] = await Promise.all([
     getSettings(),
     getAllFielderLogins(),
@@ -44,6 +48,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const lastBackupLabel = lastBackupAt
     ? new Date(lastBackupAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
     : null;
+  const driveConfig = getDriveConfigStatus();
 
   return (
     <SidebarLayout title="Settings" subtitle="Exchange rate, fielder logins, templates" current="settings">
@@ -121,6 +126,101 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             Something went wrong. Please try again.
           </div>
         )}
+        {driveTest === "ok" && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            Google Drive connection successful. Folder: {driveFolder || "Connected"}.
+          </div>
+        )}
+        {driveTest === "error" && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Google Drive test failed. {driveError || "Check credentials/folder permissions."}
+          </div>
+        )}
+        <section className="card p-6">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
+            Receipt storage (Google Drive)
+          </h2>
+          <p className="mb-4 text-sm text-zinc-400">
+            Reimbursement receipts are uploaded to Google Drive from the fielder app.
+          </p>
+          <div className="mb-4 rounded-lg border border-zinc-700 bg-zinc-900/50 px-4 py-3 text-sm">
+            {driveConfig.configured ? (
+              <p className="text-green-400">Configuration status: Ready</p>
+            ) : (
+              <div className="space-y-1">
+                <p className="text-amber-400">Configuration status: Missing environment values</p>
+                <p className="text-zinc-400">
+                  Missing: {driveConfig.missing.join(", ")}
+                </p>
+              </div>
+            )}
+          </div>
+          <form method="POST" action="/api/settings/test-drive">
+            <button type="submit" className="btn-secondary px-5 py-2.5">
+              Test Google Drive connection
+            </button>
+          </form>
+          <p className="mt-3 text-xs text-zinc-500">
+            Ensure the service account has Editor access to your receipts folder.
+          </p>
+        </section>
+        <section className="card p-6">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
+            Email ingest automation (Gmail)
+          </h2>
+          <p className="mb-4 text-sm text-zinc-400">
+            Use this to make the dashboard your source of truth: send structured email payloads to
+            the webhook, review exceptions in <a className="underline hover:text-zinc-200" href="/email-ingest">Email ingest queue</a>, and stop double entry in Google Sheets.
+          </p>
+          <form method="POST" action="/api/settings" className="grid max-w-3xl gap-4 sm:grid-cols-2">
+            <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
+              <input type="checkbox" name="emailIngestEnabled" defaultChecked={settings.emailIngestEnabled} />
+              Enable email ingest webhook
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
+              <input type="checkbox" name="emailIngestAutoApprove" defaultChecked={settings.emailIngestAutoApprove} />
+              Enable auto-approve for high-confidence payloads
+            </label>
+            <div className="space-y-1 sm:col-span-2">
+              <label className="label">Webhook secret (shared with Gmail automation)</label>
+              <input
+                name="emailIngestWebhookSecret"
+                type="text"
+                defaultValue={settings.emailIngestWebhookSecret ?? ""}
+                placeholder="Paste a long random secret"
+                className="input"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="label">Auto-approve min confidence (0 to 1)</label>
+              <input
+                name="emailIngestAutoApproveMinConfidence"
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                defaultValue={settings.emailIngestAutoApproveMinConfidence}
+                className="input"
+              />
+            </div>
+            <div className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-3 text-xs text-zinc-400">
+              <p className="font-semibold text-zinc-200 mb-1">Webhook endpoint</p>
+              <code>/api/ingest/email</code>
+              <p className="mt-2 font-semibold text-zinc-200 mb-1">Retry endpoint (cron)</p>
+              <code>/api/ingest/email/process-due</code>
+            </div>
+            <div className="sm:col-span-2">
+              <button type="submit" className="btn-primary px-5 py-2.5">
+                Save ingest settings
+              </button>
+            </div>
+          </form>
+          <p className="mt-3 text-xs text-zinc-500">
+            Keep Google Sheets as export/reporting only. New records should be created via dashboard
+            workflows or email ingest queue approvals.
+          </p>
+        </section>
+
         <section className="card p-6">
           <h2 className="mb-4 text-base font-semibold text-zinc-100">
             Fielder logins

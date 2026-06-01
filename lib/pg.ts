@@ -99,9 +99,43 @@ export async function runSchema(): Promise<void> {
       amount NUMERIC(12,2) NOT NULL,
       currency TEXT NOT NULL DEFAULT 'INR',
       paid_by TEXT NULL,
+      receipt_url TEXT NULL,
+      reimbursable BOOLEAN NOT NULL DEFAULT FALSE,
+      reimbursed_at TIMESTAMPTZ NULL,
+      reimbursed_by_payment_id INTEGER NULL REFERENCES payments(id) ON DELETE SET NULL,
       vendor TEXT NULL,
       notes TEXT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS trip_fielders (
+      id SERIAL PRIMARY KEY,
+      trip_id INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+      fielder_name TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (trip_id, fielder_name)
+    );
+    DO $$ BEGIN ALTER TABLE trip_expenses ADD COLUMN receipt_url TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trip_expenses ADD COLUMN reimbursable BOOLEAN NOT NULL DEFAULT FALSE; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trip_expenses ADD COLUMN reimbursed_at TIMESTAMPTZ NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trip_expenses ADD COLUMN reimbursed_by_payment_id INTEGER NULL REFERENCES payments(id) ON DELETE SET NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trip_expenses ADD COLUMN approved_at TIMESTAMPTZ NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trip_expenses ADD COLUMN approved_by TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trip_expenses ADD COLUMN rejected_at TIMESTAMPTZ NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trip_expenses ADD COLUMN rejected_by TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE trip_expenses ADD COLUMN rejection_note TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    CREATE TABLE IF NOT EXISTS tickets (
+      id SERIAL PRIMARY KEY,
+      fielder_name TEXT NOT NULL,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL,
+      priority TEXT NOT NULL DEFAULT 'MEDIUM',
+      description TEXT NOT NULL,
+      project_id INTEGER NULL REFERENCES projects(id) ON DELETE SET NULL,
+      trip_id INTEGER NULL REFERENCES trips(id) ON DELETE SET NULL,
+      status TEXT NOT NULL DEFAULT 'OPEN',
+      resolution_note TEXT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
   await p.query(`
@@ -156,6 +190,10 @@ export async function runSchema(): Promise<void> {
   `);
   await p.query(`
     DO $$ BEGIN ALTER TABLE settings ADD COLUMN admin_phone TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN email_ingest_enabled BOOLEAN NOT NULL DEFAULT FALSE; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN email_ingest_webhook_secret TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN email_ingest_auto_approve BOOLEAN NOT NULL DEFAULT FALSE; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN email_ingest_auto_approve_min_confidence NUMERIC(4,3) NOT NULL DEFAULT 0.950; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
     CREATE TABLE IF NOT EXISTS activity_log (
       id SERIAL PRIMARY KEY,
       type TEXT NOT NULL,
@@ -199,6 +237,40 @@ export async function runSchema(): Promise<void> {
       details JSONB NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    CREATE TABLE IF NOT EXISTS email_ingest_records (
+      id SERIAL PRIMARY KEY,
+      source TEXT NOT NULL DEFAULT 'GMAIL',
+      external_message_id TEXT NOT NULL,
+      fingerprint TEXT NOT NULL UNIQUE,
+      sender_email TEXT NULL,
+      sender_name TEXT NULL,
+      subject TEXT NULL,
+      received_at TIMESTAMPTZ NOT NULL,
+      raw_payload JSONB NOT NULL,
+      parsed_payload JSONB NOT NULL,
+      normalized_payload JSONB NULL,
+      entity_type TEXT NULL,
+      confidence NUMERIC(4,3) NULL,
+      status TEXT NOT NULL DEFAULT 'PENDING_REVIEW',
+      retries INTEGER NOT NULL DEFAULT 0,
+      next_attempt_at TIMESTAMPTZ NULL,
+      last_error TEXT NULL,
+      last_processed_at TIMESTAMPTZ NULL,
+      approved_at TIMESTAMPTZ NULL,
+      approved_by TEXT NULL,
+      rejected_at TIMESTAMPTZ NULL,
+      rejected_by TEXT NULL,
+      rejection_reason TEXT NULL,
+      created_entity_type TEXT NULL,
+      created_entity_id TEXT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS email_ingest_records_status_created_idx
+      ON email_ingest_records (status, created_at DESC);
+    CREATE INDEX IF NOT EXISTS email_ingest_records_next_attempt_idx
+      ON email_ingest_records (next_attempt_at)
+      WHERE status = 'FAILED_RETRYABLE';
   `);
   await p.query(`
     DO $$ BEGIN ALTER TABLE fielder_logins ADD COLUMN role TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
@@ -215,6 +287,32 @@ export async function runSchema(): Promise<void> {
       expo_push_token TEXT NOT NULL,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+  `);
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS invoices (
+      id SERIAL PRIMARY KEY,
+      invoice_number TEXT NOT NULL UNIQUE,
+      client_name TEXT NOT NULL,
+      issue_date TEXT NOT NULL,
+      due_date TEXT NULL,
+      notes TEXT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      source TEXT NOT NULL DEFAULT 'manual',
+      import_filename TEXT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS invoice_line_items (
+      id SERIAL PRIMARY KEY,
+      invoice_id INTEGER NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+      project_code TEXT NOT NULL,
+      client_name TEXT NULL,
+      total_sqft INTEGER NOT NULL,
+      rate_per_sqft NUMERIC(12,6) NOT NULL,
+      project_id INTEGER NULL REFERENCES projects(id) ON DELETE SET NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS invoice_line_items_invoice_id_idx ON invoice_line_items (invoice_id);
   `);
   schemaDone = true;
 }

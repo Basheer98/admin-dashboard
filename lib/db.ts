@@ -1,12 +1,55 @@
 import bcrypt from "bcrypt";
 import { query, queryOne, queryOneRow, getPool, runSchema } from "./pg";
 import { normalizeProjectCode } from "./normalize";
+import type { CanonicalEmailPayload, CanonicalEntityType } from "./emailIngest";
 
 // Postgres implementation; DATABASE_URL is required.
 
 export type SettingsRow = {
   usdToInrRate: number | null;
   adminPhone: string | null;
+  emailIngestEnabled: boolean;
+  emailIngestWebhookSecret: string | null;
+  emailIngestAutoApprove: boolean;
+  emailIngestAutoApproveMinConfidence: number;
+};
+
+export type EmailIngestStatus =
+  | "PENDING_REVIEW"
+  | "APPROVED"
+  | "REJECTED"
+  | "PROCESSING"
+  | "FAILED_RETRYABLE"
+  | "FAILED_FATAL";
+
+export type EmailIngestRecordRow = {
+  id: number;
+  source: string;
+  externalMessageId: string;
+  fingerprint: string;
+  senderEmail: string | null;
+  senderName: string | null;
+  subject: string | null;
+  receivedAt: string;
+  rawPayload: Record<string, unknown>;
+  parsedPayload: CanonicalEmailPayload;
+  normalizedPayload: Record<string, unknown> | null;
+  entityType: CanonicalEntityType | null;
+  confidence: number | null;
+  status: EmailIngestStatus;
+  retries: number;
+  nextAttemptAt: string | null;
+  lastError: string | null;
+  lastProcessedAt: string | null;
+  approvedAt: string | null;
+  approvedBy: string | null;
+  rejectedAt: string | null;
+  rejectedBy: string | null;
+  rejectionReason: string | null;
+  createdEntityType: string | null;
+  createdEntityId: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type ActivityRow = {
@@ -118,9 +161,41 @@ export type TripExpenseRow = {
   amount: number;
   currency: "USD" | "INR";
   paidBy: string | null;
+  receiptUrl: string | null;
+  reimbursable: boolean;
+  reimbursedAt: string | null;
+  reimbursedByPaymentId: number | null;
+  approvedAt: string | null;
+  approvedBy: string | null;
+  rejectedAt: string | null;
+  rejectedBy: string | null;
+  rejectionNote: string | null;
+  trip?: TripRow;
   vendor: string | null;
   notes: string | null;
   createdAt: string;
+};
+
+export type TripFielderRow = {
+  id: number;
+  tripId: number;
+  fielderName: string;
+  createdAt: string;
+};
+
+export type TicketRow = {
+  id: number;
+  fielderName: string;
+  title: string;
+  category: "PROJECT_BLOCKER" | "TRAVEL" | "TOOLS" | "PAYMENT" | "OTHER";
+  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  description: string;
+  projectId: number | null;
+  tripId: number | null;
+  status: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
+  resolutionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type ListProjectsOptions = { includeArchived?: boolean };
@@ -160,7 +235,33 @@ const tripCols = `
 
 const tripExpenseCols = `
   id, trip_id AS "tripId", expense_date AS "expenseDate", category, amount,
-  currency, paid_by AS "paidBy", vendor, notes, created_at::text AS "createdAt"
+  currency, paid_by AS "paidBy", receipt_url AS "receiptUrl", reimbursable,
+  reimbursed_at::text AS "reimbursedAt", reimbursed_by_payment_id AS "reimbursedByPaymentId",
+  approved_at::text AS "approvedAt", approved_by AS "approvedBy",
+  rejected_at::text AS "rejectedAt", rejected_by AS "rejectedBy", rejection_note AS "rejectionNote",
+  vendor, notes, created_at::text AS "createdAt"
+`;
+
+const tripFielderCols = `
+  id, trip_id AS "tripId", fielder_name AS "fielderName", created_at::text AS "createdAt"
+`;
+
+const ticketCols = `
+  id, fielder_name AS "fielderName", title, category, priority, description,
+  project_id AS "projectId", trip_id AS "tripId", status, resolution_note AS "resolutionNote",
+  created_at::text AS "createdAt", updated_at::text AS "updatedAt"
+`;
+
+const emailIngestCols = `
+  id, source, external_message_id AS "externalMessageId", fingerprint,
+  sender_email AS "senderEmail", sender_name AS "senderName", subject,
+  received_at::text AS "receivedAt", raw_payload AS "rawPayload", parsed_payload AS "parsedPayload",
+  normalized_payload AS "normalizedPayload", entity_type AS "entityType", confidence,
+  status, retries, next_attempt_at::text AS "nextAttemptAt", last_error AS "lastError",
+  last_processed_at::text AS "lastProcessedAt", approved_at::text AS "approvedAt", approved_by AS "approvedBy",
+  rejected_at::text AS "rejectedAt", rejected_by AS "rejectedBy", rejection_reason AS "rejectionReason",
+  created_entity_type AS "createdEntityType", created_entity_id AS "createdEntityId",
+  created_at::text AS "createdAt", updated_at::text AS "updatedAt"
 `;
 
 export async function getAllProjects(options?: ListProjectsOptions): Promise<ProjectRow[]> {
@@ -877,7 +978,9 @@ export async function insertTrip(input: {
     ],
   );
   if (!row) throw new Error("insertTrip failed");
-  return row as TripRow;
+  const trip = row as TripRow;
+  await syncTripFielders(trip.id, input.teamMembers);
+  return trip;
 }
 
 export async function updateTrip(
@@ -932,6 +1035,126 @@ export async function updateTrip(
       input.notes,
     ],
   );
+  await syncTripFielders(id, input.teamMembers);
+}
+
+function parseTeamMembers(teamMembers: string | null): string[] {
+  if (!teamMembers) return [];
+  return Array.from(
+    new Set(
+      teamMembers
+        .split(",")
+        .map((x) => x.trim().toUpperCase())
+        .filter(Boolean),
+    ),
+  );
+}
+
+export async function syncTripFielders(tripId: number, teamMembers: string | null): Promise<void> {
+  const names = parseTeamMembers(teamMembers);
+  await query("DELETE FROM trip_fielders WHERE trip_id = $1", [tripId]);
+  for (const name of names) {
+    await query(
+      `INSERT INTO trip_fielders (trip_id, fielder_name) VALUES ($1, $2)
+       ON CONFLICT (trip_id, fielder_name) DO NOTHING`,
+      [tripId, name],
+    );
+  }
+}
+
+export async function getTripsForFielder(
+  fielderName: string,
+): Promise<Array<TripRow & { project?: ProjectRow; totalExpense: number }>> {
+  const normalized = fielderName.trim().toUpperCase();
+  const links = await query<TripFielderRow>(
+    `SELECT ${tripFielderCols} FROM trip_fielders WHERE fielder_name = $1 ORDER BY created_at DESC`,
+    [normalized],
+  );
+  const tripIds = Array.from(new Set((links as TripFielderRow[]).map((l) => l.tripId)));
+  const allTrips = await getAllTrips();
+  if (tripIds.length === 0) {
+    // Backward compatibility: support older trips that only stored comma-separated teamMembers.
+    return allTrips.filter((t) => parseTeamMembers(t.teamMembers).includes(normalized));
+  }
+  return allTrips.filter((t) => tripIds.includes(t.id) || parseTeamMembers(t.teamMembers).includes(normalized));
+}
+
+export async function getTripFielderNames(tripId: number): Promise<string[]> {
+  const rows = await query<{ fielderName: string }>(
+    `SELECT fielder_name AS "fielderName" FROM trip_fielders WHERE trip_id = $1 ORDER BY fielder_name ASC`,
+    [tripId],
+  );
+  return (rows as { fielderName: string }[]).map((r) => r.fielderName);
+}
+
+export async function insertTicket(input: {
+  fielderName: string;
+  title: string;
+  category: "PROJECT_BLOCKER" | "TRAVEL" | "TOOLS" | "PAYMENT" | "OTHER";
+  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  description: string;
+  projectId: number | null;
+  tripId: number | null;
+}): Promise<TicketRow> {
+  const row = await queryOneRow<TicketRow>(
+    `INSERT INTO tickets (fielder_name, title, category, priority, description, project_id, trip_id, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, 'OPEN')
+     RETURNING ${ticketCols}`,
+    [
+      input.fielderName.trim().toUpperCase(),
+      input.title.trim(),
+      input.category,
+      input.priority,
+      input.description.trim(),
+      input.projectId,
+      input.tripId,
+    ],
+  );
+  if (!row) throw new Error("insertTicket failed");
+  return row as TicketRow;
+}
+
+export async function getAllTickets(): Promise<Array<TicketRow & { project?: ProjectRow; trip?: TripRow }>> {
+  const rows = await query<TicketRow>(`SELECT ${ticketCols} FROM tickets ORDER BY created_at DESC`);
+  const out: Array<TicketRow & { project?: ProjectRow; trip?: TripRow }> = [];
+  for (const row of rows as TicketRow[]) {
+    const project = row.projectId ? await getProjectById(row.projectId) : undefined;
+    const trip = row.tripId ? (await queryOne<TripRow>(`SELECT ${tripCols} FROM trips WHERE id = $1`, [row.tripId])) as TripRow | undefined : undefined;
+    out.push({ ...row, project, trip });
+  }
+  return out;
+}
+
+export async function getTicketsForFielder(
+  fielderName: string,
+): Promise<Array<TicketRow & { project?: ProjectRow; trip?: TripRow }>> {
+  const normalized = fielderName.trim().toUpperCase();
+  const rows = await query<TicketRow>(
+    `SELECT ${ticketCols} FROM tickets WHERE UPPER(TRIM(fielder_name)) = $1 ORDER BY created_at DESC`,
+    [normalized],
+  );
+  const out: Array<TicketRow & { project?: ProjectRow; trip?: TripRow }> = [];
+  for (const row of rows as TicketRow[]) {
+    const project = row.projectId ? await getProjectById(row.projectId) : undefined;
+    const trip = row.tripId ? (await queryOne<TripRow>(`SELECT ${tripCols} FROM trips WHERE id = $1`, [row.tripId])) as TripRow | undefined : undefined;
+    out.push({ ...row, project, trip });
+  }
+  return out;
+}
+
+export async function getTicketById(id: number): Promise<TicketRow | undefined> {
+  const row = await queryOne<TicketRow>(`SELECT ${ticketCols} FROM tickets WHERE id = $1`, [id]);
+  return row as TicketRow | undefined;
+}
+
+export async function updateTicket(
+  id: number,
+  input: { status: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED"; resolutionNote: string | null },
+): Promise<void> {
+  await query(
+    `UPDATE tickets SET status = $2, resolution_note = $3, updated_at = NOW() WHERE id = $1`,
+    [id, input.status, input.resolutionNote],
+  );
 }
 
 export async function insertTripExpense(input: {
@@ -941,12 +1164,14 @@ export async function insertTripExpense(input: {
   amount: number;
   currency: "USD" | "INR";
   paidBy: string | null;
+  receiptUrl?: string | null;
+  reimbursable?: boolean;
   vendor: string | null;
   notes: string | null;
 }): Promise<TripExpenseRow> {
   const row = await queryOneRow<TripExpenseRow>(
-    `INSERT INTO trip_expenses (trip_id, expense_date, category, amount, currency, paid_by, vendor, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO trip_expenses (trip_id, expense_date, category, amount, currency, paid_by, receipt_url, reimbursable, vendor, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING ${tripExpenseCols}`,
     [
       input.tripId,
@@ -955,12 +1180,161 @@ export async function insertTripExpense(input: {
       input.amount,
       input.currency,
       input.paidBy,
+      input.receiptUrl ?? null,
+      input.reimbursable ?? false,
       input.vendor,
       input.notes,
     ],
   );
   if (!row) throw new Error("insertTripExpense failed");
   return row as TripExpenseRow;
+}
+
+export async function getPendingTripReimbursementsForFielder(
+  fielderName: string,
+): Promise<TripExpenseRow[]> {
+  const normalized = fielderName.trim().toUpperCase();
+  if (!normalized) return [];
+  const rows = await query<TripExpenseRow>(
+    `SELECT ${tripExpenseCols}
+     FROM trip_expenses
+     WHERE reimbursable = TRUE
+       AND reimbursed_at IS NULL
+       AND rejected_at IS NULL
+       AND UPPER(TRIM(COALESCE(paid_by, ''))) = $1
+     ORDER BY expense_date ASC, id ASC`,
+    [normalized],
+  );
+  return rows as TripExpenseRow[];
+}
+
+export async function getApprovedTripReimbursementsForFielder(
+  fielderName: string,
+): Promise<TripExpenseRow[]> {
+  const normalized = fielderName.trim().toUpperCase();
+  if (!normalized) return [];
+  const rows = await query<TripExpenseRow>(
+    `SELECT ${tripExpenseCols}
+     FROM trip_expenses
+     WHERE reimbursable = TRUE
+       AND reimbursed_at IS NULL
+       AND rejected_at IS NULL
+       AND approved_at IS NOT NULL
+       AND UPPER(TRIM(COALESCE(paid_by, ''))) = $1
+     ORDER BY expense_date ASC, id ASC`,
+    [normalized],
+  );
+  return rows as TripExpenseRow[];
+}
+
+export async function getPendingTripReimbursementsForFielderWithTrip(
+  fielderName: string,
+): Promise<Array<TripExpenseRow & { trip: TripRow }>> {
+  const rows = await getPendingTripReimbursementsForFielder(fielderName);
+  const trips = await query<TripRow>(`SELECT ${tripCols} FROM trips`);
+  const tripById = new Map((trips as TripRow[]).map((t) => [t.id, t]));
+  return rows
+    .map((r) => {
+      const trip = tripById.get(r.tripId);
+      if (!trip) return null;
+      return { ...r, trip };
+    })
+    .filter(Boolean) as Array<TripExpenseRow & { trip: TripRow }>;
+}
+
+export async function getTripReimbursementsForFielderWithTrip(
+  fielderName: string,
+): Promise<Array<TripExpenseRow & { trip: TripRow }>> {
+  const normalized = fielderName.trim().toUpperCase();
+  if (!normalized) return [];
+  const rows = await query<TripExpenseRow>(
+    `SELECT ${tripExpenseCols}
+     FROM trip_expenses
+     WHERE reimbursable = TRUE
+       AND UPPER(TRIM(COALESCE(paid_by, ''))) = $1
+     ORDER BY expense_date DESC, id DESC`,
+    [normalized],
+  );
+  const trips = await query<TripRow>(`SELECT ${tripCols} FROM trips`);
+  const tripById = new Map((trips as TripRow[]).map((t) => [t.id, t]));
+  return (rows as TripExpenseRow[])
+    .map((r) => {
+      const trip = tripById.get(r.tripId);
+      if (!trip) return null;
+      return { ...r, trip };
+    })
+    .filter(Boolean) as Array<TripExpenseRow & { trip: TripRow }>;
+}
+
+export async function markTripReimbursementsPaid(
+  expenseIds: number[],
+  paymentId: number | null,
+): Promise<void> {
+  if (expenseIds.length === 0) return;
+  const placeholders = expenseIds.map((_, i) => `$${i + 1}`).join(", ");
+  await query(
+    `UPDATE trip_expenses
+     SET reimbursed_at = NOW(),
+         reimbursed_by_payment_id = $${expenseIds.length + 1}
+     WHERE id IN (${placeholders})`,
+    [...expenseIds, paymentId],
+  );
+}
+
+export async function getPendingTripReimbursementsForAdminWithTrip(): Promise<
+  Array<TripExpenseRow & { trip: TripRow }>
+> {
+  const rows = await query<TripExpenseRow>(
+    `SELECT ${tripExpenseCols}
+     FROM trip_expenses
+     WHERE reimbursable = TRUE
+       AND reimbursed_at IS NULL
+       AND rejected_at IS NULL
+     ORDER BY created_at DESC, id DESC`,
+  );
+  const trips = await query<TripRow>(`SELECT ${tripCols} FROM trips`);
+  const tripById = new Map((trips as TripRow[]).map((t) => [t.id, t]));
+  return (rows as TripExpenseRow[])
+    .map((r) => {
+      const trip = tripById.get(r.tripId);
+      if (!trip) return null;
+      return { ...r, trip };
+    })
+    .filter(Boolean) as Array<TripExpenseRow & { trip: TripRow }>;
+}
+
+export async function approveTripReimbursement(id: number, actorName: string): Promise<void> {
+  await query(
+    `UPDATE trip_expenses
+     SET approved_at = NOW(),
+         approved_by = $2,
+         rejected_at = NULL,
+         rejected_by = NULL,
+         rejection_note = NULL
+     WHERE id = $1
+       AND reimbursable = TRUE
+       AND reimbursed_at IS NULL`,
+    [id, actorName],
+  );
+}
+
+export async function rejectTripReimbursement(
+  id: number,
+  actorName: string,
+  rejectionNote: string | null,
+): Promise<void> {
+  await query(
+    `UPDATE trip_expenses
+     SET rejected_at = NOW(),
+         rejected_by = $2,
+         rejection_note = $3,
+         approved_at = NULL,
+         approved_by = NULL
+     WHERE id = $1
+       AND reimbursable = TRUE
+       AND reimbursed_at IS NULL`,
+    [id, actorName, rejectionNote],
+  );
 }
 
 export async function getTripExpensesWithTrip(): Promise<Array<TripExpenseRow & { trip: TripRow }>> {
@@ -1387,23 +1761,361 @@ export async function getFielderNotifications(
 }
 
 export async function getSettings(): Promise<SettingsRow> {
-  const row = await queryOne<{ usdToInrRate: number | null; adminPhone: string | null }>(
-    'SELECT usd_to_inr_rate AS "usdToInrRate", admin_phone AS "adminPhone" FROM settings WHERE id = 1',
+  const row = await queryOne<{
+    usdToInrRate: number | null;
+    adminPhone: string | null;
+    emailIngestEnabled: boolean | null;
+    emailIngestWebhookSecret: string | null;
+    emailIngestAutoApprove: boolean | null;
+    emailIngestAutoApproveMinConfidence: number | null;
+  }>(
+    `SELECT
+      usd_to_inr_rate AS "usdToInrRate",
+      admin_phone AS "adminPhone",
+      email_ingest_enabled AS "emailIngestEnabled",
+      email_ingest_webhook_secret AS "emailIngestWebhookSecret",
+      email_ingest_auto_approve AS "emailIngestAutoApprove",
+      email_ingest_auto_approve_min_confidence AS "emailIngestAutoApproveMinConfidence"
+    FROM settings
+    WHERE id = 1`,
   );
-  return { usdToInrRate: row?.usdToInrRate ?? null, adminPhone: row?.adminPhone ?? null };
+  return {
+    usdToInrRate: row?.usdToInrRate ?? null,
+    adminPhone: row?.adminPhone ?? null,
+    emailIngestEnabled: !!row?.emailIngestEnabled,
+    emailIngestWebhookSecret: row?.emailIngestWebhookSecret ?? null,
+    emailIngestAutoApprove: !!row?.emailIngestAutoApprove,
+    emailIngestAutoApproveMinConfidence: Number(
+      row?.emailIngestAutoApproveMinConfidence ?? 0.95,
+    ),
+  };
 }
 
 export async function updateSettings(input: {
   usdToInrRate?: number | null;
   adminPhone?: string | null;
+  emailIngestEnabled?: boolean;
+  emailIngestWebhookSecret?: string | null;
+  emailIngestAutoApprove?: boolean;
+  emailIngestAutoApproveMinConfidence?: number;
 }): Promise<void> {
   const current = await getSettings();
   const usdToInrRate = input.usdToInrRate !== undefined ? input.usdToInrRate : current.usdToInrRate;
   const adminPhone = input.adminPhone !== undefined ? input.adminPhone : current.adminPhone;
+  const emailIngestEnabled =
+    input.emailIngestEnabled !== undefined
+      ? input.emailIngestEnabled
+      : current.emailIngestEnabled;
+  const emailIngestWebhookSecret =
+    input.emailIngestWebhookSecret !== undefined
+      ? input.emailIngestWebhookSecret
+      : current.emailIngestWebhookSecret;
+  const emailIngestAutoApprove =
+    input.emailIngestAutoApprove !== undefined
+      ? input.emailIngestAutoApprove
+      : current.emailIngestAutoApprove;
+  const emailIngestAutoApproveMinConfidence =
+    input.emailIngestAutoApproveMinConfidence !== undefined
+      ? input.emailIngestAutoApproveMinConfidence
+      : current.emailIngestAutoApproveMinConfidence;
   await query(
-    "UPDATE settings SET usd_to_inr_rate = $1, admin_phone = $2 WHERE id = 1",
-    [usdToInrRate, adminPhone ?? null],
+    `UPDATE settings
+     SET usd_to_inr_rate = $1,
+         admin_phone = $2,
+         email_ingest_enabled = $3,
+         email_ingest_webhook_secret = $4,
+         email_ingest_auto_approve = $5,
+         email_ingest_auto_approve_min_confidence = $6
+     WHERE id = 1`,
+    [
+      usdToInrRate,
+      adminPhone ?? null,
+      emailIngestEnabled,
+      emailIngestWebhookSecret ?? null,
+      emailIngestAutoApprove,
+      emailIngestAutoApproveMinConfidence,
+    ],
   );
+}
+
+export async function getEmailIngestRecordByFingerprint(
+  fingerprint: string,
+): Promise<EmailIngestRecordRow | undefined> {
+  const row = await queryOne<EmailIngestRecordRow>(
+    `SELECT ${emailIngestCols} FROM email_ingest_records WHERE fingerprint = $1`,
+    [fingerprint],
+  );
+  return row as EmailIngestRecordRow | undefined;
+}
+
+export async function getEmailIngestRecordById(
+  id: number,
+): Promise<EmailIngestRecordRow | undefined> {
+  const row = await queryOne<EmailIngestRecordRow>(
+    `SELECT ${emailIngestCols} FROM email_ingest_records WHERE id = $1`,
+    [id],
+  );
+  return row as EmailIngestRecordRow | undefined;
+}
+
+export async function insertEmailIngestRecord(input: {
+  source: string;
+  externalMessageId: string;
+  fingerprint: string;
+  senderEmail: string | null;
+  senderName: string | null;
+  subject: string | null;
+  receivedAt: string;
+  rawPayload: Record<string, unknown>;
+  parsedPayload: CanonicalEmailPayload;
+  entityType: CanonicalEntityType;
+  confidence: number;
+}): Promise<EmailIngestRecordRow> {
+  const row = await queryOneRow<EmailIngestRecordRow>(
+    `INSERT INTO email_ingest_records (
+      source, external_message_id, fingerprint, sender_email, sender_name, subject, received_at,
+      raw_payload, parsed_payload, entity_type, confidence, status
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7::timestamptz, $8, $9, $10, $11, 'PENDING_REVIEW')
+    ON CONFLICT (fingerprint) DO UPDATE
+      SET updated_at = NOW()
+    RETURNING ${emailIngestCols}`,
+    [
+      input.source,
+      input.externalMessageId,
+      input.fingerprint,
+      input.senderEmail,
+      input.senderName,
+      input.subject,
+      input.receivedAt,
+      JSON.stringify(input.rawPayload),
+      JSON.stringify(input.parsedPayload),
+      input.entityType,
+      input.confidence,
+    ],
+  );
+  if (!row) throw new Error("insertEmailIngestRecord failed");
+  return row as EmailIngestRecordRow;
+}
+
+export async function listEmailIngestRecords(filters?: {
+  status?: EmailIngestStatus | "ALL";
+  q?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<EmailIngestRecordRow[]> {
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (filters?.status && filters.status !== "ALL") {
+    params.push(filters.status);
+    where.push(`status = $${params.length}`);
+  }
+  if (filters?.q) {
+    params.push(`%${filters.q.toLowerCase()}%`);
+    where.push(
+      `(LOWER(COALESCE(subject, '')) LIKE $${params.length}
+        OR LOWER(COALESCE(sender_email, '')) LIKE $${params.length}
+        OR LOWER(COALESCE(parsed_payload->>'fielderName', '')) LIKE $${params.length}
+        OR LOWER(COALESCE(parsed_payload->>'projectCode', '')) LIKE $${params.length})`,
+    );
+  }
+  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  params.push(filters?.limit ?? 100);
+  params.push(filters?.offset ?? 0);
+  const rows = await query<EmailIngestRecordRow>(
+    `SELECT ${emailIngestCols}
+     FROM email_ingest_records
+     ${whereSql}
+     ORDER BY created_at DESC
+     LIMIT $${params.length - 1}
+     OFFSET $${params.length}`,
+    params,
+  );
+  return rows as EmailIngestRecordRow[];
+}
+
+export async function countEmailIngestRecords(filters?: {
+  status?: EmailIngestStatus | "ALL";
+  q?: string;
+}): Promise<number> {
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (filters?.status && filters.status !== "ALL") {
+    params.push(filters.status);
+    where.push(`status = $${params.length}`);
+  }
+  if (filters?.q) {
+    params.push(`%${filters.q.toLowerCase()}%`);
+    where.push(
+      `(LOWER(COALESCE(subject, '')) LIKE $${params.length}
+        OR LOWER(COALESCE(sender_email, '')) LIKE $${params.length}
+        OR LOWER(COALESCE(parsed_payload->>'fielderName', '')) LIKE $${params.length}
+        OR LOWER(COALESCE(parsed_payload->>'projectCode', '')) LIKE $${params.length})`,
+    );
+  }
+  const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const row = await queryOne<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM email_ingest_records ${whereSql}`,
+    params,
+  );
+  return Number(row?.count ?? 0);
+}
+
+export async function markEmailIngestRecordRejected(input: {
+  id: number;
+  actorName: string;
+  reason: string | null;
+}): Promise<void> {
+  await query(
+    `UPDATE email_ingest_records
+     SET status = 'REJECTED',
+         rejected_at = NOW(),
+         rejected_by = $2,
+         rejection_reason = $3,
+         updated_at = NOW(),
+         last_processed_at = NOW()
+     WHERE id = $1`,
+    [input.id, input.actorName, input.reason],
+  );
+}
+
+export async function markEmailIngestRecordProcessing(id: number): Promise<void> {
+  await query(
+    `UPDATE email_ingest_records
+     SET status = 'PROCESSING',
+         updated_at = NOW(),
+         last_error = NULL
+     WHERE id = $1`,
+    [id],
+  );
+}
+
+export async function updateEmailIngestParsedPayload(input: {
+  id: number;
+  parsedPayload: CanonicalEmailPayload;
+  entityType: CanonicalEntityType;
+  confidence: number;
+}): Promise<void> {
+  await query(
+    `UPDATE email_ingest_records
+     SET parsed_payload = $2,
+         entity_type = $3,
+         confidence = $4,
+         updated_at = NOW()
+     WHERE id = $1`,
+    [input.id, JSON.stringify(input.parsedPayload), input.entityType, input.confidence],
+  );
+}
+
+export async function markEmailIngestRecordApproved(input: {
+  id: number;
+  actorName: string;
+  createdEntityType: string;
+  createdEntityId: string;
+  normalizedPayload: Record<string, unknown>;
+}): Promise<void> {
+  await query(
+    `UPDATE email_ingest_records
+     SET status = 'APPROVED',
+         approved_at = NOW(),
+         approved_by = $2,
+         created_entity_type = $3,
+         created_entity_id = $4,
+         normalized_payload = $5,
+         updated_at = NOW(),
+         last_processed_at = NOW(),
+         next_attempt_at = NULL,
+         last_error = NULL
+     WHERE id = $1`,
+    [
+      input.id,
+      input.actorName,
+      input.createdEntityType,
+      input.createdEntityId,
+      JSON.stringify(input.normalizedPayload),
+    ],
+  );
+}
+
+export async function markEmailIngestRecordRetryableFailure(input: {
+  id: number;
+  retries: number;
+  error: string;
+  nextAttemptAt: string;
+}): Promise<void> {
+  await query(
+    `UPDATE email_ingest_records
+     SET status = 'FAILED_RETRYABLE',
+         retries = $2,
+         last_error = $3,
+         next_attempt_at = $4::timestamptz,
+         updated_at = NOW(),
+         last_processed_at = NOW()
+     WHERE id = $1`,
+    [input.id, input.retries, input.error, input.nextAttemptAt],
+  );
+}
+
+export async function markEmailIngestRecordFatalFailure(input: {
+  id: number;
+  error: string;
+}): Promise<void> {
+  await query(
+    `UPDATE email_ingest_records
+     SET status = 'FAILED_FATAL',
+         last_error = $2,
+         next_attempt_at = NULL,
+         updated_at = NOW(),
+         last_processed_at = NOW()
+     WHERE id = $1`,
+    [input.id, input.error],
+  );
+}
+
+export async function getDueRetryableEmailIngestRecords(
+  limit = 25,
+): Promise<EmailIngestRecordRow[]> {
+  const rows = await query<EmailIngestRecordRow>(
+    `SELECT ${emailIngestCols}
+     FROM email_ingest_records
+     WHERE status = 'FAILED_RETRYABLE'
+       AND next_attempt_at IS NOT NULL
+       AND next_attempt_at <= NOW()
+     ORDER BY next_attempt_at ASC
+     LIMIT $1`,
+    [limit],
+  );
+  return rows as EmailIngestRecordRow[];
+}
+
+export async function getEmailIngestQueueStats(): Promise<{
+  pendingReview: number;
+  failedRetryable: number;
+  failedFatal: number;
+  processedLast24h: number;
+}> {
+  const row = await queryOne<{
+    pendingReview: string;
+    failedRetryable: string;
+    failedFatal: string;
+    processedLast24h: string;
+  }>(
+    `SELECT
+       COUNT(*) FILTER (WHERE status = 'PENDING_REVIEW')::text AS "pendingReview",
+       COUNT(*) FILTER (WHERE status = 'FAILED_RETRYABLE')::text AS "failedRetryable",
+       COUNT(*) FILTER (WHERE status = 'FAILED_FATAL')::text AS "failedFatal",
+       COUNT(*) FILTER (
+         WHERE status = 'APPROVED'
+           AND last_processed_at >= NOW() - INTERVAL '24 hours'
+       )::text AS "processedLast24h"
+     FROM email_ingest_records`,
+  );
+  return {
+    pendingReview: Number(row?.pendingReview ?? 0),
+    failedRetryable: Number(row?.failedRetryable ?? 0),
+    failedFatal: Number(row?.failedFatal ?? 0),
+    processedLast24h: Number(row?.processedLast24h ?? 0),
+  };
 }
 
 export async function insertActivity(input: {
@@ -1465,6 +2177,53 @@ export async function insertAuditLog(input: {
       input.details ? JSON.stringify(input.details) : null,
     ],
   );
+}
+
+export async function hasRecentIdempotencyKey(input: {
+  actorType: "admin" | "fielder";
+  actorName: string;
+  action: string;
+  idempotencyKey: string;
+  withinMinutes?: number;
+}): Promise<boolean> {
+  const minutes = input.withinMinutes ?? 10;
+  const row = await queryOne<{ exists: boolean }>(
+    `SELECT EXISTS (
+      SELECT 1
+      FROM audit_log
+      WHERE actor_type = $1
+        AND actor_name = $2
+        AND action = $3
+        AND details->>'idempotencyKey' = $4
+        AND created_at >= NOW() - ($5::text || ' minutes')::interval
+    ) AS "exists"`,
+    [input.actorType, input.actorName, input.action, input.idempotencyKey, String(minutes)],
+  );
+  return !!row?.exists;
+}
+
+export async function getRecentAuditByIdempotencyKey(input: {
+  actorType: "admin" | "fielder";
+  actorName: string;
+  action: string;
+  idempotencyKey: string;
+  withinMinutes?: number;
+}): Promise<AuditLogRow | undefined> {
+  const minutes = input.withinMinutes ?? 10;
+  const row = await queryOne<AuditLogRow>(
+    `SELECT id, actor_type AS "actorType", actor_name AS "actorName", action, entity_type AS "entityType",
+      entity_id AS "entityId", details, created_at::text AS "createdAt"
+     FROM audit_log
+     WHERE actor_type = $1
+       AND actor_name = $2
+       AND action = $3
+       AND details->>'idempotencyKey' = $4
+       AND created_at >= NOW() - ($5::text || ' minutes')::interval
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [input.actorType, input.actorName, input.action, input.idempotencyKey, String(minutes)],
+  );
+  return row as AuditLogRow | undefined;
 }
 
 export type NotificationItem = {
@@ -1719,7 +2478,14 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
   return {
     version: 1,
     exportedAt: now,
-    settings: { usdToInrRate: legacy.settings?.usdToInrRate ?? null, adminPhone: null },
+    settings: {
+      usdToInrRate: legacy.settings?.usdToInrRate ?? null,
+      adminPhone: null,
+      emailIngestEnabled: false,
+      emailIngestWebhookSecret: null,
+      emailIngestAutoApprove: false,
+      emailIngestAutoApproveMinConfidence: 0.95,
+    },
     projects,
     assignments,
     payments,
@@ -1907,8 +2673,197 @@ export async function resetSequences(): Promise<void> {
     "SELECT setval(pg_get_serial_sequence('activity_log', 'id'), COALESCE((SELECT MAX(id) FROM activity_log), 1))",
     "SELECT setval(pg_get_serial_sequence('audit_log', 'id'), COALESCE((SELECT MAX(id) FROM audit_log), 1))",
     "SELECT setval(pg_get_serial_sequence('fielder_logins', 'id'), COALESCE((SELECT MAX(id) FROM fielder_logins), 1))",
+    "SELECT setval(pg_get_serial_sequence('invoices', 'id'), COALESCE((SELECT MAX(id) FROM invoices), 1))",
+    "SELECT setval(pg_get_serial_sequence('invoice_line_items', 'id'), COALESCE((SELECT MAX(id) FROM invoice_line_items), 1))",
   ];
   for (const sql of seqQueries) {
     await pool.query(sql);
   }
+}
+
+// --- Invoices (billing records) ---
+
+export type InvoiceRow = {
+  id: number;
+  invoiceNumber: string;
+  clientName: string;
+  issueDate: string;
+  dueDate: string | null;
+  notes: string | null;
+  status: string;
+  source: string;
+  importFilename: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type InvoiceLineItemRow = {
+  id: number;
+  invoiceId: number;
+  projectCode: string;
+  clientName: string | null;
+  totalSqft: number;
+  ratePerSqft: number;
+  projectId: number | null;
+  sortOrder: number;
+};
+
+const invoiceCols = `
+  id, invoice_number AS "invoiceNumber", client_name AS "clientName",
+  issue_date AS "issueDate", due_date AS "dueDate", notes, status, source,
+  import_filename AS "importFilename",
+  created_at::text AS "createdAt", updated_at::text AS "updatedAt"
+`;
+
+const invoiceLineCols = `
+  id, invoice_id AS "invoiceId", project_code AS "projectCode",
+  client_name AS "clientName", total_sqft AS "totalSqft",
+  rate_per_sqft AS "ratePerSqft", project_id AS "projectId", sort_order AS "sortOrder"
+`;
+
+export function invoiceLineRevenue(line: Pick<InvoiceLineItemRow, "totalSqft" | "ratePerSqft">): number {
+  return line.totalSqft * Number(line.ratePerSqft);
+}
+
+export async function getAllInvoices(): Promise<InvoiceRow[]> {
+  const rows = await query<InvoiceRow>(
+    `SELECT ${invoiceCols} FROM invoices ORDER BY created_at DESC`,
+  );
+  return rows as InvoiceRow[];
+}
+
+export type InvoiceSummary = InvoiceRow & {
+  lineCount: number;
+  totalRevenue: number;
+};
+
+export async function getAllInvoiceSummaries(): Promise<InvoiceSummary[]> {
+  const rows = await query<InvoiceSummary & { lineCount: string; totalRevenue: string }>(
+    `SELECT i.id, i.invoice_number AS "invoiceNumber", i.client_name AS "clientName",
+            i.issue_date AS "issueDate", i.due_date AS "dueDate", i.notes, i.status, i.source,
+            i.import_filename AS "importFilename",
+            i.created_at::text AS "createdAt", i.updated_at::text AS "updatedAt",
+            COUNT(l.id)::int AS "lineCount",
+            COALESCE(SUM(l.total_sqft * l.rate_per_sqft), 0)::float AS "totalRevenue"
+     FROM invoices i
+     LEFT JOIN invoice_line_items l ON l.invoice_id = i.id
+     GROUP BY i.id
+     ORDER BY i.created_at DESC`,
+  );
+  return rows.map((r) => ({
+    ...(r as InvoiceRow),
+    lineCount: Number(r.lineCount),
+    totalRevenue: Number(r.totalRevenue),
+  }));
+}
+
+export async function getInvoiceById(id: number): Promise<InvoiceRow | undefined> {
+  const row = await queryOne<InvoiceRow>(
+    `SELECT ${invoiceCols} FROM invoices WHERE id = $1`,
+    [id],
+  );
+  return row as InvoiceRow | undefined;
+}
+
+export async function getInvoiceLineItemsByInvoiceId(invoiceId: number): Promise<InvoiceLineItemRow[]> {
+  const rows = await query<InvoiceLineItemRow>(
+    `SELECT ${invoiceLineCols} FROM invoice_line_items WHERE invoice_id = $1 ORDER BY sort_order ASC, id ASC`,
+    [invoiceId],
+  );
+  return rows.map((r) => ({
+    ...r,
+    totalSqft: Number(r.totalSqft),
+    ratePerSqft: Number(r.ratePerSqft),
+  })) as InvoiceLineItemRow[];
+}
+
+export async function getInvoiceWithLines(id: number): Promise<
+  | { invoice: InvoiceRow; lines: InvoiceLineItemRow[] }
+  | undefined
+> {
+  const invoice = await getInvoiceById(id);
+  if (!invoice) return undefined;
+  const lines = await getInvoiceLineItemsByInvoiceId(id);
+  return { invoice, lines };
+}
+
+export async function suggestNextInvoiceNumber(): Promise<string> {
+  const now = new Date();
+  const prefix = `INV-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-`;
+  const rows = await query<{ invoiceNumber: string }>(
+    `SELECT invoice_number AS "invoiceNumber" FROM invoices WHERE invoice_number LIKE $1 ORDER BY invoice_number DESC LIMIT 1`,
+    [`${prefix}%`],
+  );
+  if (rows.length === 0) return `${prefix}001`;
+  const last = rows[0]!.invoiceNumber;
+  const suffix = last.slice(prefix.length);
+  const num = parseInt(suffix, 10);
+  const next = Number.isNaN(num) ? 1 : num + 1;
+  return `${prefix}${String(next).padStart(3, "0")}`;
+}
+
+export async function createInvoiceWithLines(input: {
+  invoiceNumber: string;
+  clientName: string;
+  issueDate: string;
+  dueDate?: string | null;
+  notes?: string | null;
+  status?: string;
+  source?: string;
+  importFilename?: string | null;
+  lines: Array<{
+    projectCode: string;
+    clientName?: string | null;
+    totalSqft: number;
+    ratePerSqft: number;
+    projectId?: number | null;
+  }>;
+}): Promise<{ invoice: InvoiceRow; lines: InvoiceLineItemRow[] }> {
+  const invoiceRow = await queryOneRow<InvoiceRow>(
+    `INSERT INTO invoices (invoice_number, client_name, issue_date, due_date, notes, status, source, import_filename)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     RETURNING ${invoiceCols}`,
+    [
+      input.invoiceNumber.trim(),
+      input.clientName.trim(),
+      input.issueDate,
+      input.dueDate ?? null,
+      input.notes ?? null,
+      input.status ?? "draft",
+      input.source ?? "manual",
+      input.importFilename ?? null,
+    ],
+  );
+  if (!invoiceRow) throw new Error("createInvoiceWithLines: insert invoice failed");
+  const invoice = invoiceRow as InvoiceRow;
+  const lines: InvoiceLineItemRow[] = [];
+  for (let i = 0; i < input.lines.length; i++) {
+    const line = input.lines[i]!;
+    const row = await queryOneRow<InvoiceLineItemRow>(
+      `INSERT INTO invoice_line_items (invoice_id, project_code, client_name, total_sqft, rate_per_sqft, project_id, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING ${invoiceLineCols}`,
+      [
+        invoice.id,
+        line.projectCode,
+        line.clientName ?? null,
+        line.totalSqft,
+        line.ratePerSqft,
+        line.projectId ?? null,
+        i,
+      ],
+    );
+    if (!row) throw new Error("createInvoiceWithLines: insert line failed");
+    lines.push({
+      ...(row as InvoiceLineItemRow),
+      totalSqft: Number(row.totalSqft),
+      ratePerSqft: Number(row.ratePerSqft),
+    });
+  }
+  await insertActivity({
+    type: "invoice_created",
+    description: `Created invoice ${invoice.invoiceNumber} (${lines.length} line${lines.length !== 1 ? "s" : ""})`,
+    metadata: { invoiceId: invoice.id },
+  });
+  return { invoice, lines };
 }

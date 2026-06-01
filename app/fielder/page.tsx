@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getAssignmentsWithDetails } from "@/lib/db";
+import { getAssignmentsWithDetails, getTripReimbursementsForFielderWithTrip } from "@/lib/db";
 import { formatCurrency } from "@/lib/currency";
 import { PrintButton } from "@/app/components/PrintButton";
 import Link from "next/link";
@@ -39,6 +39,13 @@ export default async function FielderStatementPage() {
   let totalPaid = 0;
   let internalWorkValue = 0;
   let totalSqft = 0;
+  const reimbursementRows = await getTripReimbursementsForFielderWithTrip(fielderNameNormalized);
+  const reimbursementPending = reimbursementRows
+    .filter((r) => !r.reimbursedAt && !r.rejectedAt && !r.approvedAt)
+    .reduce((sum, r) => sum + Number(r.amount), 0);
+  const reimbursementApproved = reimbursementRows
+    .filter((r) => !r.reimbursedAt && !r.rejectedAt && !!r.approvedAt)
+    .reduce((sum, r) => sum + Number(r.amount), 0);
 
   for (const a of fielderAssignments) {
     const sqft = a.project.totalSqft;
@@ -64,7 +71,7 @@ export default async function FielderStatementPage() {
     totalPaid += paid;
   }
 
-  const totalOwed = totalOwedFromAssignments + managerCommissionOwed;
+  const totalOwed = totalOwedFromAssignments + managerCommissionOwed + reimbursementPending + reimbursementApproved;
   const pending = Math.max(totalOwed - totalPaid, 0);
 
   return (
@@ -90,9 +97,9 @@ export default async function FielderStatementPage() {
           <p className="mt-1 text-xl font-semibold text-zinc-100">
             {formatCurrency(totalOwed)}
           </p>
-          {managerCommissionOwed > 0 && (
+          {(managerCommissionOwed > 0 || reimbursementPending > 0) && (
             <p className="mt-1 text-xs text-zinc-500">
-              {formatCurrency(totalOwedFromAssignments)} from assignments + {formatCurrency(managerCommissionOwed)} manager commissions
+              {formatCurrency(totalOwedFromAssignments)} from assignments + {formatCurrency(managerCommissionOwed)} manager commissions + {formatCurrency(reimbursementPending)} pending reimbursements + {formatCurrency(reimbursementApproved)} approved reimbursements
             </p>
           )}
         </div>
@@ -135,6 +142,24 @@ export default async function FielderStatementPage() {
           className="text-zinc-400 underline hover:text-zinc-100"
         >
           View my payments →
+        </Link>
+        <Link
+          href="/fielder/reimbursements"
+          className="text-zinc-400 underline hover:text-zinc-100"
+        >
+          Submit reimbursement →
+        </Link>
+        <Link
+          href="/fielder/travel"
+          className="text-zinc-400 underline hover:text-zinc-100"
+        >
+          View travel details →
+        </Link>
+        <Link
+          href="/fielder/tickets"
+          className="text-zinc-400 underline hover:text-zinc-100"
+        >
+          Raise / track tickets →
         </Link>
       </div>
     </div>

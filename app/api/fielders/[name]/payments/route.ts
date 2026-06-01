@@ -4,11 +4,14 @@ import {
   insertPayment,
   insertActivity,
   insertAuditLog,
+  getApprovedTripReimbursementsForFielder,
+  markTripReimbursementsPaid,
 } from "@/lib/db";
 import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate, fielderPaymentPostSchema } from "@/lib/validations";
 import { calcAssignmentPayout } from "@/lib/payouts";
+import { sendPushToFielder } from "@/lib/push";
 
 export async function POST(
   request: Request,
@@ -81,7 +84,9 @@ export async function POST(
     (sum, x) => sum + x.pending,
     0,
   );
-  const totalPending = assignmentsPendingOnly + managerCommissionOwed;
+  const pendingReimbursements = await getApprovedTripReimbursementsForFielder(fielderNameNormalized);
+  const reimbursementPending = pendingReimbursements.reduce((sum, r) => sum + Number(r.amount), 0);
+  const totalPending = assignmentsPendingOnly + managerCommissionOwed + reimbursementPending;
 
   if (totalPending <= 0) {
     return NextResponse.redirect(
@@ -127,24 +132,81 @@ export async function POST(
       remainingToAllocate -= payThis;
     }
 
-    // If paying for manager commissions too, allocate remainder to an assignment (last one we paid, or any fielder assignment if they had no pending)
+    // If paying for manager commissions and/or reimbursements too, allocate remainder to an assignment.
     if (remainingToAllocate > 0) {
       const targetAssignment = lastAssignmentPaid
         ? lastAssignmentPaid.assignment
         : fielderAssignments.sort((a, b) => a.id - b.id)[0];
-      if (targetAssignment) {
-        await insertPayment({
+      if (!targetAssignment) {
+        return NextResponse.redirect(
+          getRedirectUrl(request, `/fielders/${encodeURIComponent(encodedName)}`, {
+            error: "no-assignment",
+          }),
+        );
+      }
+
+      // Settle pending reimbursements first from remaining amount.
+      const reimbursementSettlement: { expenseId: number; amount: number; paymentId: number }[] = [];
+      let reimbursedAmount = 0;
+      for (const expense of pendingReimbursements) {
+        if (remainingToAllocate <= 0) break;
+        const expenseAmount = Number(expense.amount);
+        if (remainingToAllocate < expenseAmount) break;
+        const payThis = expenseAmount;
+        const reimbursementPaymentId = await insertPayment({
           projectId: targetAssignment.projectId,
           fielderAssignmentId: targetAssignment.id,
-          amount: remainingToAllocate,
+          amount: payThis,
           currency: parsed.data.currency,
           method: parsed.data.method,
           paymentDate: paymentDate.toISOString(),
-          notes: parsed.data.notes,
+          notes: parsed.data.notes ? `${parsed.data.notes} | reimbursement` : "Trip reimbursement",
         });
-        const existingEntry = created.find((c) => c.assignmentId === targetAssignment.id);
-        if (existingEntry) existingEntry.amount += remainingToAllocate;
-        else created.push({ assignmentId: targetAssignment.id, projectId: targetAssignment.projectId, amount: remainingToAllocate });
+        reimbursementSettlement.push({
+          expenseId: expense.id,
+          amount: payThis,
+          paymentId: reimbursementPaymentId,
+        });
+        created.push({
+          assignmentId: targetAssignment.id,
+          projectId: targetAssignment.projectId,
+          amount: payThis,
+        });
+        remainingToAllocate -= payThis;
+        reimbursedAmount += payThis;
+      }
+
+      for (const s of reimbursementSettlement) {
+        // Mark as reimbursed only when full amount is covered.
+        const expense = pendingReimbursements.find((x) => x.id === s.expenseId);
+        if (expense && Number(s.amount) >= Number(expense.amount)) {
+          await markTripReimbursementsPaid([s.expenseId], s.paymentId);
+        }
+      }
+      if (reimbursedAmount > 0) {
+        sendPushToFielder(
+          fielderNameNormalized,
+          "Reimbursement paid",
+          `${parsed.data.currency} ${reimbursedAmount.toFixed(2)} reimbursement marked paid`,
+          { screen: "reimbursements" },
+        ).catch(() => {});
+      }
+
+      if (targetAssignment) {
+        if (remainingToAllocate > 0) {
+          await insertPayment({
+            projectId: targetAssignment.projectId,
+            fielderAssignmentId: targetAssignment.id,
+            amount: remainingToAllocate,
+            currency: parsed.data.currency,
+            method: parsed.data.method,
+            paymentDate: paymentDate.toISOString(),
+            notes: parsed.data.notes,
+          });
+          const existingEntry = created.find((c) => c.assignmentId === targetAssignment.id);
+          if (existingEntry) existingEntry.amount += remainingToAllocate;
+          else created.push({ assignmentId: targetAssignment.id, projectId: targetAssignment.projectId, amount: remainingToAllocate });
+        }
       }
     }
 

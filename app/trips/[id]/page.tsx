@@ -164,8 +164,20 @@ export default async function TripDetailsPage({ params, searchParams }: PageProp
               <input name="paidBy" placeholder="Company or fielder name" className="input h-11" />
             </div>
             <div className="space-y-1">
+              <label className="label">Receipt URL (optional)</label>
+              <input name="receiptUrl" placeholder="https://..." className="input h-11" />
+            </div>
+            <div className="space-y-1">
               <label className="label">Vendor (optional)</label>
               <input name="vendor" placeholder="Hotel, fuel station, etc." className="input h-11" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="reimbursable" className="rounded border-slate-300" />
+                <span className="text-sm text-slate-700">
+                  Reimbursable to fielder (if paid by fielder)
+                </span>
+              </label>
             </div>
             <div className="space-y-1 md:col-span-2">
               <label className="label">Notes</label>
@@ -188,6 +200,8 @@ export default async function TripDetailsPage({ params, searchParams }: PageProp
                 <th className="px-3 py-2">Amount</th>
                 <th className="px-3 py-2">Currency</th>
                 <th className="px-3 py-2">Paid by</th>
+                <th className="px-3 py-2">Receipt</th>
+                <th className="px-3 py-2">Reimbursement</th>
                 <th className="px-3 py-2">Vendor</th>
                 <th className="px-3 py-2">Notes</th>
               </tr>
@@ -200,13 +214,32 @@ export default async function TripDetailsPage({ params, searchParams }: PageProp
                   <td className="px-3 py-2">{formatCurrency(Number(e.amount))}</td>
                   <td className="px-3 py-2">{e.currency}</td>
                   <td className="px-3 py-2">{e.paidBy ?? "—"}</td>
+                  <td className="px-3 py-2">
+                    {e.receiptUrl ? (
+                      <a
+                        href={e.receiptUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-slate-700 underline hover:text-slate-900"
+                      >
+                        View receipt
+                      </a>
+                    ) : "—"}
+                  </td>
+                  <td className="px-3 py-2">
+                    {e.reimbursable
+                      ? e.reimbursedAt
+                        ? "Paid"
+                        : "Pending"
+                      : "—"}
+                  </td>
                   <td className="px-3 py-2">{e.vendor ?? "—"}</td>
                   <td className="px-3 py-2">{e.notes ?? "—"}</td>
                 </tr>
               ))}
               {trip.expenses.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-4 text-center text-slate-500">
+                  <td colSpan={9} className="px-3 py-4 text-center text-slate-500">
                     No expenses logged yet.
                   </td>
                 </tr>

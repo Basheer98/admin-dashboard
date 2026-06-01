@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuditActor, getSessionFromRequest } from "@/lib/auth";
-import { getTripById, insertAuditLog, updateTrip } from "@/lib/db";
+import { getTripById, getTripFielderNames, insertAuditLog, updateTrip } from "@/lib/db";
+import { sendPushToFielder } from "@/lib/push";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { tripPatchSchema, validate } from "@/lib/validations";
 
@@ -60,6 +61,17 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   await updateTrip(id, parsed.data);
+  if (existing.status !== parsed.data.status) {
+    const fielderNames = await getTripFielderNames(id);
+    for (const fielderName of fielderNames) {
+      sendPushToFielder(
+        fielderName,
+        "Trip status updated",
+        `${parsed.data.name}: ${parsed.data.status}`,
+        { tripId: id, screen: "travel" },
+      ).catch(() => {});
+    }
+  }
   await insertAuditLog({
     ...actor,
     action: "trip.update",

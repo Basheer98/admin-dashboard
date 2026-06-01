@@ -1,4 +1,4 @@
-import { getAssignmentsWithDetails } from "@/lib/db";
+import { getAssignmentsWithDetails, getTripReimbursementsForFielderWithTrip } from "@/lib/db";
 import { getDueDateStatus } from "@/lib/dueDate";
 import { formatCurrency, formatRate } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
@@ -141,8 +141,18 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
   );
   const totalPaid = rows.reduce((s, r) => s + r.paid, 0);
   const internalWorkValue = rows.reduce((s, r) => s + r.internalValue, 0);
+  const reimbursementRowsAll = await getTripReimbursementsForFielderWithTrip(fielderNameNormalized);
+  const reimbursementRows = filterMonth
+    ? reimbursementRowsAll.filter((r) => r.expenseDate.slice(0, 7) === filterMonth)
+    : reimbursementRowsAll;
+  const reimbursementPending = reimbursementRows
+    .filter((r) => !r.reimbursedAt && !r.rejectedAt && !r.approvedAt)
+    .reduce((sum, r) => sum + Number(r.amount), 0);
+  const reimbursementApproved = reimbursementRows
+    .filter((r) => !r.reimbursedAt && !r.rejectedAt && !!r.approvedAt)
+    .reduce((sum, r) => sum + Number(r.amount), 0);
 
-  const totalOwed = totalOwedFromAssignments + managerCommissionOwed;
+  const totalOwed = totalOwedFromAssignments + managerCommissionOwed + reimbursementPending + reimbursementApproved;
   const pending = Math.max(totalOwed - totalPaid, 0);
 
   return (
@@ -207,6 +217,11 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
             Payment amount cannot exceed pending balance ({formatCurrency(pending)}).
           </div>
         )}
+        {error === "no-assignment" && (
+          <div className="no-print rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Cannot log payment because no assignment exists to attach this reimbursement payout.
+          </div>
+        )}
 
         <section className={`card grid gap-4 p-6 ${internalWorkValue > 0 || managerCommissionOwed > 0 ? "md:grid-cols-5" : "md:grid-cols-4"}`}>
           <div>
@@ -220,9 +235,9 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
             <p className="mt-1 text-xl font-semibold text-zinc-100">
               {formatCurrency(totalOwed)}
             </p>
-            {managerCommissionOwed > 0 && (
+            {(managerCommissionOwed > 0 || reimbursementPending > 0) && (
               <p className="mt-1 text-xs text-zinc-500">
-                {formatCurrency(totalOwedFromAssignments)} from assignments + {formatCurrency(managerCommissionOwed)} manager commissions
+                {formatCurrency(totalOwedFromAssignments)} from assignments + {formatCurrency(managerCommissionOwed)} manager commissions + {formatCurrency(reimbursementPending)} pending reimbursements + {formatCurrency(reimbursementApproved)} approved reimbursements
               </p>
             )}
           </div>
@@ -250,6 +265,48 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
             </div>
           )}
         </section>
+
+        {reimbursementRows.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-base font-semibold text-zinc-100">Reimbursements</h2>
+            <div className="card overflow-x-auto">
+              <table className="table-sticky table-hover table-zebra min-w-full text-left text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-3 py-2">Date</th>
+                    <th className="px-3 py-2">Trip</th>
+                    <th className="px-3 py-2">Category</th>
+                    <th className="px-3 py-2">Amount</th>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2">Receipt</th>
+                    <th className="px-3 py-2">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reimbursementRows.map((r) => (
+                    <tr key={r.id} className="border-t text-zinc-200">
+                      <td className="px-3 py-2">{r.expenseDate}</td>
+                      <td className="px-3 py-2">{r.trip?.name ?? `Trip #${r.tripId}`}</td>
+                      <td className="px-3 py-2">{r.category}</td>
+                      <td className="px-3 py-2">{formatCurrency(Number(r.amount))}</td>
+                      <td className="px-3 py-2">
+                        {r.reimbursedAt ? "PAID" : r.rejectedAt ? "REJECTED" : r.approvedAt ? "APPROVED" : "PENDING"}
+                      </td>
+                      <td className="px-3 py-2">
+                        {r.receiptUrl ? (
+                          <a href={r.receiptUrl} target="_blank" rel="noreferrer" className="underline hover:text-zinc-100">
+                            View receipt
+                          </a>
+                        ) : "—"}
+                      </td>
+                      <td className="px-3 py-2">{r.notes ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
 
         {pending > 0 && (
           <section className="card no-print p-6">

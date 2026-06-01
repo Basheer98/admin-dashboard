@@ -1,4 +1,4 @@
-import { getAssignmentsWithDetails } from "@/lib/db";
+import { getAssignmentsWithDetails, getTripReimbursementsForFielderWithTrip } from "@/lib/db";
 import { formatCurrency } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import Link from "next/link";
@@ -65,6 +65,9 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
       totalOwed: number;
       totalPaid: number;
       pending: number;
+      reimbursementPending: number;
+      reimbursementApproved: number;
+      reimbursementRejected: number;
       assignmentCount: number;
       totalSqft: number;
     }
@@ -101,6 +104,9 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
       totalOwed: 0,
       totalPaid: 0,
       pending: 0,
+      reimbursementPending: 0,
+      reimbursementApproved: 0,
+      reimbursementRejected: 0,
       assignmentCount: 0,
       totalSqft: 0,
     };
@@ -130,11 +136,38 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
       totalOwed: 0,
       totalPaid: 0,
       pending: 0,
+      reimbursementPending: 0,
+      reimbursementApproved: 0,
+      reimbursementRejected: 0,
       assignmentCount: 0,
       totalSqft: 0,
     };
     existing.totalOwed += managerNetCommission;
     byFielder.set(managerName, existing);
+  }
+
+  // Add pending trip reimbursements paid by this fielder.
+  for (const [key, data] of byFielder) {
+    const reimbursementsAll = await getTripReimbursementsForFielderWithTrip(key);
+    const reimbursements = filterMonth
+      ? reimbursementsAll.filter((r) => r.expenseDate.slice(0, 7) === filterMonth)
+      : reimbursementsAll;
+    const reimbursementPending = reimbursements
+      .filter((r) => !r.reimbursedAt && !r.rejectedAt && !r.approvedAt)
+      .reduce((sum, r) => sum + Number(r.amount), 0);
+    const reimbursementApproved = reimbursements
+      .filter((r) => !r.reimbursedAt && !r.rejectedAt && !!r.approvedAt)
+      .reduce((sum, r) => sum + Number(r.amount), 0);
+    const reimbursementRejected = reimbursements
+      .filter((r) => !!r.rejectedAt)
+      .reduce((sum, r) => sum + Number(r.amount), 0);
+    byFielder.set(key, {
+      ...data,
+      totalOwed: data.totalOwed + reimbursementPending + reimbursementApproved,
+      reimbursementPending,
+      reimbursementApproved,
+      reimbursementRejected,
+    });
   }
 
   // Align pending with detailed fielder statement:
@@ -234,6 +267,9 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
                 <th className="px-3 py-2">Assignments</th>
                 <th className="px-3 py-2">Total SQFT</th>
                 <th className="px-3 py-2">Total owed</th>
+                <th className="px-3 py-2">Reimbursement pending</th>
+                <th className="px-3 py-2">Reimbursement approved</th>
+                <th className="px-3 py-2">Reimbursement rejected</th>
                 <th className="px-3 py-2">Total paid</th>
                 <th className="px-3 py-2">Pending</th>
                 <th className="px-3 py-2"></th>
@@ -248,6 +284,11 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
                   <td className="px-3 py-2">
                     {formatCurrency(f.totalOwed)}
                   </td>
+                  <td className="px-3 py-2">
+                    {formatCurrency(f.reimbursementPending)}
+                  </td>
+                  <td className="px-3 py-2">{formatCurrency(f.reimbursementApproved)}</td>
+                  <td className="px-3 py-2">{formatCurrency(f.reimbursementRejected)}</td>
                   <td className="px-3 py-2">
                     {formatCurrency(f.totalPaid)}
                   </td>
@@ -267,7 +308,7 @@ export default async function FieldersReportListPage({ searchParams }: PageProps
               {fielders.length === 0 && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={10}
                     className="px-3 py-4 text-center text-zinc-500"
                   >
                     No fielders with assignments yet.
