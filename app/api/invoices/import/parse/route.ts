@@ -22,6 +22,13 @@ export async function POST(request: Request) {
   const mapping = guessColumnMapping(headers);
   const sampleRows = rows.slice(0, 8);
 
+  let suggestedClient = "";
+  const monthMatch = file.name.match(/\b(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\b/i);
+  if (monthMatch) {
+    const month = monthMatch[1]!.charAt(0).toUpperCase() + monthMatch[1]!.slice(1).toLowerCase();
+    suggestedClient = `Project Tracker — ${month}`;
+  }
+
   return NextResponse.json({
     filename: file.name,
     headers,
@@ -29,5 +36,6 @@ export async function POST(request: Request) {
     sampleRows,
     mapping,
     rowCount: rows.length,
+    suggestedClientName: suggestedClient,
   });
 }

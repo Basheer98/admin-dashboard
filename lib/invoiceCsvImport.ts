@@ -19,6 +19,9 @@ export type CsvColumnRole =
   | "fielderRate"
   | "location"
   | "status"
+  | "qfield"
+  | "ecd"
+  | "notes"
   | "invoiceNumber"
   | "ignore";
 
@@ -46,6 +49,9 @@ export type ParsedProjectGroup = {
   companyRatePerSqft: number;
   location: string;
   status: string;
+  qfield: string | null;
+  ecd: string | null;
+  notes: string | null;
   billingInvoiceNumber: string | null;
   fielders: ParsedFielder[];
   rowNumbers: number[];
@@ -67,14 +73,17 @@ export type PreviewProjectRow = {
 };
 
 const HEADER_ALIASES: Record<CsvColumnRole, string[]> = {
-  projectCode: ["project", "project no", "project #", "project number", "project id", "project_code", "job", "job no"],
+  projectCode: ["project id", "project", "project no", "project #", "project number", "project_code", "job", "job no"],
   clientName: ["client", "client name", "customer"],
   totalSqft: ["sqft", "sq ft", "square feet", "total sqft", "total_sqft", "sf"],
   companyRate: ["rate", "company rate", "company_rate", "billing rate", "client rate", "price"],
   fielderName: ["fielder", "fielder name", "assigned to", "surveyor"],
   fielderRate: ["fielder rate", "payout rate", "pay rate", "rate per sqft", "fielder_rate"],
-  location: ["location", "address", "site"],
-  status: ["status", "project status"],
+  location: ["address", "location", "site"],
+  status: ["fielding status", "data status", "submitted", "status", "project status"],
+  qfield: ["qfield", "q field"],
+  ecd: ["ecd", "due date", "completion date"],
+  notes: ["notes", "note", "comments"],
   invoiceNumber: ["invoice", "invoice number", "invoice #", "billing batch"],
   ignore: [],
 };
@@ -96,6 +105,9 @@ export function guessColumnMapping(headers: string[]): ColumnMapping {
     "fielderRate",
     "location",
     "status",
+    "qfield",
+    "ecd",
+    "notes",
     "invoiceNumber",
   ];
 
@@ -125,6 +137,29 @@ function parseNum(raw: string): number | null {
   if (!cleaned) return null;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
+}
+
+/** Split "Nikhil/Jaggu" or "A, B" into normalized fielder names. */
+export function parseFielderNamesFromCell(raw: string, ratePerSqft = 0): ParsedFielder[] {
+  if (!raw.trim()) return [];
+  const names = raw.split(/[,;|/]+/).map((n) => normalizeFielderName(n)).filter(Boolean);
+  return names.map((name) => ({ name, ratePerSqft }));
+}
+
+function normalizeQfieldFromSheet(raw: string): string | null {
+  const s = raw.trim().toLowerCase();
+  if (!s) return null;
+  if (s.includes("2")) return "Qfield-2";
+  if (s.includes("1")) return "Qfield-1";
+  return null;
+}
+
+const VALID_PROJECT_STATUSES = new Set(["ASSIGNED", "IN_PROGRESS", "SUBMITTED", "COMPLETED"]);
+
+function mapSheetStatus(raw: string, fallback: string): string {
+  const u = raw.trim().toUpperCase().replace(/\s+/g, "_");
+  if (VALID_PROJECT_STATUSES.has(u)) return u;
+  return fallback;
 }
 
 function extractWideFielders(obj: Record<string, string>, headers: string[]): ParsedFielder[] {
@@ -161,10 +196,7 @@ function extractWideFielders(obj: Record<string, string>, headers: string[]): Pa
         if (!nameRaw) continue;
         const rateHeader = headers.find((x) => /fielder\s*rate|payout/i.test(x));
         const rate = rateHeader ? parseNum(obj[rateHeader] ?? "") ?? 0 : 0;
-        for (const n of nameRaw.split(/[,;|]/)) {
-          const name = normalizeFielderName(n);
-          if (name) fielders.push({ name, ratePerSqft: rate });
-        }
+        fielders.push(...parseFielderNamesFromCell(nameRaw, rate));
       }
     }
   }
@@ -172,11 +204,26 @@ function extractWideFielders(obj: Record<string, string>, headers: string[]): Pa
   return fielders;
 }
 
+function applyFielderRatesFromSettings(
+  fielders: ParsedFielder[],
+  fielderRateMap: Map<string, number>,
+): ParsedFielder[] {
+  return fielders.map((f) => {
+    if (f.ratePerSqft > 0) return f;
+    const fromSettings = fielderRateMap.get(f.name);
+    if (fromSettings != null && fromSettings > 0) {
+      return { ...f, ratePerSqft: fromSettings };
+    }
+    return f;
+  });
+}
+
 export function parseProjectsFromCsv(
   headers: string[],
   dataRows: string[][],
   mapping: ColumnMapping,
   defaults: Pick<ImportOptions, "defaultClientName" | "defaultCompanyRate" | "defaultLocation" | "defaultStatus">,
+  fielderRateMap: Map<string, number> = new Map(),
 ): { groups: ParsedProjectGroup[]; errors: string[] } {
   const objects = rowsToObjects(headers, dataRows);
   const errors: string[] = [];
@@ -203,20 +250,21 @@ export function parseProjectsFromCsv(
     const companyRate =
       parseNum(cell(obj, mapping.companyRate)) ?? defaults.defaultCompanyRate;
     const location = cell(obj, mapping.location) || defaults.defaultLocation;
-    const status = cell(obj, mapping.status) || defaults.defaultStatus;
+    const statusRaw = cell(obj, mapping.status);
+    const status = mapSheetStatus(statusRaw, defaults.defaultStatus);
+    const qfield = normalizeQfieldFromSheet(cell(obj, mapping.qfield));
+    const ecd = cell(obj, mapping.ecd) || null;
+    const notes = cell(obj, mapping.notes) || null;
     const billingInvoiceNumber = cell(obj, mapping.invoiceNumber) || null;
 
     let fielders: ParsedFielder[] = [];
     if (hasLongFielder) {
-      const name = normalizeFielderName(cell(obj, mapping.fielderName));
-      if (name) {
-        const rate =
-          parseNum(cell(obj, mapping.fielderRate)) ?? 0;
-        fielders = [{ name, ratePerSqft: rate }];
-      }
+      const rate = parseNum(cell(obj, mapping.fielderRate)) ?? 0;
+      fielders = parseFielderNamesFromCell(cell(obj, mapping.fielderName), rate);
     } else {
       fielders = extractWideFielders(obj, headers);
     }
+    fielders = applyFielderRatesFromSettings(fielders, fielderRateMap);
 
     const existing = groupMap.get(projectCode);
     if (existing) {
@@ -226,6 +274,7 @@ export function parseProjectsFromCsv(
           existing.fielders.push(f);
         }
       }
+      existing.fielders = applyFielderRatesFromSettings(existing.fielders, fielderRateMap);
       return;
     }
 
@@ -236,6 +285,9 @@ export function parseProjectsFromCsv(
       companyRatePerSqft: companyRate,
       location,
       status,
+      qfield,
+      ecd,
+      notes,
       billingInvoiceNumber,
       fielders,
       rowNumbers: [rowNum],
@@ -353,7 +405,9 @@ export async function applyImportPreview(
           totalSqft: g.totalSqft,
           companyRatePerSqft: g.companyRatePerSqft,
           status: g.status,
-          notes: null,
+          ecd: g.ecd,
+          notes: g.notes,
+          qfield: g.qfield,
           invoiceNumber: billingNumber ?? g.billingInvoiceNumber,
         });
         projectsCreated++;
@@ -369,8 +423,9 @@ export async function applyImportPreview(
             totalSqft: g.totalSqft,
             companyRatePerSqft: g.companyRatePerSqft,
             status: g.status || existing.status,
-            notes: existing.notes,
-            qfield: existing.qfield,
+            ecd: g.ecd ?? existing.ecd,
+            notes: g.notes ?? existing.notes,
+            qfield: g.qfield ?? existing.qfield,
             invoiceNumber: billingNumber ?? g.billingInvoiceNumber ?? existing.invoiceNumber,
             workType: existing.workType,
             gdriveFolderUrl: existing.gdriveFolderUrl,

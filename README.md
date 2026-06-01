@@ -31,7 +31,8 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 - **Invoices** — Card list of saved invoices; **Create new invoice** or **Import CSV**.
 - **Manual create:** Enter invoice header (number, client, dates) and line items (project #, SQFT, company rate). **Look up** fills from an existing project. Optional **Sync to dashboard** creates/updates the project and adds fielder assignments per line.
-- **CSV import:** Export your Google Sheet as CSV (File → Download → CSV). Upload on **Invoices → Import CSV**, map columns (project #, SQFT, fielder, rates), preview, then confirm. This creates/updates **Projects** and **Assignments** and saves an **invoice** with a PDF. One row per fielder (long format) or `Fielder 1` / `Rate 1` columns (wide format).
+- **Rates in Settings:** Set **default company billing rate** (client invoices) and **fielder payout rates** (dashboard assignments / fielder reports). CSV import and manual invoices use these automatically.
+- **CSV import:** Export any month’s Project Tracker CSV (same columns: PROJECT ID, SQFT, ADDRESS, FIELDER, etc.). **Invoices → Import CSV** → map columns → **Review changes** (nothing is written until you click **Import changes**) → success/error popup. Then dashboard projects/assignments update and a **client invoice** PDF is ready. Rates come from Settings.
 - **PDF:** On an invoice detail page, **Download PDF**, or `GET /api/invoice-records/[id]/pdf`.
 
 ### Project billing batch (legacy)

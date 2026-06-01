@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionFromRequest } from "@/lib/auth";
-import { suggestNextInvoiceNumber } from "@/lib/db";
+import { getFielderRateMap, getSettings, suggestNextInvoiceNumber } from "@/lib/db";
 import {
   buildImportPreview,
   parseProjectsFromCsv,
@@ -27,16 +27,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Map a column to SQFT" }, { status: 400 });
   }
 
+  const settings = await getSettings();
+  const fielderRateMap = await getFielderRateMap();
+  const companyRate =
+    parsed.data.options.defaultCompanyRate > 0
+      ? parsed.data.options.defaultCompanyRate
+      : (settings.companyRatePerSqft ?? 0);
+
   const { groups, errors: parseErrors } = parseProjectsFromCsv(
     parsed.data.headers,
     parsed.data.rows,
     mapping,
     {
       defaultClientName: parsed.data.options.defaultClientName,
-      defaultCompanyRate: parsed.data.options.defaultCompanyRate,
+      defaultCompanyRate: companyRate,
       defaultLocation: parsed.data.options.defaultLocation,
       defaultStatus: parsed.data.options.defaultStatus,
     },
+    fielderRateMap,
   );
 
   const options: ImportOptions = {
@@ -53,7 +61,20 @@ export async function POST(request: Request) {
     0,
   );
 
+  let projectsToCreate = 0;
+  let projectsToUpdate = 0;
+  let projectsSkipped = 0;
+  let assignmentsToAdd = 0;
+  for (const p of preview) {
+    if (p.action === "create_project") projectsToCreate++;
+    else if (p.action === "update_project") projectsToUpdate++;
+    else if (p.action === "skip_project") projectsSkipped++;
+    assignmentsToAdd += p.assignmentsToAdd.length;
+  }
+
   return NextResponse.json({
+    companyRatePerSqft: companyRate,
+    fielderRatesConfigured: fielderRateMap.size,
     preview: preview.map((p) => ({
       projectCode: p.group.projectCode,
       clientName: p.group.clientName,
@@ -70,5 +91,11 @@ export async function POST(request: Request) {
     projectCount: groups.length,
     totalRevenue,
     suggestedInvoiceNumber: options.invoiceNumber || suggestedInvoice,
+    summary: {
+      projectsToCreate,
+      projectsToUpdate,
+      projectsSkipped,
+      assignmentsToAdd,
+    },
   });
 }

@@ -189,6 +189,16 @@ export async function runSchema(): Promise<void> {
     ON CONFLICT (id) DO NOTHING;
   `);
   await p.query(`
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN company_rate_per_sqft NUMERIC(12,6) NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS fielder_rates (
+      fielder_name TEXT PRIMARY KEY,
+      rate_per_sqft NUMERIC(12,6) NOT NULL DEFAULT 0,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await p.query(`
     DO $$ BEGIN ALTER TABLE settings ADD COLUMN admin_phone TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
     DO $$ BEGIN ALTER TABLE settings ADD COLUMN email_ingest_enabled BOOLEAN NOT NULL DEFAULT FALSE; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
     DO $$ BEGIN ALTER TABLE settings ADD COLUMN email_ingest_webhook_secret TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;

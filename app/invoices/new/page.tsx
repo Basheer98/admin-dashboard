@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { InvoiceForm } from "../components/InvoiceForm";
-import { suggestNextInvoiceNumber } from "@/lib/db";
+import { getSettings, suggestNextInvoiceNumber } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewInvoicePage() {
-  const suggested = await suggestNextInvoiceNumber();
+  const [suggested, settings] = await Promise.all([
+    suggestNextInvoiceNumber(),
+    getSettings(),
+  ]);
   const today = new Date().toISOString().slice(0, 10);
 
   return (
@@ -22,11 +25,15 @@ export default async function NewInvoicePage() {
           </Link>
         </nav>
         <section className="card p-6">
-          <h2 className="mb-2 text-base font-semibold text-zinc-100">New invoice</h2>
+          <h2 className="mb-2 text-base font-semibold text-zinc-100">Client invoice</h2>
           <p className="mb-6 text-sm text-zinc-400">
-            Enter project numbers, SQFT, and rates. Use Look up to pull data from existing projects. Enable sync to create or update projects and fielder assignments in the dashboard.
+            Bill your client: project number, SQFT, rate, and line total. Use CSV import to sync fielders and projects from your tracker; use this form for a quick client bill.
           </p>
-          <InvoiceForm suggestedInvoiceNumber={suggested} defaultIssueDate={today} />
+          <InvoiceForm
+            suggestedInvoiceNumber={suggested}
+            defaultIssueDate={today}
+            defaultCompanyRate={settings.companyRatePerSqft}
+          />
         </section>
       </div>
     </SidebarLayout>

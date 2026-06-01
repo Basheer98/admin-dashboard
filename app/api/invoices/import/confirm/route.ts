@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuditActor, getSessionFromRequest } from "@/lib/auth";
-import { insertAuditLog } from "@/lib/db";
+import { getFielderRateMap, getSettings, insertAuditLog } from "@/lib/db";
 import {
   applyImportPreview,
   buildImportPreview,
@@ -27,20 +27,29 @@ export async function POST(request: Request) {
   }
 
   const mapping = parsed.data.mapping as ColumnMapping;
+  const settings = await getSettings();
+  const fielderRateMap = await getFielderRateMap();
+  const companyRate =
+    parsed.data.options.defaultCompanyRate > 0
+      ? parsed.data.options.defaultCompanyRate
+      : (settings.companyRatePerSqft ?? 0);
+
   const { groups } = parseProjectsFromCsv(
     parsed.data.headers,
     parsed.data.rows,
     mapping,
     {
       defaultClientName: parsed.data.options.defaultClientName,
-      defaultCompanyRate: parsed.data.options.defaultCompanyRate,
+      defaultCompanyRate: companyRate,
       defaultLocation: parsed.data.options.defaultLocation,
       defaultStatus: parsed.data.options.defaultStatus,
     },
+    fielderRateMap,
   );
 
   const options: ImportOptions = {
     ...parsed.data.options,
+    defaultCompanyRate: companyRate,
     dueDate: parsed.data.options.dueDate ?? null,
     notes: parsed.data.options.notes ?? null,
   };

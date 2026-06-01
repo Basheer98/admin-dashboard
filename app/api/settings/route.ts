@@ -11,6 +11,7 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const hasUsd = formData.has("usdToInrRate");
+  const hasCompanyRate = formData.has("companyRatePerSqft");
   const hasAdminPhone = formData.has("adminPhone");
   const hasEmailIngestEnabled = formData.has("emailIngestEnabled");
   const hasEmailIngestAutoApprove = formData.has("emailIngestAutoApprove");
@@ -19,6 +20,10 @@ export async function POST(request: Request) {
 
   const rateStr = String(formData.get("usdToInrRate") ?? "").trim();
   const usdToInrRate = hasUsd ? (rateStr === "" ? null : Number(rateStr)) : undefined;
+  const companyRateStr = String(formData.get("companyRatePerSqft") ?? "").trim();
+  const companyRatePerSqft = hasCompanyRate
+    ? (companyRateStr === "" ? null : Number(companyRateStr))
+    : undefined;
   const adminPhoneRaw = String(formData.get("adminPhone") ?? "").trim();
   const adminPhone = hasAdminPhone ? (adminPhoneRaw || null) : undefined;
   const emailIngestEnabled = hasEmailIngestEnabled
@@ -36,6 +41,7 @@ export async function POST(request: Request) {
 
   const parsed = validate(settingsPostSchema, {
     usdToInrRate,
+    companyRatePerSqft,
     adminPhone,
     emailIngestEnabled,
     emailIngestWebhookSecret,
@@ -49,6 +55,7 @@ export async function POST(request: Request) {
   const oldSettings = await getSettings();
   await updateSettings({
     usdToInrRate: parsed.data.usdToInrRate,
+    companyRatePerSqft: parsed.data.companyRatePerSqft,
     adminPhone: parsed.data.adminPhone,
     emailIngestEnabled: parsed.data.emailIngestEnabled,
     emailIngestWebhookSecret: parsed.data.emailIngestWebhookSecret,

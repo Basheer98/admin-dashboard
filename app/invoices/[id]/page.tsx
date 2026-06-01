@@ -61,6 +61,7 @@ export default async function InvoiceDetailPage({ params, searchParams }: PagePr
             <div>
               <h1 className="font-display text-2xl font-bold text-zinc-100">{invoice.invoiceNumber}</h1>
               <p className="mt-1 text-zinc-400">Bill to: {invoice.clientName}</p>
+              <p className="mt-1 text-xs text-zinc-500">Client invoice — project #, SQFT, rate, and line total only.</p>
               <p className="text-sm text-zinc-500">
                 Issued {invoice.issueDate}
                 {invoice.dueDate ? ` · Due ${invoice.dueDate}` : ""}

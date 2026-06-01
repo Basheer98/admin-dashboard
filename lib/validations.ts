@@ -93,6 +93,7 @@ export const projectPatchSchema = z.object({
 // --- Settings ---
 export const settingsPostSchema = z.object({
   usdToInrRate: z.number().positive().nullable(),
+  companyRatePerSqft: z.number().nonnegative().nullable().optional(),
   adminPhone: z.string().max(30).nullable(),
   emailIngestEnabled: z.boolean().optional(),
   emailIngestWebhookSecret: z.string().max(200).nullable().optional(),

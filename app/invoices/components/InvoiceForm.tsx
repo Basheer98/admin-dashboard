@@ -5,40 +5,42 @@ import { useState } from "react";
 
 type LineState = {
   projectCode: string;
-  clientName: string;
   totalSqft: string;
   ratePerSqft: string;
-  fielders: string;
-  fielderRate: string;
-  syncToDashboard: boolean;
 };
 
 type InvoiceFormProps = {
   suggestedInvoiceNumber: string;
   defaultIssueDate: string;
+  defaultCompanyRate: number | null;
 };
 
-function emptyLine(): LineState {
+function emptyLine(defaultRate: string): LineState {
   return {
     projectCode: "",
-    clientName: "",
     totalSqft: "",
-    ratePerSqft: "",
-    fielders: "",
-    fielderRate: "",
-    syncToDashboard: true,
+    ratePerSqft: defaultRate,
   };
 }
 
-export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: InvoiceFormProps) {
+export function InvoiceForm({
+  suggestedInvoiceNumber,
+  defaultIssueDate,
+  defaultCompanyRate,
+}: InvoiceFormProps) {
   const router = useRouter();
+  const defaultRateStr =
+    defaultCompanyRate != null && defaultCompanyRate > 0 ? String(defaultCompanyRate) : "";
+
   const [invoiceNumber, setInvoiceNumber] = useState(suggestedInvoiceNumber);
   const [clientName, setClientName] = useState("");
   const [issueDate, setIssueDate] = useState(defaultIssueDate);
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
-  const [syncBatch, setSyncBatch] = useState(true);
-  const [lines, setLines] = useState<LineState[]>([emptyLine(), emptyLine()]);
+  const [lines, setLines] = useState<LineState[]>([
+    emptyLine(defaultRateStr),
+    emptyLine(defaultRateStr),
+  ]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -54,9 +56,9 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
     if (!data.project) return;
     updateLine(index, {
       projectCode: data.project.projectCode,
-      clientName: data.project.clientName,
       totalSqft: String(data.project.totalSqft),
-      ratePerSqft: String(data.project.companyRatePerSqft),
+      ratePerSqft:
+        defaultRateStr || String(data.project.companyRatePerSqft),
     });
     if (!clientName) setClientName(data.project.clientName);
   }
@@ -64,19 +66,19 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!defaultRateStr && lines.every((l) => !l.ratePerSqft.trim())) {
+      setError("Set a default company rate in Settings → Billing rates, or enter a rate on each line.");
+      return;
+    }
+
     const payloadLines = lines
       .filter((l) => l.projectCode.trim())
       .map((l) => ({
         projectCode: l.projectCode.trim(),
-        clientName: l.clientName.trim() || null,
+        clientName: null as string | null,
         totalSqft: Number(l.totalSqft),
-        ratePerSqft: Number(l.ratePerSqft),
-        fielders: l.fielders
-          .split(/[,;|]/)
-          .map((n) => n.trim())
-          .filter(Boolean),
-        fielderRate: l.fielderRate ? Number(l.fielderRate) : 0,
-        syncToDashboard: l.syncToDashboard,
+        ratePerSqft: Number(l.ratePerSqft || defaultRateStr),
       }));
 
     if (payloadLines.length === 0) {
@@ -84,7 +86,7 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
       return;
     }
     if (!clientName.trim()) {
-      setError("Client name is required.");
+      setError("Client name is required (who you are billing).");
       return;
     }
     for (const l of payloadLines) {
@@ -93,7 +95,7 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
         return;
       }
       if (!Number.isFinite(l.ratePerSqft) || l.ratePerSqft < 0) {
-        setError("Each line needs a valid rate.");
+        setError("Each line needs a valid billing rate.");
         return;
       }
     }
@@ -109,7 +111,8 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
           issueDate,
           dueDate: dueDate.trim() || null,
           notes: notes.trim() || null,
-          syncProjectInvoiceNumber: syncBatch,
+          syncProjectInvoiceNumber: false,
+          syncProjectsToDashboard: false,
           lines: payloadLines,
         }),
       });
@@ -129,7 +132,7 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
 
   const previewTotal = lines.reduce((sum, l) => {
     const sqft = Number(l.totalSqft);
-    const rate = Number(l.ratePerSqft);
+    const rate = Number(l.ratePerSqft || defaultRateStr);
     if (!l.projectCode.trim() || !Number.isFinite(sqft) || !Number.isFinite(rate)) return sum;
     return sum + sqft * rate;
   }, 0);
@@ -142,6 +145,12 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
         </div>
       )}
 
+      <p className="text-sm text-zinc-400">
+        This invoice is for your <strong className="text-zinc-200">client</strong> (project #, SQFT, rate, total).
+        Fielder payouts are tracked separately under Fielder reports. Billing rate defaults come from{" "}
+        <a href="/settings" className="text-emerald-400 hover:underline">Settings</a>.
+      </p>
+
       <div className="card grid gap-4 p-6 md:grid-cols-2">
         <div className="space-y-1">
           <label className="label">Invoice number</label>
@@ -153,7 +162,7 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
           />
         </div>
         <div className="space-y-1">
-          <label className="label">Client name (bill to)</label>
+          <label className="label">Bill to (client name)</label>
           <input
             className="input h-11 w-full"
             value={clientName}
@@ -188,33 +197,32 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
             onChange={(e) => setNotes(e.target.value)}
           />
         </div>
-        <label className="flex items-center gap-2 text-sm text-zinc-300 md:col-span-2">
-          <input
-            type="checkbox"
-            checked={syncBatch}
-            onChange={(e) => setSyncBatch(e.target.checked)}
-            className="rounded border-zinc-600"
-          />
-          Set project billing batch to this invoice number on synced projects
-        </label>
+        {defaultRateStr && (
+          <p className="text-sm text-zinc-500 md:col-span-2">
+            Default billing rate from settings: <strong className="text-zinc-300">{defaultRateStr}</strong> / sqft (editable per line)
+          </p>
+        )}
       </div>
 
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-base font-semibold text-zinc-100">Line items</h3>
+          <h3 className="text-base font-semibold text-zinc-100">Billable lines</h3>
           <p className="text-sm text-zinc-400">
-            Preview total: <span className="font-medium text-zinc-200">${previewTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            Total:{" "}
+            <span className="font-medium text-zinc-200">
+              ${previewTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           </p>
         </div>
 
         {lines.map((line, index) => (
-          <div key={index} className="card grid gap-3 p-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-1 lg:col-span-3">
+          <div key={index} className="card grid gap-3 p-4 md:grid-cols-3">
+            <div className="space-y-1 md:col-span-3">
               <label className="label">Project #</label>
               <div className="flex gap-2">
                 <input
                   className="input h-11 flex-1"
-                  placeholder="e.g. 12345"
+                  placeholder="e.g. PRJ24086"
                   value={line.projectCode}
                   onChange={(e) => updateLine(index, { projectCode: e.target.value })}
                 />
@@ -223,18 +231,9 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
                   className="btn-secondary h-11 shrink-0 px-4"
                   onClick={() => lookupLine(index)}
                 >
-                  Look up
+                  Look up SQFT
                 </button>
               </div>
-            </div>
-            <div className="space-y-1">
-              <label className="label">Client (line)</label>
-              <input
-                className="input h-11 w-full"
-                value={line.clientName}
-                onChange={(e) => updateLine(index, { clientName: e.target.value })}
-                placeholder="Optional"
-              />
             </div>
             <div className="space-y-1">
               <label className="label">SQFT</label>
@@ -247,52 +246,30 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
               />
             </div>
             <div className="space-y-1">
-              <label className="label">Company rate / sqft</label>
+              <label className="label">Billing rate / sqft</label>
               <input
                 type="number"
                 step="0.001"
                 min={0}
                 className="input h-11 w-full"
+                placeholder={defaultRateStr || "From settings"}
                 value={line.ratePerSqft}
                 onChange={(e) => updateLine(index, { ratePerSqft: e.target.value })}
               />
             </div>
-            <div className="space-y-1 md:col-span-2">
-              <label className="label">Fielders (comma-separated)</label>
-              <input
-                className="input h-11 w-full"
-                placeholder="NIVAS, JOHN"
-                value={line.fielders}
-                onChange={(e) => updateLine(index, { fielders: e.target.value })}
-              />
+            <div className="flex items-end text-sm text-zinc-500">
+              Line total: $
+              {(
+                (Number(line.totalSqft) || 0) * (Number(line.ratePerSqft || defaultRateStr) || 0)
+              ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div className="space-y-1">
-              <label className="label">Fielder rate / sqft</label>
-              <input
-                type="number"
-                step="0.001"
-                min={0}
-                className="input h-11 w-full"
-                value={line.fielderRate}
-                onChange={(e) => updateLine(index, { fielderRate: e.target.value })}
-              />
-            </div>
-            <label className="flex items-center gap-2 text-sm text-zinc-400 lg:col-span-3">
-              <input
-                type="checkbox"
-                checked={line.syncToDashboard}
-                onChange={(e) => updateLine(index, { syncToDashboard: e.target.checked })}
-                className="rounded border-zinc-600"
-              />
-              Sync this line to Projects &amp; Assignments in the dashboard
-            </label>
           </div>
         ))}
 
         <button
           type="button"
           className="btn-secondary px-4 py-2"
-          onClick={() => setLines((prev) => [...prev, emptyLine()])}
+          onClick={() => setLines((prev) => [...prev, emptyLine(defaultRateStr)])}
         >
           + Add line
         </button>
@@ -300,7 +277,7 @@ export function InvoiceForm({ suggestedInvoiceNumber, defaultIssueDate }: Invoic
 
       <div className="flex flex-wrap gap-3">
         <button type="submit" className="btn-primary px-6 py-2.5" disabled={saving}>
-          {saving ? "Saving…" : "Create invoice"}
+          {saving ? "Saving…" : "Create client invoice"}
         </button>
         <a href="/invoices" className="btn-secondary inline-flex items-center px-6 py-2.5">
           Cancel

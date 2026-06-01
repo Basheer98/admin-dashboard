@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionFromRequest, getAuditActor } from "@/lib/auth";
-import { getAllFielderLogins, insertFielderLogin, insertAuditLog } from "@/lib/db";
+import { getAllFielderLogins, insertFielderLoginWithRate, insertAuditLog } from "@/lib/db";
+import { normalizeFielderName } from "@/lib/normalize";
 import { getRedirectUrl } from "@/lib/redirectUrl";
 import { validate } from "@/lib/validations";
 import { z } from "zod";
@@ -33,6 +34,8 @@ export async function POST(request: Request) {
   const role = String(formData.get("role") ?? "").trim();
   const region = String(formData.get("region") ?? "").trim();
   const gdriveRootFolderUrl = String(formData.get("gdriveRootFolderUrl") ?? "").trim();
+  const rateStr = String(formData.get("ratePerSqft") ?? "").trim();
+  const ratePerSqft = rateStr === "" ? null : Number(rateStr);
 
   const parsed = validate(createSchema, { email, password, fielderName });
   if (!parsed.success) {
@@ -42,11 +45,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const id = await insertFielderLogin({
+    const id = await insertFielderLoginWithRate({
       ...parsed.data,
+      fielderName: normalizeFielderName(parsed.data.fielderName),
       role: role || null,
       region: region || null,
       gdriveRootFolderUrl: gdriveRootFolderUrl || null,
+      ratePerSqft: ratePerSqft != null && !Number.isNaN(ratePerSqft) ? ratePerSqft : null,
     });
     await insertAuditLog({
       ...getAuditActor(session),

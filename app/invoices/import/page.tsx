@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { InvoiceImportWizard } from "../components/InvoiceImportWizard";
-import { suggestNextInvoiceNumber } from "@/lib/db";
+import { getSettings, suggestNextInvoiceNumber } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function ImportInvoicePage() {
-  const suggested = await suggestNextInvoiceNumber();
+  const [suggested, settings] = await Promise.all([
+    suggestNextInvoiceNumber(),
+    getSettings(),
+  ]);
 
   return (
     <SidebarLayout
@@ -20,7 +23,15 @@ export default async function ImportInvoicePage() {
             ← Back to invoices
           </Link>
         </nav>
-        <InvoiceImportWizard suggestedInvoiceNumber={suggested} />
+        <InvoiceImportWizard
+          suggestedInvoiceNumber={suggested}
+          defaultCompanyRate={settings.companyRatePerSqft}
+          fielderRatesNote={
+            settings.companyRatePerSqft != null
+              ? `Company billing rate: $${settings.companyRatePerSqft}/sqft from Settings.`
+              : "Set company billing rate in Settings before import."
+          }
+        />
       </div>
     </SidebarLayout>
   );

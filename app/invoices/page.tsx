@@ -15,7 +15,7 @@ export default async function InvoicesPage() {
       <div className="flex flex-1 flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-zinc-400">
-            Create invoices manually or import a CSV exported from Google Sheets to sync projects and fielders.
+            Client invoices (project #, SQFT, rate, total) for payment. Import CSV to sync your Project Tracker into the dashboard; rates come from Settings.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href="/invoices/import" className="btn-secondary inline-flex items-center gap-2 px-4 py-2.5">

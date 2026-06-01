@@ -7,11 +7,18 @@ import type { CanonicalEmailPayload, CanonicalEntityType } from "./emailIngest";
 
 export type SettingsRow = {
   usdToInrRate: number | null;
+  companyRatePerSqft: number | null;
   adminPhone: string | null;
   emailIngestEnabled: boolean;
   emailIngestWebhookSecret: string | null;
   emailIngestAutoApprove: boolean;
   emailIngestAutoApproveMinConfidence: number;
+};
+
+export type FielderRateRow = {
+  fielderName: string;
+  ratePerSqft: number;
+  updatedAt: string;
 };
 
 export type EmailIngestStatus =
@@ -1583,6 +1590,22 @@ export async function insertFielderLogin(input: {
   return row.id;
 }
 
+export async function insertFielderLoginWithRate(input: {
+  email: string;
+  password: string;
+  fielderName: string;
+  role?: string | null;
+  region?: string | null;
+  gdriveRootFolderUrl?: string | null;
+  ratePerSqft?: number | null;
+}): Promise<number> {
+  const id = await insertFielderLogin(input);
+  if (input.ratePerSqft != null && input.ratePerSqft > 0) {
+    await upsertFielderRate(input.fielderName, input.ratePerSqft);
+  }
+  return id;
+}
+
 export async function updateFielderLoginMeta(
   id: number,
   role: string | null,
@@ -1763,6 +1786,7 @@ export async function getFielderNotifications(
 export async function getSettings(): Promise<SettingsRow> {
   const row = await queryOne<{
     usdToInrRate: number | null;
+    companyRatePerSqft: number | null;
     adminPhone: string | null;
     emailIngestEnabled: boolean | null;
     emailIngestWebhookSecret: string | null;
@@ -1771,6 +1795,7 @@ export async function getSettings(): Promise<SettingsRow> {
   }>(
     `SELECT
       usd_to_inr_rate AS "usdToInrRate",
+      company_rate_per_sqft AS "companyRatePerSqft",
       admin_phone AS "adminPhone",
       email_ingest_enabled AS "emailIngestEnabled",
       email_ingest_webhook_secret AS "emailIngestWebhookSecret",
@@ -1780,7 +1805,8 @@ export async function getSettings(): Promise<SettingsRow> {
     WHERE id = 1`,
   );
   return {
-    usdToInrRate: row?.usdToInrRate ?? null,
+    usdToInrRate: row?.usdToInrRate != null ? Number(row.usdToInrRate) : null,
+    companyRatePerSqft: row?.companyRatePerSqft != null ? Number(row.companyRatePerSqft) : null,
     adminPhone: row?.adminPhone ?? null,
     emailIngestEnabled: !!row?.emailIngestEnabled,
     emailIngestWebhookSecret: row?.emailIngestWebhookSecret ?? null,
@@ -1791,8 +1817,33 @@ export async function getSettings(): Promise<SettingsRow> {
   };
 }
 
+export async function getAllFielderRates(): Promise<FielderRateRow[]> {
+  const rows = await query<FielderRateRow>(
+    `SELECT fielder_name AS "fielderName", rate_per_sqft AS "ratePerSqft", updated_at::text AS "updatedAt"
+     FROM fielder_rates ORDER BY fielder_name ASC`,
+  );
+  return rows.map((r) => ({ ...r, ratePerSqft: Number(r.ratePerSqft) }));
+}
+
+export async function getFielderRateMap(): Promise<Map<string, number>> {
+  const rows = await getAllFielderRates();
+  return new Map(rows.map((r) => [r.fielderName.trim().toUpperCase(), r.ratePerSqft]));
+}
+
+export async function upsertFielderRate(fielderName: string, ratePerSqft: number): Promise<void> {
+  const name = fielderName.trim().toUpperCase();
+  if (!name) return;
+  await query(
+    `INSERT INTO fielder_rates (fielder_name, rate_per_sqft, updated_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (fielder_name) DO UPDATE SET rate_per_sqft = $2, updated_at = NOW()`,
+    [name, ratePerSqft],
+  );
+}
+
 export async function updateSettings(input: {
   usdToInrRate?: number | null;
+  companyRatePerSqft?: number | null;
   adminPhone?: string | null;
   emailIngestEnabled?: boolean;
   emailIngestWebhookSecret?: string | null;
@@ -1801,6 +1852,8 @@ export async function updateSettings(input: {
 }): Promise<void> {
   const current = await getSettings();
   const usdToInrRate = input.usdToInrRate !== undefined ? input.usdToInrRate : current.usdToInrRate;
+  const companyRatePerSqft =
+    input.companyRatePerSqft !== undefined ? input.companyRatePerSqft : current.companyRatePerSqft;
   const adminPhone = input.adminPhone !== undefined ? input.adminPhone : current.adminPhone;
   const emailIngestEnabled =
     input.emailIngestEnabled !== undefined
@@ -1821,14 +1874,16 @@ export async function updateSettings(input: {
   await query(
     `UPDATE settings
      SET usd_to_inr_rate = $1,
-         admin_phone = $2,
-         email_ingest_enabled = $3,
-         email_ingest_webhook_secret = $4,
-         email_ingest_auto_approve = $5,
-         email_ingest_auto_approve_min_confidence = $6
+         company_rate_per_sqft = $2,
+         admin_phone = $3,
+         email_ingest_enabled = $4,
+         email_ingest_webhook_secret = $5,
+         email_ingest_auto_approve = $6,
+         email_ingest_auto_approve_min_confidence = $7
      WHERE id = 1`,
     [
       usdToInrRate,
+      companyRatePerSqft ?? null,
       adminPhone ?? null,
       emailIngestEnabled,
       emailIngestWebhookSecret ?? null,
@@ -2480,6 +2535,7 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
     exportedAt: now,
     settings: {
       usdToInrRate: legacy.settings?.usdToInrRate ?? null,
+      companyRatePerSqft: null,
       adminPhone: null,
       emailIngestEnabled: false,
       emailIngestWebhookSecret: null,
@@ -2614,8 +2670,12 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
   }
 
     await client.query(
-      "UPDATE settings SET usd_to_inr_rate = $1, admin_phone = $2 WHERE id = 1",
-      [backup.settings.usdToInrRate, backup.settings.adminPhone ?? null],
+      `UPDATE settings SET usd_to_inr_rate = $1, company_rate_per_sqft = $2, admin_phone = $3 WHERE id = 1`,
+      [
+        backup.settings.usdToInrRate,
+        backup.settings.companyRatePerSqft ?? null,
+        backup.settings.adminPhone ?? null,
+      ],
     );
 
     const logins = backup.fielderLogins ?? [];
