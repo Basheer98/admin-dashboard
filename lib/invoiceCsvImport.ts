@@ -489,6 +489,7 @@ export async function applyImportPreview(
     clientId: billTo.clientId,
     clientName: billTo.clientName,
     billToAddress: billTo.billToAddress,
+    billToEmail: billTo.billToEmail,
     issueDate: options.issueDate,
     dueDate: options.dueDate,
     notes: options.notes,

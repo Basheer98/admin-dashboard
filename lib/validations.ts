@@ -94,6 +94,16 @@ export const projectPatchSchema = z.object({
 export const settingsPatchSchema = z.object({
   companyRatePerSqft: z.number().nonnegative().nullable().optional(),
   adminPhone: z.string().max(30).nullable().optional(),
+  usdToInrRate: z.number().positive().nullable().optional(),
+  invoiceIssuerName: z.string().max(200).nullable().optional(),
+  invoiceIssuerAddress: z.string().max(2000).nullable().optional(),
+  invoiceIssuerGstin: z.string().max(50).nullable().optional(),
+  invoiceIssuerLut: z.string().max(50).nullable().optional(),
+  invoiceIssuerServiceDescription: z.string().max(2000).nullable().optional(),
+  invoiceIssuerSacLine: z.string().max(200).nullable().optional(),
+  invoiceIssuerBankDetails: z.string().max(2000).nullable().optional(),
+  invoiceIssuerExportDeclaration: z.string().max(2000).nullable().optional(),
+  invoicePlaceOfSupply: z.string().max(100).nullable().optional(),
   emailIngestEnabled: z.boolean().optional(),
   emailIngestWebhookSecret: z.string().max(200).nullable().optional(),
   emailIngestAutoApprove: z.boolean().optional(),
@@ -181,11 +191,13 @@ export const ticketPatchSchema = z.object({
 export const clientPostSchema = z.object({
   name: z.string().min(1),
   address: z.string().nullable().optional(),
+  email: z.string().max(200).nullable().optional(),
 });
 
 export const clientPatchSchema = z.object({
   name: z.string().min(1).optional(),
   address: z.string().nullable().optional(),
+  email: z.string().max(200).nullable().optional(),
 });
 
 // --- Invoices ---
@@ -201,6 +213,7 @@ export const invoicePostSchema = z.object({
   clientId: z.number().int().positive().nullable().optional(),
   clientName: z.string().min(1),
   billToAddress: z.string().nullable().optional(),
+  billToEmail: z.string().max(200).nullable().optional(),
   issueDate: z.string().min(1),
   dueDate: z.string().nullable(),
   notes: z.string().nullable(),

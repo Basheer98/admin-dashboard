@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { getSettings, getAllFielderLogins, getAllFielderRates } from "@/lib/db";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
+import { mergeInvoiceIssuerSettings } from "@/lib/invoicePdfDefaults";
 import { getDriveConfigStatus } from "@/lib/drive";
 
 const LAST_BACKUP_COOKIE = "last_backup_at";
@@ -23,6 +24,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {};
   const saved = sp.saved === "1";
   const billingSaved = sp.billingSaved === "1";
+  const invoicePdfSaved = sp.invoicePdfSaved === "1";
   const error = typeof sp.error === "string" ? sp.error : "";
   const restoreStatus = typeof sp.restore === "string" ? sp.restore : "";
   const restoreMessage = typeof sp.message === "string" ? RESTORE_MESSAGES[sp.message] ?? RESTORE_MESSAGES.error : RESTORE_MESSAGES[restoreStatus] ?? "";
@@ -53,6 +55,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
     ? new Date(lastBackupAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
     : null;
   const driveConfig = getDriveConfigStatus();
+  const issuer = mergeInvoiceIssuerSettings(settings);
 
   return (
     <SidebarLayout title="Settings" subtitle="Billing rates, fielder payouts, logins, and integrations" current="settings">
@@ -60,6 +63,11 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         {billingSaved && (
           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             Company billing rate saved. CSV import and client invoices will use this rate.
+          </div>
+        )}
+        {invoicePdfSaved && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            Invoice PDF settings saved.
           </div>
         )}
         {saved && (
@@ -76,6 +84,11 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             {restoreMessage}
             {restoreDetail && <p className="mt-2 font-mono text-xs">{restoreDetail}</p>}
+          </div>
+        )}
+        {error === "invoicePdf" && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Could not save invoice PDF settings. Check values (USD→INR must be a positive number if set).
           </div>
         )}
         {error === "billing" && (
@@ -236,6 +249,69 @@ export default async function SettingsPage({ searchParams }: PageProps) {
           ) : (
             <p className="text-sm text-zinc-500">No fielder rates yet — add names from your Project Tracker CSV.</p>
           )}
+        </section>
+
+        <section className="card p-6">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">Invoice PDF (your company)</h2>
+          <p className="mb-4 text-sm text-zinc-400">
+            Header, bank details, and export wording on downloaded client invoices. Defaults match the AK Products export template.
+          </p>
+          <form method="POST" action="/api/settings" className="grid max-w-2xl gap-4 md:grid-cols-2">
+            <input type="hidden" name="invoicePdfSettings" value="1" />
+            <div className="space-y-1 md:col-span-2">
+              <label className="label">Company name</label>
+              <input name="invoiceIssuerName" defaultValue={issuer.issuerName} className="input h-11" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="label">Address (one line per row)</label>
+              <textarea name="invoiceIssuerAddress" rows={4} defaultValue={issuer.issuerAddress} className="input py-2.5" />
+            </div>
+            <div className="space-y-1">
+              <label className="label">GSTIN</label>
+              <input name="invoiceIssuerGstin" defaultValue={issuer.issuerGstin} className="input h-11" />
+            </div>
+            <div className="space-y-1">
+              <label className="label">LUT reference</label>
+              <input name="invoiceIssuerLut" defaultValue={issuer.issuerLut} className="input h-11" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="label">Service description</label>
+              <textarea name="invoiceIssuerServiceDescription" rows={3} defaultValue={issuer.serviceDescription} className="input py-2.5" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="label">SAC / GST line</label>
+              <input name="invoiceIssuerSacLine" defaultValue={issuer.sacLine} className="input h-11" />
+            </div>
+            <div className="space-y-1">
+              <label className="label">Place of supply</label>
+              <input name="invoicePlaceOfSupply" defaultValue={issuer.placeOfSupply} className="input h-11" />
+            </div>
+            <div className="space-y-1">
+              <label className="label">USD → INR (PDF total in INR only)</label>
+              <input
+                type="number"
+                name="usdToInrRate"
+                step="0.01"
+                min="0"
+                placeholder="e.g. 94"
+                defaultValue={settings.usdToInrRate ?? ""}
+                className="input h-11"
+              />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="label">Bank details (one line per row)</label>
+              <textarea name="invoiceIssuerBankDetails" rows={5} defaultValue={issuer.bankDetails} className="input py-2.5" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="label">Export declaration</label>
+              <textarea name="invoiceIssuerExportDeclaration" rows={2} defaultValue={issuer.exportDeclaration} className="input py-2.5" />
+            </div>
+            <div className="md:col-span-2">
+              <button type="submit" className="btn-primary px-5 py-2.5">
+                Save invoice PDF settings
+              </button>
+            </div>
+          </form>
         </section>
 
         <section className="card p-6">

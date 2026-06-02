@@ -16,8 +16,30 @@ export async function POST(request: Request) {
   const hasEmailIngestAutoApprove = formData.has("emailIngestAutoApprove");
   const hasWebhookSecret = formData.has("emailIngestWebhookSecret");
   const hasConfidence = formData.has("emailIngestAutoApproveMinConfidence");
+  const hasInvoicePdf = formData.has("invoicePdfSettings");
 
   const payload: Record<string, unknown> = {};
+  const strOrNull = (key: string) => {
+    const v = String(formData.get(key) ?? "").trim();
+    return v === "" ? null : v;
+  };
+  const numOrNull = (key: string) => {
+    const v = String(formData.get(key) ?? "").trim();
+    return v === "" ? null : Number(v);
+  };
+
+  if (hasInvoicePdf) {
+    payload.invoiceIssuerName = strOrNull("invoiceIssuerName");
+    payload.invoiceIssuerAddress = strOrNull("invoiceIssuerAddress");
+    payload.invoiceIssuerGstin = strOrNull("invoiceIssuerGstin");
+    payload.invoiceIssuerLut = strOrNull("invoiceIssuerLut");
+    payload.invoiceIssuerServiceDescription = strOrNull("invoiceIssuerServiceDescription");
+    payload.invoiceIssuerSacLine = strOrNull("invoiceIssuerSacLine");
+    payload.invoiceIssuerBankDetails = strOrNull("invoiceIssuerBankDetails");
+    payload.invoiceIssuerExportDeclaration = strOrNull("invoiceIssuerExportDeclaration");
+    payload.invoicePlaceOfSupply = strOrNull("invoicePlaceOfSupply");
+    payload.usdToInrRate = numOrNull("usdToInrRate");
+  }
 
   if (hasCompanyRate) {
     const companyRateStr = String(formData.get("companyRatePerSqft") ?? "").trim();
@@ -45,19 +67,12 @@ export async function POST(request: Request) {
 
   const parsed = validate(settingsPatchSchema, payload);
   if (!parsed.success) {
-    const err = hasCompanyRate ? "billing" : "invalid";
+    const err = hasCompanyRate ? "billing" : hasInvoicePdf ? "invoicePdf" : "invalid";
     return NextResponse.redirect(getRedirectUrl(request, "/settings", { error: err }));
   }
 
   const oldSettings = await getSettings();
-  await updateSettings({
-    companyRatePerSqft: parsed.data.companyRatePerSqft,
-    adminPhone: parsed.data.adminPhone,
-    emailIngestEnabled: parsed.data.emailIngestEnabled,
-    emailIngestWebhookSecret: parsed.data.emailIngestWebhookSecret,
-    emailIngestAutoApprove: parsed.data.emailIngestAutoApprove,
-    emailIngestAutoApproveMinConfidence: parsed.data.emailIngestAutoApproveMinConfidence,
-  });
+  await updateSettings(parsed.data);
 
   const changes: string[] = [];
   if (
@@ -92,13 +107,20 @@ export async function POST(request: Request) {
     !hasEmailIngestEnabled &&
     !hasEmailIngestAutoApprove &&
     !hasWebhookSecret &&
-    !hasConfidence;
+    !hasConfidence &&
+    !hasInvoicePdf;
+
+  const onlyInvoicePdf = hasInvoicePdf && !hasCompanyRate && !hasAdminPhone;
 
   return NextResponse.redirect(
     getRedirectUrl(
       request,
       "/settings",
-      onlyBilling ? { billingSaved: "1" } : { saved: "1" },
+      onlyBilling
+        ? { billingSaved: "1" }
+        : onlyInvoicePdf
+          ? { invoicePdfSaved: "1" }
+          : { saved: "1" },
     ),
   );
 }

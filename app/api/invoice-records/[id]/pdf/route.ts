@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { getInvoiceWithLines } from "@/lib/db";
+import { getInvoiceWithLines, getSettings } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/auth";
 import { buildInvoiceRecordPdfBuffer } from "@/lib/invoicePdf";
+import { mergeInvoiceIssuerSettings } from "@/lib/invoicePdfDefaults";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,9 @@ export async function GET(
   }
 
   try {
-    const buffer = await buildInvoiceRecordPdfBuffer(data);
+    const settings = await getSettings();
+    const issuer = mergeInvoiceIssuerSettings(settings);
+    const buffer = await buildInvoiceRecordPdfBuffer({ ...data, issuer });
     const filename = `invoice-${data.invoice.invoiceNumber.replace(/\s+/g, "-")}.pdf`;
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,

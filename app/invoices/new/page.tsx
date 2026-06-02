@@ -34,7 +34,7 @@ export default async function NewInvoicePage() {
             suggestedInvoiceNumber={suggested}
             defaultIssueDate={today}
             defaultCompanyRate={settings.companyRatePerSqft}
-            clients={clients.map((c) => ({ id: c.id, name: c.name, address: c.address }))}
+            clients={clients.map((c) => ({ id: c.id, name: c.name, address: c.address, email: c.email }))}
           />
         </section>
       </div>

@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     payload = {
       name: String(formData.get("name") ?? ""),
       address: String(formData.get("address") ?? "").trim() || null,
+      email: String(formData.get("email") ?? "").trim() || null,
     };
   }
 

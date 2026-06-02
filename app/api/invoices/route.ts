@@ -73,12 +73,16 @@ export async function POST(request: Request) {
       clientName: parsed.data.clientName,
       billToAddress: parsed.data.billToAddress ?? null,
     });
+    if (parsed.data.billToEmail?.trim()) {
+      billTo.billToEmail = parsed.data.billToEmail.trim();
+    }
 
     const { invoice } = await createInvoiceWithLines({
       invoiceNumber: parsed.data.invoiceNumber,
       clientId: billTo.clientId,
       clientName: billTo.clientName,
       billToAddress: billTo.billToAddress,
+      billToEmail: billTo.billToEmail,
       issueDate: parsed.data.issueDate,
       dueDate: parsed.data.dueDate,
       notes: parsed.data.notes,

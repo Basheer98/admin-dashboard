@@ -27,7 +27,7 @@ export default async function ImportInvoicePage() {
         <InvoiceImportWizard
           suggestedInvoiceNumber={suggested}
           defaultCompanyRate={settings.companyRatePerSqft}
-          clients={clients.map((c) => ({ id: c.id, name: c.name, address: c.address }))}
+          clients={clients.map((c) => ({ id: c.id, name: c.name, address: c.address, email: c.email }))}
           fielderRatesNote={
             settings.companyRatePerSqft != null
               ? `Company billing rate: $${settings.companyRatePerSqft}/sqft from Settings.`

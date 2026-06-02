@@ -334,6 +334,17 @@ export async function runSchema(): Promise<void> {
     );
     DO $$ BEGIN ALTER TABLE invoices ADD COLUMN client_id INTEGER NULL REFERENCES clients(id) ON DELETE SET NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
     DO $$ BEGIN ALTER TABLE invoices ADD COLUMN bill_to_address TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE invoices ADD COLUMN bill_to_email TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE clients ADD COLUMN email TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_name TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_address TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_gstin TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_lut TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_service_description TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_sac_line TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_bank_details TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_export_declaration TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_place_of_supply TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   schemaDone = true;
 }

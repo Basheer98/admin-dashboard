@@ -42,6 +42,10 @@ export default async function ClientsPage({ searchParams }: PageProps) {
               <input name="name" required placeholder="e.g. DY TELE" className="input h-11" />
             </div>
             <div className="space-y-1 md:col-span-2">
+              <label className="label">Email (optional)</label>
+              <input name="email" type="email" placeholder="ops@client.com" className="input h-11" />
+            </div>
+            <div className="space-y-1 md:col-span-2">
               <label className="label">Address (optional)</label>
               <textarea
                 name="address"

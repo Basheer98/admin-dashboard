@@ -40,6 +40,7 @@ export function InvoiceForm({
   const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
   const [billToAddress, setBillToAddress] = useState("");
+  const [billToEmail, setBillToEmail] = useState("");
   const [issueDate, setIssueDate] = useState(defaultIssueDate);
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
@@ -116,6 +117,7 @@ export function InvoiceForm({
           clientId: clientId ? Number(clientId) : null,
           clientName: clientName.trim(),
           billToAddress: billToAddress.trim() || null,
+          billToEmail: billToEmail.trim() || null,
           issueDate,
           dueDate: dueDate.trim() || null,
           notes: notes.trim() || null,
@@ -177,6 +179,7 @@ export function InvoiceForm({
             if (c) {
               setClientName(c.name);
               setBillToAddress(c.address ?? "");
+              setBillToEmail(c.email ?? "");
             }
           }}
         />
@@ -196,6 +199,16 @@ export function InvoiceForm({
             value={billToAddress}
             onChange={(e) => setBillToAddress(e.target.value)}
             placeholder="Shown on PDF under Bill to"
+          />
+        </div>
+        <div className="space-y-1 md:col-span-2">
+          <label className="label">Bill to email (optional)</label>
+          <input
+            className="input h-11 w-full"
+            type="email"
+            value={billToEmail}
+            onChange={(e) => setBillToEmail(e.target.value)}
+            placeholder="ops@client.com"
           />
         </div>
         <div className="space-y-1">

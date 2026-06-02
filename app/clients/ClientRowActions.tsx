@@ -8,6 +8,7 @@ export function ClientRowActions({ client }: { client: ClientRow }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(client.name);
+  const [email, setEmail] = useState(client.email ?? "");
   const [address, setAddress] = useState(client.address ?? "");
   const [busy, setBusy] = useState(false);
 
@@ -17,7 +18,7 @@ export function ClientRowActions({ client }: { client: ClientRow }) {
       const res = await fetch(`/api/clients/${client.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, address: address.trim() || null }),
+        body: JSON.stringify({ name, address: address.trim() || null, email: email.trim() || null }),
       });
       if (!res.ok) {
         alert("Could not save client");
@@ -49,6 +50,12 @@ export function ClientRowActions({ client }: { client: ClientRow }) {
     return (
       <div className="flex min-w-[280px] flex-col gap-2">
         <input value={name} onChange={(e) => setName(e.target.value)} className="input h-9 text-sm" />
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          className="input h-9 text-sm"
+        />
         <textarea
           value={address}
           onChange={(e) => setAddress(e.target.value)}

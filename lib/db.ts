@@ -12,6 +12,16 @@ export type SettingsRow = {
   emailIngestWebhookSecret: string | null;
   emailIngestAutoApprove: boolean;
   emailIngestAutoApproveMinConfidence: number;
+  usdToInrRate: number | null;
+  invoiceIssuerName: string | null;
+  invoiceIssuerAddress: string | null;
+  invoiceIssuerGstin: string | null;
+  invoiceIssuerLut: string | null;
+  invoiceIssuerServiceDescription: string | null;
+  invoiceIssuerSacLine: string | null;
+  invoiceIssuerBankDetails: string | null;
+  invoiceIssuerExportDeclaration: string | null;
+  invoicePlaceOfSupply: string | null;
 };
 
 export type FielderRateRow = {
@@ -1782,21 +1792,24 @@ export async function getFielderNotifications(
 }
 
 export async function getSettings(): Promise<SettingsRow> {
-  const row = await queryOne<{
-    companyRatePerSqft: number | null;
-    adminPhone: string | null;
-    emailIngestEnabled: boolean | null;
-    emailIngestWebhookSecret: string | null;
-    emailIngestAutoApprove: boolean | null;
-    emailIngestAutoApproveMinConfidence: number | null;
-  }>(
+  const row = await queryOne<SettingsRow & { emailIngestEnabled: boolean | null }>(
     `SELECT
       company_rate_per_sqft AS "companyRatePerSqft",
       admin_phone AS "adminPhone",
       email_ingest_enabled AS "emailIngestEnabled",
       email_ingest_webhook_secret AS "emailIngestWebhookSecret",
       email_ingest_auto_approve AS "emailIngestAutoApprove",
-      email_ingest_auto_approve_min_confidence AS "emailIngestAutoApproveMinConfidence"
+      email_ingest_auto_approve_min_confidence AS "emailIngestAutoApproveMinConfidence",
+      usd_to_inr_rate AS "usdToInrRate",
+      invoice_issuer_name AS "invoiceIssuerName",
+      invoice_issuer_address AS "invoiceIssuerAddress",
+      invoice_issuer_gstin AS "invoiceIssuerGstin",
+      invoice_issuer_lut AS "invoiceIssuerLut",
+      invoice_issuer_service_description AS "invoiceIssuerServiceDescription",
+      invoice_issuer_sac_line AS "invoiceIssuerSacLine",
+      invoice_issuer_bank_details AS "invoiceIssuerBankDetails",
+      invoice_issuer_export_declaration AS "invoiceIssuerExportDeclaration",
+      invoice_place_of_supply AS "invoicePlaceOfSupply"
     FROM settings
     WHERE id = 1`,
   );
@@ -1809,6 +1822,16 @@ export async function getSettings(): Promise<SettingsRow> {
     emailIngestAutoApproveMinConfidence: Number(
       row?.emailIngestAutoApproveMinConfidence ?? 0.95,
     ),
+    usdToInrRate: row?.usdToInrRate != null ? Number(row.usdToInrRate) : null,
+    invoiceIssuerName: row?.invoiceIssuerName ?? null,
+    invoiceIssuerAddress: row?.invoiceIssuerAddress ?? null,
+    invoiceIssuerGstin: row?.invoiceIssuerGstin ?? null,
+    invoiceIssuerLut: row?.invoiceIssuerLut ?? null,
+    invoiceIssuerServiceDescription: row?.invoiceIssuerServiceDescription ?? null,
+    invoiceIssuerSacLine: row?.invoiceIssuerSacLine ?? null,
+    invoiceIssuerBankDetails: row?.invoiceIssuerBankDetails ?? null,
+    invoiceIssuerExportDeclaration: row?.invoiceIssuerExportDeclaration ?? null,
+    invoicePlaceOfSupply: row?.invoicePlaceOfSupply ?? null,
   };
 }
 
@@ -1836,34 +1859,11 @@ export async function upsertFielderRate(fielderName: string, ratePerSqft: number
   );
 }
 
-export async function updateSettings(input: {
-  companyRatePerSqft?: number | null;
-  adminPhone?: string | null;
-  emailIngestEnabled?: boolean;
-  emailIngestWebhookSecret?: string | null;
-  emailIngestAutoApprove?: boolean;
-  emailIngestAutoApproveMinConfidence?: number;
-}): Promise<void> {
+export async function updateSettings(input: Partial<SettingsRow>): Promise<void> {
   const current = await getSettings();
-  const companyRatePerSqft =
-    input.companyRatePerSqft !== undefined ? input.companyRatePerSqft : current.companyRatePerSqft;
-  const adminPhone = input.adminPhone !== undefined ? input.adminPhone : current.adminPhone;
-  const emailIngestEnabled =
-    input.emailIngestEnabled !== undefined
-      ? input.emailIngestEnabled
-      : current.emailIngestEnabled;
-  const emailIngestWebhookSecret =
-    input.emailIngestWebhookSecret !== undefined
-      ? input.emailIngestWebhookSecret
-      : current.emailIngestWebhookSecret;
-  const emailIngestAutoApprove =
-    input.emailIngestAutoApprove !== undefined
-      ? input.emailIngestAutoApprove
-      : current.emailIngestAutoApprove;
-  const emailIngestAutoApproveMinConfidence =
-    input.emailIngestAutoApproveMinConfidence !== undefined
-      ? input.emailIngestAutoApproveMinConfidence
-      : current.emailIngestAutoApproveMinConfidence;
+  const pick = <K extends keyof SettingsRow>(key: K): SettingsRow[K] =>
+    input[key] !== undefined ? input[key]! : current[key];
+
   await query(
     `UPDATE settings
      SET company_rate_per_sqft = $1,
@@ -1871,15 +1871,35 @@ export async function updateSettings(input: {
          email_ingest_enabled = $3,
          email_ingest_webhook_secret = $4,
          email_ingest_auto_approve = $5,
-         email_ingest_auto_approve_min_confidence = $6
+         email_ingest_auto_approve_min_confidence = $6,
+         usd_to_inr_rate = $7,
+         invoice_issuer_name = $8,
+         invoice_issuer_address = $9,
+         invoice_issuer_gstin = $10,
+         invoice_issuer_lut = $11,
+         invoice_issuer_service_description = $12,
+         invoice_issuer_sac_line = $13,
+         invoice_issuer_bank_details = $14,
+         invoice_issuer_export_declaration = $15,
+         invoice_place_of_supply = $16
      WHERE id = 1`,
     [
-      companyRatePerSqft ?? null,
-      adminPhone ?? null,
-      emailIngestEnabled,
-      emailIngestWebhookSecret ?? null,
-      emailIngestAutoApprove,
-      emailIngestAutoApproveMinConfidence,
+      pick("companyRatePerSqft") ?? null,
+      pick("adminPhone") ?? null,
+      pick("emailIngestEnabled"),
+      pick("emailIngestWebhookSecret") ?? null,
+      pick("emailIngestAutoApprove"),
+      pick("emailIngestAutoApproveMinConfidence"),
+      pick("usdToInrRate") ?? null,
+      pick("invoiceIssuerName") ?? null,
+      pick("invoiceIssuerAddress") ?? null,
+      pick("invoiceIssuerGstin") ?? null,
+      pick("invoiceIssuerLut") ?? null,
+      pick("invoiceIssuerServiceDescription") ?? null,
+      pick("invoiceIssuerSacLine") ?? null,
+      pick("invoiceIssuerBankDetails") ?? null,
+      pick("invoiceIssuerExportDeclaration") ?? null,
+      pick("invoicePlaceOfSupply") ?? null,
     ],
   );
 }
@@ -2530,6 +2550,16 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
       emailIngestWebhookSecret: null,
       emailIngestAutoApprove: false,
       emailIngestAutoApproveMinConfidence: 0.95,
+      usdToInrRate: null,
+      invoiceIssuerName: null,
+      invoiceIssuerAddress: null,
+      invoiceIssuerGstin: null,
+      invoiceIssuerLut: null,
+      invoiceIssuerServiceDescription: null,
+      invoiceIssuerSacLine: null,
+      invoiceIssuerBankDetails: null,
+      invoiceIssuerExportDeclaration: null,
+      invoicePlaceOfSupply: null,
     },
     projects,
     assignments,
@@ -2732,6 +2762,7 @@ export type ClientRow = {
   id: number;
   name: string;
   address: string | null;
+  email: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -2742,6 +2773,7 @@ export type InvoiceRow = {
   clientId: number | null;
   clientName: string;
   billToAddress: string | null;
+  billToEmail: string | null;
   issueDate: string;
   dueDate: string | null;
   notes: string | null;
@@ -2765,14 +2797,14 @@ export type InvoiceLineItemRow = {
 
 const invoiceCols = `
   id, invoice_number AS "invoiceNumber", client_id AS "clientId",
-  client_name AS "clientName", bill_to_address AS "billToAddress",
+  client_name AS "clientName", bill_to_address AS "billToAddress", bill_to_email AS "billToEmail",
   issue_date AS "issueDate", due_date AS "dueDate", notes, status, source,
   import_filename AS "importFilename",
   created_at::text AS "createdAt", updated_at::text AS "updatedAt"
 `;
 
 const clientCols = `
-  id, name, address, created_at::text AS "createdAt", updated_at::text AS "updatedAt"
+  id, name, address, email, created_at::text AS "createdAt", updated_at::text AS "updatedAt"
 `;
 
 const invoiceLineCols = `
@@ -2797,11 +2829,15 @@ export async function getClientById(id: number): Promise<ClientRow | undefined> 
   return row as ClientRow | undefined;
 }
 
-export async function insertClient(input: { name: string; address?: string | null }): Promise<ClientRow> {
+export async function insertClient(input: {
+  name: string;
+  address?: string | null;
+  email?: string | null;
+}): Promise<ClientRow> {
   const row = await queryOneRow<ClientRow>(
-    `INSERT INTO clients (name, address) VALUES ($1, $2)
+    `INSERT INTO clients (name, address, email) VALUES ($1, $2, $3)
      RETURNING ${clientCols}`,
-    [input.name.trim(), input.address?.trim() || null],
+    [input.name.trim(), input.address?.trim() || null, input.email?.trim() || null],
   );
   if (!row) throw new Error("insertClient failed");
   return row as ClientRow;
@@ -2809,15 +2845,16 @@ export async function insertClient(input: { name: string; address?: string | nul
 
 export async function updateClient(
   id: number,
-  input: { name?: string; address?: string | null },
+  input: { name?: string; address?: string | null; email?: string | null },
 ): Promise<ClientRow | undefined> {
   const current = await getClientById(id);
   if (!current) return undefined;
   const name = input.name !== undefined ? input.name.trim() : current.name;
   const address = input.address !== undefined ? input.address?.trim() || null : current.address;
+  const email = input.email !== undefined ? input.email?.trim() || null : current.email;
   const row = await queryOneRow<ClientRow>(
-    `UPDATE clients SET name = $1, address = $2, updated_at = NOW() WHERE id = $3 RETURNING ${clientCols}`,
-    [name, address, id],
+    `UPDATE clients SET name = $1, address = $2, email = $3, updated_at = NOW() WHERE id = $4 RETURNING ${clientCols}`,
+    [name, address, email, id],
   );
   return row as ClientRow | undefined;
 }
@@ -2831,7 +2868,12 @@ export async function resolveClientBillTo(input: {
   clientId?: number | null;
   clientName?: string;
   billToAddress?: string | null;
-}): Promise<{ clientId: number | null; clientName: string; billToAddress: string | null }> {
+}): Promise<{
+  clientId: number | null;
+  clientName: string;
+  billToAddress: string | null;
+  billToEmail: string | null;
+}> {
   if (input.clientId != null && input.clientId > 0) {
     const client = await getClientById(input.clientId);
     if (client) {
@@ -2839,6 +2881,7 @@ export async function resolveClientBillTo(input: {
         clientId: client.id,
         clientName: client.name,
         billToAddress: client.address,
+        billToEmail: client.email,
       };
     }
   }
@@ -2848,6 +2891,7 @@ export async function resolveClientBillTo(input: {
     clientId: input.clientId ?? null,
     clientName: name,
     billToAddress: input.billToAddress?.trim() || null,
+    billToEmail: null,
   };
 }
 
@@ -2866,7 +2910,7 @@ export type InvoiceSummary = InvoiceRow & {
 export async function getAllInvoiceSummaries(): Promise<InvoiceSummary[]> {
   const rows = await query<InvoiceSummary & { lineCount: string; totalRevenue: string }>(
     `SELECT i.id, i.invoice_number AS "invoiceNumber", i.client_id AS "clientId",
-            i.client_name AS "clientName", i.bill_to_address AS "billToAddress",
+            i.client_name AS "clientName", i.bill_to_address AS "billToAddress", i.bill_to_email AS "billToEmail",
             i.issue_date AS "issueDate", i.due_date AS "dueDate", i.notes, i.status, i.source,
             i.import_filename AS "importFilename",
             i.created_at::text AS "createdAt", i.updated_at::text AS "updatedAt",
@@ -2934,6 +2978,7 @@ export async function createInvoiceWithLines(input: {
   clientId?: number | null;
   clientName: string;
   billToAddress?: string | null;
+  billToEmail?: string | null;
   issueDate: string;
   dueDate?: string | null;
   notes?: string | null;
@@ -2949,14 +2994,15 @@ export async function createInvoiceWithLines(input: {
   }>;
 }): Promise<{ invoice: InvoiceRow; lines: InvoiceLineItemRow[] }> {
   const invoiceRow = await queryOneRow<InvoiceRow>(
-    `INSERT INTO invoices (invoice_number, client_id, client_name, bill_to_address, issue_date, due_date, notes, status, source, import_filename)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `INSERT INTO invoices (invoice_number, client_id, client_name, bill_to_address, bill_to_email, issue_date, due_date, notes, status, source, import_filename)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING ${invoiceCols}`,
     [
       input.invoiceNumber.trim(),
       input.clientId ?? null,
       input.clientName.trim(),
       input.billToAddress?.trim() || null,
+      input.billToEmail?.trim() || null,
       input.issueDate,
       input.dueDate ?? null,
       input.notes ?? null,
