@@ -22,7 +22,8 @@ const RESTORE_MESSAGES: Record<string, string> = {
 export default async function SettingsPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {};
   const saved = sp.saved === "1";
-  const error = sp.error === "invalid";
+  const billingSaved = sp.billingSaved === "1";
+  const error = typeof sp.error === "string" ? sp.error : "";
   const restoreStatus = typeof sp.restore === "string" ? sp.restore : "";
   const restoreMessage = typeof sp.message === "string" ? RESTORE_MESSAGES[sp.message] ?? RESTORE_MESSAGES.error : RESTORE_MESSAGES[restoreStatus] ?? "";
   const restoreDetail = typeof sp.detail === "string" ? sp.detail : "";
@@ -54,8 +55,13 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const driveConfig = getDriveConfigStatus();
 
   return (
-    <SidebarLayout title="Settings" subtitle="Exchange rate, fielder logins, templates" current="settings">
+    <SidebarLayout title="Settings" subtitle="Billing rates, fielder payouts, logins, and integrations" current="settings">
       <div className="flex flex-1 flex-col gap-8">
+        {billingSaved && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            Company billing rate saved. CSV import and client invoices will use this rate.
+          </div>
+        )}
         {saved && (
           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
             Settings saved.
@@ -72,9 +78,14 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             {restoreDetail && <p className="mt-2 font-mono text-xs">{restoreDetail}</p>}
           </div>
         )}
-        {error && (
+        {error === "billing" && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            Please enter a valid exchange rate (positive number) or leave empty to hide INR.
+            Please enter a valid company billing rate (zero or a positive number per sqft).
+          </div>
+        )}
+        {error === "invalid" && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            Could not save settings. Check the values and try again.
           </div>
         )}
         {normalized && (
@@ -139,6 +150,94 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             Google Drive test failed. {driveError || "Check credentials/folder permissions."}
           </div>
         )}
+
+        <section className="card p-6 border-emerald-900/40">
+          <h2 className="mb-4 text-base font-semibold text-zinc-100">
+            Billing &amp; payout rates
+          </h2>
+          <p className="mb-4 text-sm text-zinc-400">
+            Set once — used automatically on every Project Tracker CSV import and client invoice.
+            Fielder reports use payout rates below; client invoices use the company billing rate only.
+          </p>
+          <form method="POST" action="/api/settings" className="mb-8 max-w-sm space-y-4">
+            <div className="space-y-1">
+              <label className="label">Default company billing rate (USD per sqft)</label>
+              <input
+                type="number"
+                name="companyRatePerSqft"
+                step="0.000001"
+                min="0"
+                placeholder="e.g. 0.05"
+                defaultValue={settings.companyRatePerSqft ?? ""}
+                className="input"
+              />
+              <p className="text-xs text-zinc-500">What you charge clients per sqft (Project # × SQFT × this rate).</p>
+            </div>
+            <button type="submit" className="btn-primary px-5 py-2.5">
+              Save billing rate
+            </button>
+          </form>
+
+          <h3 className="mb-3 text-sm font-semibold text-zinc-200">Fielder payout rates (per sqft)</h3>
+          <p className="mb-3 text-xs text-zinc-500">
+            Add everyone who appears in your sheet (ETC, NIVAS, VINITH, CHANDU, KRISHNA, BASHEER, JAGGU, …).
+          </p>
+          <form method="POST" action="/api/fielder-rates" className="mb-4 flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <label className="label">Fielder name</label>
+              <input name="fielderName" required placeholder="NIVAS" className="input w-36" />
+            </div>
+            <div className="space-y-1">
+              <label className="label">Rate / sqft</label>
+              <input name="ratePerSqft" type="number" step="0.000001" min="0" required placeholder="0.02" className="input w-28" />
+            </div>
+            <button type="submit" className="btn-secondary px-4 py-2.5">
+              Add / update rate
+            </button>
+          </form>
+          {fielderRates.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="table-sticky min-w-full text-left text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-3 py-2">Fielder</th>
+                    <th className="px-3 py-2">Payout rate / sqft</th>
+                    <th className="px-3 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fielderRates.map((r) => (
+                    <tr key={r.fielderName} className="border-t border-zinc-800">
+                      <td className="px-3 py-2 font-medium">{r.fielderName}</td>
+                      <td className="px-3 py-2">
+                        <form method="POST" action="/api/fielder-rates" className="inline-flex items-center gap-2">
+                          <input type="hidden" name="fielderName" value={r.fielderName} />
+                          <input
+                            name="ratePerSqft"
+                            type="number"
+                            step="0.000001"
+                            min="0"
+                            defaultValue={r.ratePerSqft}
+                            className="input h-9 w-28"
+                          />
+                          <button type="submit" className="btn-secondary py-1 text-xs">
+                            Save
+                          </button>
+                        </form>
+                      </td>
+                      <td className="px-3 py-2 text-xs text-zinc-500">
+                        Updated {new Date(r.updatedAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500">No fielder rates yet — add names from your Project Tracker CSV.</p>
+          )}
+        </section>
+
         <section className="card p-6">
           <h2 className="mb-4 text-base font-semibold text-zinc-100">
             Receipt storage (Google Drive)
@@ -229,88 +328,6 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             Fielder payout rate saved.
           </div>
         )}
-        <section className="card p-6">
-          <h2 className="mb-4 text-base font-semibold text-zinc-100">
-            Billing &amp; payout rates
-          </h2>
-          <p className="mb-4 text-sm text-zinc-400">
-            Used automatically when you import a Project Tracker CSV or create a client invoice. Fielder reports use payout rates; client invoices use the company billing rate.
-          </p>
-          <form method="POST" action="/api/settings" className="mb-8 max-w-sm space-y-4">
-            <div className="space-y-1">
-              <label className="label">Default company billing rate (USD per sqft)</label>
-              <input
-                type="number"
-                name="companyRatePerSqft"
-                step="0.000001"
-                min="0"
-                placeholder="e.g. 0.05"
-                defaultValue={settings.companyRatePerSqft ?? ""}
-                className="input"
-              />
-              <p className="text-xs text-zinc-500">What you charge clients per sqft on invoices.</p>
-            </div>
-            <button type="submit" className="btn-primary px-5 py-2.5">
-              Save billing rate
-            </button>
-          </form>
-
-          <h3 className="mb-3 text-sm font-semibold text-zinc-200">Fielder payout rates (per sqft)</h3>
-          <form method="POST" action="/api/fielder-rates" className="mb-4 flex flex-wrap items-end gap-3">
-            <div className="space-y-1">
-              <label className="label">Fielder name</label>
-              <input name="fielderName" required placeholder="NIVAS" className="input w-36" />
-            </div>
-            <div className="space-y-1">
-              <label className="label">Rate / sqft</label>
-              <input name="ratePerSqft" type="number" step="0.000001" min="0" required placeholder="0.02" className="input w-28" />
-            </div>
-            <button type="submit" className="btn-secondary px-4 py-2.5">
-              Add / update rate
-            </button>
-          </form>
-          {fielderRates.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="table-sticky min-w-full text-left text-sm">
-                <thead>
-                  <tr>
-                    <th className="px-3 py-2">Fielder</th>
-                    <th className="px-3 py-2">Payout rate / sqft</th>
-                    <th className="px-3 py-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fielderRates.map((r) => (
-                    <tr key={r.fielderName} className="border-t border-zinc-800">
-                      <td className="px-3 py-2 font-medium">{r.fielderName}</td>
-                      <td className="px-3 py-2">
-                        <form method="POST" action="/api/fielder-rates" className="inline-flex items-center gap-2">
-                          <input type="hidden" name="fielderName" value={r.fielderName} />
-                          <input
-                            name="ratePerSqft"
-                            type="number"
-                            step="0.000001"
-                            min="0"
-                            defaultValue={r.ratePerSqft}
-                            className="input h-9 w-28"
-                          />
-                          <button type="submit" className="btn-secondary py-1 text-xs">
-                            Save
-                          </button>
-                        </form>
-                      </td>
-                      <td className="px-3 py-2 text-xs text-zinc-500">
-                        Updated {new Date(r.updatedAt).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500">No fielder rates yet. Add names from your sheet (ETC, NIVAS, VINITH, etc.).</p>
-          )}
-        </section>
 
         <section className="card p-6">
           <h2 className="mb-4 text-base font-semibold text-zinc-100">
@@ -458,27 +475,10 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         </section>
         <section className="card p-6">
           <h2 className="mb-4 text-base font-semibold text-zinc-100">
-            Currency conversion
+            General
           </h2>
-          <p className="mb-4 text-sm text-zinc-400">
-            Set the USD to INR exchange rate to display amounts in both currencies on the dashboard and elsewhere. Leave empty to show USD only.
-          </p>
           <form method="POST" action="/api/settings" className="max-w-sm space-y-4">
             <input type="hidden" name="companyRatePerSqft" value={settings.companyRatePerSqft ?? ""} />
-            <div className="space-y-1">
-              <label className="label">
-                1 USD = ? INR
-              </label>
-              <input
-                type="number"
-                name="usdToInrRate"
-                step="0.01"
-                min="0"
-                placeholder="e.g. 83.5"
-                defaultValue={settings.usdToInrRate ?? ""}
-                className="input"
-              />
-            </div>
             <div className="space-y-1">
               <label className="label">
                 Admin phone (for Contact admin in fielder app)

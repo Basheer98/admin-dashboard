@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -279,9 +280,9 @@ export function InvoiceForm({
         <button type="submit" className="btn-primary px-6 py-2.5" disabled={saving}>
           {saving ? "Saving…" : "Create client invoice"}
         </button>
-        <a href="/invoices" className="btn-secondary inline-flex items-center px-6 py-2.5">
+        <Link href="/invoices" className="btn-secondary inline-flex items-center px-6 py-2.5">
           Cancel
-        </a>
+        </Link>
       </div>
     </form>
   );

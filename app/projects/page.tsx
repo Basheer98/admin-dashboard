@@ -1,7 +1,7 @@
 import { getAllAssignments, getAllProjects, getAssignmentsWithDetails } from "@/lib/db";
 import { getProjectEcdStatus } from "@/lib/dueDate";
 import { getProjectStatusLabel, PROJECT_STATUS_VALUES } from "@/lib/projectStatus";
-import { formatCurrency, formatRate, formatUsdSmart } from "@/lib/currency";
+import { formatRate, formatUsdSmart } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { FilterChips } from "@/app/components/FilterChips";
 import { SortLink } from "@/app/components/SortLink";

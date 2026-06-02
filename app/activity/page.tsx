@@ -34,10 +34,6 @@ export default async function ActivityPage() {
                           .map(([k, v]) => `${k}: ${String(v.old)} → ${String(v.new)}`)
                           .join("; ")}
                       </span>
-                    ) : a.metadata?.usdToInrRate && typeof a.metadata.usdToInrRate === "object" ? (
-                      <span className="text-xs">
-                        {String((a.metadata.usdToInrRate as { old: unknown }).old)} → {String((a.metadata.usdToInrRate as { new: unknown }).new)}
-                      </span>
                     ) : null}
                   </td>
                 </tr>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
-import { formatCurrency } from "@/lib/currency";
+import { formatCurrency, formatUsdSmart } from "@/lib/currency";
 import { getTripById } from "@/lib/db";
 
 type PageProps = {
@@ -152,13 +152,7 @@ export default async function TripDetailsPage({ params, searchParams }: PageProp
               <label className="label">Amount</label>
               <input name="amount" type="number" min="0" step="0.01" required className="input h-11" />
             </div>
-            <div className="space-y-1">
-              <label className="label">Currency</label>
-              <select name="currency" defaultValue="INR" className="select h-11">
-                <option value="INR">INR</option>
-                <option value="USD">USD</option>
-              </select>
-            </div>
+            <input type="hidden" name="currency" value="USD" />
             <div className="space-y-1">
               <label className="label">Paid by (optional)</label>
               <input name="paidBy" placeholder="Company or fielder name" className="input h-11" />
@@ -198,7 +192,6 @@ export default async function TripDetailsPage({ params, searchParams }: PageProp
                 <th className="px-3 py-2">Date</th>
                 <th className="px-3 py-2">Category</th>
                 <th className="px-3 py-2">Amount</th>
-                <th className="px-3 py-2">Currency</th>
                 <th className="px-3 py-2">Paid by</th>
                 <th className="px-3 py-2">Receipt</th>
                 <th className="px-3 py-2">Reimbursement</th>
@@ -211,8 +204,7 @@ export default async function TripDetailsPage({ params, searchParams }: PageProp
                 <tr key={e.id} className="border-t text-slate-800">
                   <td className="px-3 py-2">{e.expenseDate}</td>
                   <td className="px-3 py-2">{e.category}</td>
-                  <td className="px-3 py-2">{formatCurrency(Number(e.amount))}</td>
-                  <td className="px-3 py-2">{e.currency}</td>
+                  <td className="px-3 py-2">{formatUsdSmart(Number(e.amount))}</td>
                   <td className="px-3 py-2">{e.paidBy ?? "—"}</td>
                   <td className="px-3 py-2">
                     {e.receiptUrl ? (
@@ -239,7 +231,7 @@ export default async function TripDetailsPage({ params, searchParams }: PageProp
               ))}
               {trip.expenses.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-3 py-4 text-center text-slate-500">
+                  <td colSpan={8} className="px-3 py-4 text-center text-slate-500">
                     No expenses logged yet.
                   </td>
                 </tr>

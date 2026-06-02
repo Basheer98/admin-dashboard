@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getPaymentsWithDetails } from "@/lib/db";
-import { formatCurrency } from "@/lib/currency";
+import { formatUsdSmart } from "@/lib/currency";
 import { PrintButton } from "@/app/components/PrintButton";
 import Link from "next/link";
 
@@ -27,7 +27,7 @@ export default async function FielderPaymentsPage() {
       </div>
 
       <p className="text-sm text-zinc-400">
-        Total received: {formatCurrency(totalPaid)}
+        Total received: {formatUsdSmart(totalPaid)}
       </p>
 
       <div className="card overflow-x-auto">
@@ -38,7 +38,6 @@ export default async function FielderPaymentsPage() {
               <th className="px-3 py-2">Project</th>
               <th className="px-3 py-2">Invoice</th>
               <th className="px-3 py-2">Amount</th>
-              <th className="px-3 py-2">Currency</th>
               <th className="px-3 py-2">Method</th>
               <th className="px-3 py-2">Notes</th>
             </tr>
@@ -54,9 +53,8 @@ export default async function FielderPaymentsPage() {
                 </td>
                 <td className="px-3 py-2">{p.project.invoiceNumber?.trim() ?? "—"}</td>
                 <td className="px-3 py-2">
-                  {formatCurrency(Number(p.amount))}
+                  {formatUsdSmart(Number(p.amount))}
                 </td>
-                <td className="px-3 py-2">{p.currency}</td>
                 <td className="px-3 py-2">{p.method}</td>
                 <td className="px-3 py-2">{p.notes ?? "—"}</td>
               </tr>

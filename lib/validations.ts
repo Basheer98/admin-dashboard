@@ -19,7 +19,7 @@ export const paymentPostSchema = z.object({
   projectId: z.number().int().positive(),
   fielderAssignmentId: z.number().int().positive(),
   amount: z.number().positive(),
-  currency: z.enum(["USD", "INR"]),
+  currency: z.enum(["USD"]),
   method: z.enum(["BANK", "WISE", "CASH", "OTHER"]),
   paymentDate: z.string().min(1),
   notes: z.string().nullable(),
@@ -28,7 +28,7 @@ export const paymentPostSchema = z.object({
 /** Log payment for a fielder (allocated across their assignments). */
 export const fielderPaymentPostSchema = z.object({
   amount: z.number().positive(),
-  currency: z.enum(["USD", "INR"]),
+  currency: z.enum(["USD"]),
   method: z.enum(["BANK", "WISE", "CASH", "OTHER"]),
   paymentDate: z.string().min(1),
   notes: z.string().nullable(),
@@ -90,16 +90,18 @@ export const projectPatchSchema = z.object({
   gdriveFolderUrl: z.string().url().nullable().optional(),
 });
 
-// --- Settings ---
-export const settingsPostSchema = z.object({
-  usdToInrRate: z.number().positive().nullable(),
+// --- Settings (partial — only fields present in the form are validated) ---
+export const settingsPatchSchema = z.object({
   companyRatePerSqft: z.number().nonnegative().nullable().optional(),
-  adminPhone: z.string().max(30).nullable(),
+  adminPhone: z.string().max(30).nullable().optional(),
   emailIngestEnabled: z.boolean().optional(),
   emailIngestWebhookSecret: z.string().max(200).nullable().optional(),
   emailIngestAutoApprove: z.boolean().optional(),
   emailIngestAutoApproveMinConfidence: z.number().min(0).max(1).optional(),
 });
+
+/** @deprecated Use settingsPatchSchema */
+export const settingsPostSchema = settingsPatchSchema;
 
 // --- Additional work ---
 export const additionalWorkPostSchema = z.object({
@@ -153,7 +155,7 @@ export const tripExpensePostSchema = z.object({
   expenseDate: z.string().min(1),
   category: z.enum(["CAR", "ACCOMMODATION", "GAS", "TOOLS", "OTHER"]),
   amount: z.number().positive(),
-  currency: z.enum(["USD", "INR"]),
+  currency: z.enum(["USD"]),
   paidBy: z.string().nullable(),
   receiptUrl: z.string().url().nullable().optional(),
   reimbursable: z.boolean().optional(),

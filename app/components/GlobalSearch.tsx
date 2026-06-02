@@ -77,6 +77,7 @@ export function GlobalSearch() {
       <input
         id="global-search"
         type="search"
+        role="combobox"
         value={q}
         onChange={(e) => {
           setQ(e.target.value);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Bell, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const LAST_SEEN_KEY = "admin-dashboard-notifications-last-seen";
@@ -47,40 +47,52 @@ function relativeTime(iso: string): string {
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
-  const [lastSeenAt, setLastSeenAtState] = useState("");
+  const [lastSeenAt, setLastSeenAtState] = useState(() =>
+    typeof window !== "undefined" ? getLastSeenAt() : "",
+  );
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = (showLoader = false) => {
+  const fetchNotifications = useCallback((showLoader = false) => {
     if (showLoader) setLoading(true);
     fetch("/api/notifications?limit=25")
       .then((r) => (r.ok ? r.json() : { items: [] }))
       .then((data) => setItems(data.items ?? []))
       .catch(() => setItems([]))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    setLastSeenAtState(getLastSeenAt());
-    fetchNotifications(false);
-    const interval = setInterval(() => fetchNotifications(false), 60000);
-    return () => clearInterval(interval);
+      .finally(() => {
+        if (showLoader) setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
-    if (open) fetchNotifications(true);
-  }, [open]);
-
-  const markAllAsSeen = () => {
-    if (items.length > 0) {
-      const latest = items.reduce((max, n) =>
-        n.createdAt > max ? n.createdAt : max,
-        items[0].createdAt,
-      );
-      setLastSeenAt(latest);
-      setLastSeenAtState(latest);
+    let cancelled = false;
+    function poll() {
+      fetch("/api/notifications?limit=25")
+        .then((r) => (r.ok ? r.json() : { items: [] }))
+        .then((data) => {
+          if (!cancelled) setItems(data.items ?? []);
+        })
+        .catch(() => {
+          if (!cancelled) setItems([]);
+        });
     }
-  };
+    poll();
+    const interval = setInterval(poll, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const markAllAsSeen = useCallback(() => {
+    if (items.length === 0) return;
+    const latest = items.reduce(
+      (max, n) => (n.createdAt > max ? n.createdAt : max),
+      items[0].createdAt,
+    );
+    setLastSeenAt(latest);
+    setLastSeenAtState(latest);
+  }, [items]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -91,7 +103,7 @@ export function NotificationBell() {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open, items]);
+  }, [open, markAllAsSeen]);
 
   const handleClose = () => {
     markAllAsSeen();
@@ -108,8 +120,13 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => {
-          if (open) markAllAsSeen();
-          setOpen((o) => !o);
+          if (open) {
+            markAllAsSeen();
+            setOpen(false);
+          } else {
+            fetchNotifications(true);
+            setOpen(true);
+          }
         }}
         className="relative rounded-xl p-2.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
         aria-label={badgeCount ? `${badgeCount} new notifications` : "Notifications"}

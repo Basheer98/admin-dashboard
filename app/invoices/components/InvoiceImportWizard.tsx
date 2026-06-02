@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, X } from "lucide-react";
@@ -211,8 +212,8 @@ export function InvoiceImportWizard({
   const [invoiceNumber, setInvoiceNumber] = useState(suggestedInvoiceNumber);
   const [defaultClientName, setDefaultClientName] = useState("");
   const [ratesHint, setRatesHint] = useState(fielderRatesNote);
-  const [defaultLocation, setDefaultLocation] = useState("");
-  const [defaultStatus, setDefaultStatus] = useState("COMPLETED");
+  const defaultLocation = "";
+  const defaultStatus = "COMPLETED";
   const [syncBatch, setSyncBatch] = useState(true);
   const [projectConflict, setProjectConflict] = useState<"update" | "skip_project" | "skip">("update");
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -659,9 +660,9 @@ export function InvoiceImportWizard({
             >
               View invoice
             </button>
-            <a href="/projects" className="btn-secondary inline-flex items-center px-4 py-2">
+            <Link href="/projects" className="btn-secondary inline-flex items-center px-4 py-2">
               View projects
-            </a>
+            </Link>
           </div>
         </section>
       )}

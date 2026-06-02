@@ -6,7 +6,6 @@ import type { CanonicalEmailPayload, CanonicalEntityType } from "./emailIngest";
 // Postgres implementation; DATABASE_URL is required.
 
 export type SettingsRow = {
-  usdToInrRate: number | null;
   companyRatePerSqft: number | null;
   adminPhone: string | null;
   emailIngestEnabled: boolean;
@@ -166,7 +165,7 @@ export type TripExpenseRow = {
   expenseDate: string;
   category: "CAR" | "ACCOMMODATION" | "GAS" | "TOOLS" | "OTHER";
   amount: number;
-  currency: "USD" | "INR";
+  currency: "USD";
   paidBy: string | null;
   receiptUrl: string | null;
   reimbursable: boolean;
@@ -1169,7 +1168,7 @@ export async function insertTripExpense(input: {
   expenseDate: string;
   category: "CAR" | "ACCOMMODATION" | "GAS" | "TOOLS" | "OTHER";
   amount: number;
-  currency: "USD" | "INR";
+  currency: "USD";
   paidBy: string | null;
   receiptUrl?: string | null;
   reimbursable?: boolean;
@@ -1671,7 +1670,6 @@ export async function getFielderNotifications(
   const assignmentIds = assignments.map((a) => a.id);
   if (projectIds.length === 0) return [];
 
-  const projectIdList = projectIds.join(",");
   const assignmentIdList = assignmentIds.join(",");
 
   const assignmentRows = await query<{
@@ -1785,7 +1783,6 @@ export async function getFielderNotifications(
 
 export async function getSettings(): Promise<SettingsRow> {
   const row = await queryOne<{
-    usdToInrRate: number | null;
     companyRatePerSqft: number | null;
     adminPhone: string | null;
     emailIngestEnabled: boolean | null;
@@ -1794,7 +1791,6 @@ export async function getSettings(): Promise<SettingsRow> {
     emailIngestAutoApproveMinConfidence: number | null;
   }>(
     `SELECT
-      usd_to_inr_rate AS "usdToInrRate",
       company_rate_per_sqft AS "companyRatePerSqft",
       admin_phone AS "adminPhone",
       email_ingest_enabled AS "emailIngestEnabled",
@@ -1805,7 +1801,6 @@ export async function getSettings(): Promise<SettingsRow> {
     WHERE id = 1`,
   );
   return {
-    usdToInrRate: row?.usdToInrRate != null ? Number(row.usdToInrRate) : null,
     companyRatePerSqft: row?.companyRatePerSqft != null ? Number(row.companyRatePerSqft) : null,
     adminPhone: row?.adminPhone ?? null,
     emailIngestEnabled: !!row?.emailIngestEnabled,
@@ -1842,7 +1837,6 @@ export async function upsertFielderRate(fielderName: string, ratePerSqft: number
 }
 
 export async function updateSettings(input: {
-  usdToInrRate?: number | null;
   companyRatePerSqft?: number | null;
   adminPhone?: string | null;
   emailIngestEnabled?: boolean;
@@ -1851,7 +1845,6 @@ export async function updateSettings(input: {
   emailIngestAutoApproveMinConfidence?: number;
 }): Promise<void> {
   const current = await getSettings();
-  const usdToInrRate = input.usdToInrRate !== undefined ? input.usdToInrRate : current.usdToInrRate;
   const companyRatePerSqft =
     input.companyRatePerSqft !== undefined ? input.companyRatePerSqft : current.companyRatePerSqft;
   const adminPhone = input.adminPhone !== undefined ? input.adminPhone : current.adminPhone;
@@ -1873,16 +1866,14 @@ export async function updateSettings(input: {
       : current.emailIngestAutoApproveMinConfidence;
   await query(
     `UPDATE settings
-     SET usd_to_inr_rate = $1,
-         company_rate_per_sqft = $2,
-         admin_phone = $3,
-         email_ingest_enabled = $4,
-         email_ingest_webhook_secret = $5,
-         email_ingest_auto_approve = $6,
-         email_ingest_auto_approve_min_confidence = $7
+     SET company_rate_per_sqft = $1,
+         admin_phone = $2,
+         email_ingest_enabled = $3,
+         email_ingest_webhook_secret = $4,
+         email_ingest_auto_approve = $5,
+         email_ingest_auto_approve_min_confidence = $6
      WHERE id = 1`,
     [
-      usdToInrRate,
       companyRatePerSqft ?? null,
       adminPhone ?? null,
       emailIngestEnabled,
@@ -2440,7 +2431,6 @@ export type LegacyJsonShape = {
   projects: Array<Record<string, unknown>>;
   assignments: Array<Record<string, unknown>>;
   payments: Array<Record<string, unknown>>;
-  settings?: { usdToInrRate?: number | null };
 };
 
 export function isLegacyJsonShape(obj: unknown): obj is LegacyJsonShape {
@@ -2534,7 +2524,6 @@ export function legacyJsonToBackupPayload(legacy: LegacyJsonShape): BackupPayloa
     version: 1,
     exportedAt: now,
     settings: {
-      usdToInrRate: legacy.settings?.usdToInrRate ?? null,
       companyRatePerSqft: null,
       adminPhone: null,
       emailIngestEnabled: false,
@@ -2670,12 +2659,8 @@ export async function restoreBackup(backup: BackupPayload): Promise<void> {
   }
 
     await client.query(
-      `UPDATE settings SET usd_to_inr_rate = $1, company_rate_per_sqft = $2, admin_phone = $3 WHERE id = 1`,
-      [
-        backup.settings.usdToInrRate,
-        backup.settings.companyRatePerSqft ?? null,
-        backup.settings.adminPhone ?? null,
-      ],
+      `UPDATE settings SET company_rate_per_sqft = $1, admin_phone = $2 WHERE id = 1`,
+      [backup.settings.companyRatePerSqft ?? null, backup.settings.adminPhone ?? null],
     );
 
     const logins = backup.fielderLogins ?? [];

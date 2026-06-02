@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getSessionFromRequest } from "@/lib/auth";
 import { getMobileSession, unauthorized } from "@/lib/mobileAuth";
 import {
-  getPendingTripReimbursementsForFielderWithTrip,
   getRecentAuditByIdempotencyKey,
   getTripReimbursementsForFielderWithTrip,
   getTripsForFielder,
@@ -62,7 +61,7 @@ export async function POST(request: Request) {
         ? categoryRaw
         : "OTHER";
     const amountStr = String(formData.get("amount") ?? "").trim();
-    const currency = String(formData.get("currency") ?? "").trim() === "USD" ? "USD" : "INR";
+    const currency = "USD" as const;
     const vendor = String(formData.get("vendor") ?? "").trim() || null;
     const notes = String(formData.get("notes") ?? "").trim() || null;
     const file = formData.get("receipt");
@@ -167,7 +166,7 @@ export async function POST(request: Request) {
       ? categoryRaw
       : "OTHER";
   const amountStr = String(formData.get("amount") ?? "").trim();
-  const currency = String(formData.get("currency") ?? "").trim() === "USD" ? "USD" : "INR";
+  const currency = "USD" as const;
   const vendor = String(formData.get("vendor") ?? "").trim() || null;
   const notes = String(formData.get("notes") ?? "").trim() || null;
   const file = formData.get("receipt");

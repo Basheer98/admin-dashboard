@@ -92,13 +92,7 @@ export default async function FielderReimbursementsPage({ searchParams }: PagePr
             <label className="label">Amount</label>
             <input name="amount" type="number" min="0.01" step="0.01" required className="input h-11" />
           </div>
-          <div className="space-y-1">
-            <label className="label">Currency</label>
-            <select name="currency" defaultValue="INR" className="select h-11">
-              <option value="INR">INR</option>
-              <option value="USD">USD</option>
-            </select>
-          </div>
+          <input type="hidden" name="currency" value="USD" />
           <div className="space-y-1">
             <label className="label">Vendor (optional)</label>
             <input name="vendor" className="input h-11" />

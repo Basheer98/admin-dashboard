@@ -24,8 +24,7 @@ export async function POST(request: Request) {
       ? categoryRaw
       : "OTHER";
   const amountRaw = String(formData.get("amount") ?? "").trim();
-  const currencyRaw = String(formData.get("currency") ?? "").trim();
-  const currency = currencyRaw === "USD" ? "USD" : "INR";
+  const currency = "USD" as const;
   const paidByRaw = String(formData.get("paidBy") ?? "").trim();
   const paidBy = paidByRaw ? paidByRaw.toUpperCase() : null;
   const receiptUrlRaw = String(formData.get("receiptUrl") ?? "").trim();

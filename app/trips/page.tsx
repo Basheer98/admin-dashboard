@@ -63,15 +63,15 @@ export default async function TripsPage({ searchParams }: PageProps) {
           <form method="POST" action="/api/trips" className="mt-4 grid gap-4 md:grid-cols-2">
             <div className="space-y-1 md:col-span-2">
               <label className="label">Trip name</label>
-              <input name="name" required placeholder="e.g. Karnataka - Bengaluru week 2" className="input h-11" />
+              <input name="name" required placeholder="e.g. California - Bay Area week 2" className="input h-11" />
             </div>
             <div className="space-y-1">
               <label className="label">State</label>
-              <input name="state" required placeholder="e.g. Karnataka" className="input h-11" />
+              <input name="state" required placeholder="e.g. California" className="input h-11" />
             </div>
             <div className="space-y-1">
               <label className="label">City (optional)</label>
-              <input name="city" placeholder="e.g. Bengaluru" className="input h-11" />
+              <input name="city" placeholder="e.g. San Francisco" className="input h-11" />
             </div>
             <div className="space-y-1 md:col-span-2">
               <label className="label">Team members (optional)</label>

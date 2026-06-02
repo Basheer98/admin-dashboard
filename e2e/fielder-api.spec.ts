@@ -76,7 +76,7 @@ test.describe("Fielder APIs", () => {
         expenseDate: new Date().toISOString().slice(0, 10),
         category: "GAS",
         amount: "100",
-        currency: "INR",
+        currency: "USD",
       },
     });
     expect([400, 403]).toContain(res.status());

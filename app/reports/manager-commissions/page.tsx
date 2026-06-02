@@ -1,5 +1,5 @@
-import { getAssignmentsWithDetails, getSettings } from "@/lib/db";
-import { formatCurrency, formatWithInr } from "@/lib/currency";
+import { getAssignmentsWithDetails } from "@/lib/db";
+import { formatUsdSmart } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { PrintButton } from "@/app/components/PrintButton";
 import Link from "next/link";
@@ -43,10 +43,7 @@ export default async function ManagerCommissionsReportPage({
   const filterProject = typeof sp.project === "string" ? sp.project.trim() : "";
   const filterMonth = typeof sp.month === "string" ? sp.month.trim() : "";
 
-  const [assignments, settings] = await Promise.all([
-    getAssignmentsWithDetails({ includeArchived: true }),
-    getSettings(),
-  ]);
+  const assignments = await getAssignmentsWithDetails({ includeArchived: true });
 
   const assignmentIdToFielderName = new Map(
     assignments.map((a) => [a.id, a.fielderName.trim().toUpperCase()]),
@@ -121,8 +118,6 @@ export default async function ManagerCommissionsReportPage({
   const totalCommission = filtered.reduce((s, r) => s + r.netCommission, 0);
   const uniqueManagers = Array.from(new Set(rows.map((r) => r.managerName))).sort();
   const uniqueMonths = Array.from(new Set(rows.map((r) => r.monthKey))).sort().reverse();
-  const showInr = settings.usdToInrRate != null;
-
   return (
     <SidebarLayout
       title="Manager commissions"
@@ -202,12 +197,7 @@ export default async function ManagerCommissionsReportPage({
             <div>
               <p className="text-sm font-medium text-zinc-500">Total net commissions</p>
               <p className="mt-1 text-2xl font-semibold text-zinc-100">
-                {showInr
-                  ? formatWithInr(totalCommission, {
-                      showInr: true,
-                      usdToInrRate: settings.usdToInrRate,
-                    })
-                  : `$${formatCurrency(totalCommission)}`}
+                {formatUsdSmart(totalCommission)}
               </p>
             </div>
             <div>
@@ -249,12 +239,7 @@ export default async function ManagerCommissionsReportPage({
                       <tr key={name} className="border-t text-zinc-200">
                         <td className="px-3 py-2 font-medium">{name}</td>
                         <td className="px-3 py-2">
-                          {showInr
-                            ? formatWithInr(total, {
-                                showInr: true,
-                                usdToInrRate: settings.usdToInrRate,
-                              })
-                            : `$${formatCurrency(total)}`}
+                          {formatUsdSmart(total)}
                         </td>
                       </tr>
                     ))}
@@ -298,12 +283,7 @@ export default async function ManagerCommissionsReportPage({
                         </td>
                         <td className="px-3 py-2">{client}</td>
                         <td className="px-3 py-2">
-                          {showInr
-                            ? formatWithInr(total, {
-                                showInr: true,
-                                usdToInrRate: settings.usdToInrRate,
-                              })
-                            : `$${formatCurrency(total)}`}
+                          {formatUsdSmart(total)}
                         </td>
                       </tr>
                     ))}
@@ -338,12 +318,7 @@ export default async function ManagerCommissionsReportPage({
                       <tr key={monthKey} className="border-t text-zinc-200">
                         <td className="px-3 py-2">{monthLabelFromKey(monthKey)}</td>
                         <td className="px-3 py-2">
-                          {showInr
-                            ? formatWithInr(total, {
-                                showInr: true,
-                                usdToInrRate: settings.usdToInrRate,
-                              })
-                            : `$${formatCurrency(total)}`}
+                          {formatUsdSmart(total)}
                         </td>
                       </tr>
                     ))}
@@ -400,12 +375,7 @@ export default async function ManagerCommissionsReportPage({
                         <td className="px-3 py-2">{r.workerName}</td>
                         <td className="px-3 py-2">{r.sqft.toLocaleString()}</td>
                         <td className="px-3 py-2">
-                          {showInr
-                            ? formatWithInr(r.netCommission, {
-                                showInr: true,
-                                usdToInrRate: settings.usdToInrRate,
-                              })
-                            : `$${formatCurrency(r.netCommission)}`}
+                          {formatUsdSmart(r.netCommission)}
                         </td>
                       </tr>
                     ))}

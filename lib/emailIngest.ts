@@ -14,7 +14,7 @@ const canonicalReimbursementSchema = z.object({
   expenseDate: z.string().min(8),
   category: z.enum(["CAR", "ACCOMMODATION", "GAS", "TOOLS", "OTHER"]),
   amount: z.number().positive(),
-  currency: z.enum(["USD", "INR"]).default("USD"),
+  currency: z.enum(["USD"]).default("USD"),
   reimbursable: z.boolean().default(true),
   vendor: z.string().max(140).nullable().default(null),
   notes: z.string().max(1000).nullable().default(null),

@@ -97,7 +97,7 @@ export async function runSchema(): Promise<void> {
       expense_date TEXT NOT NULL,
       category TEXT NOT NULL,
       amount NUMERIC(12,2) NOT NULL,
-      currency TEXT NOT NULL DEFAULT 'INR',
+      currency TEXT NOT NULL DEFAULT 'USD',
       paid_by TEXT NULL,
       receipt_url TEXT NULL,
       reimbursable BOOLEAN NOT NULL DEFAULT FALSE,

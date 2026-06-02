@@ -335,13 +335,7 @@ export default async function FielderReportPage({ params, searchParams }: PagePr
                 />
                 <p className="text-xs text-zinc-500">Max: {formatCurrency(pending)}</p>
               </div>
-              <div className="space-y-1">
-                <label className="label">Currency</label>
-                <select name="currency" required className="select">
-                  <option value="USD">USD</option>
-                  <option value="INR">INR</option>
-                </select>
-              </div>
+              <input type="hidden" name="currency" value="USD" />
               <div className="space-y-1">
                 <label className="label">Payment method</label>
                 <select name="method" required className="select">

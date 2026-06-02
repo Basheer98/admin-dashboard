@@ -3,7 +3,7 @@ import {
   getAssignmentsWithDetails,
   getPaymentsWithDetails,
 } from "@/lib/db";
-import { formatCurrency } from "@/lib/currency";
+import { formatCurrency, formatUsdSmart } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { FilterChips } from "@/app/components/FilterChips";
 import { PrintButton } from "@/app/components/PrintButton";
@@ -176,19 +176,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="label">
-                  Currency
-                </label>
-                <select
-                  name="currency"
-                  required
-                  className="select"
-                >
-                  <option value="USD">USD</option>
-                  <option value="INR">INR</option>
-                </select>
-              </div>
+              <input type="hidden" name="currency" value="USD" />
 
               <div className="space-y-1">
                 <label className="label">
@@ -350,7 +338,6 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                   <th className="px-3 py-2">Invoice</th>
                   <th className="px-3 py-2">Fielder</th>
                   <th className="px-3 py-2">Amount</th>
-                  <th className="px-3 py-2">Currency</th>
                   <th className="px-3 py-2">Method</th>
                   <th className="px-3 py-2">Notes</th>
                   <th className="px-3 py-2 no-print"></th>
@@ -380,9 +367,8 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                       )}
                     </td>
                     <td className="px-3 py-2">
-                      {formatCurrency(Number(p.amount))}
+                      {formatUsdSmart(Number(p.amount))}
                     </td>
-                    <td className="px-3 py-2">{p.currency}</td>
                     <td className="px-3 py-2">{p.method}</td>
                     <td className="px-3 py-2">{p.notes}</td>
                     <td className="no-print px-3 py-2">
@@ -395,7 +381,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                 {payments.length === 0 && (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={8}
                       className="px-3 py-4 text-center text-zinc-500"
                     >
                       No payments recorded yet.

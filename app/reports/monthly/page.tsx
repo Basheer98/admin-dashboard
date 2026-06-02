@@ -1,5 +1,5 @@
-import { getAllProjects, getAllPayments, getPaymentsWithDetails, getSettings } from "@/lib/db";
-import { formatCurrency, formatWithInr } from "@/lib/currency";
+import { getAllProjects, getAllPayments, getPaymentsWithDetails } from "@/lib/db";
+import { formatCurrency, formatUsdSmart } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { PrintButton } from "@/app/components/PrintButton";
 import Link from "next/link";
@@ -31,13 +31,11 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
   const sp = searchParams ? await searchParams : {};
   const monthParam = typeof sp.month === "string" ? sp.month : "";
 
-  const [allProjects, allPayments, paymentsWithDetails, settings] = await Promise.all([
+  const [allProjects, allPayments, paymentsWithDetails] = await Promise.all([
     getAllProjects(),
     getAllPayments(),
     getPaymentsWithDetails(),
-    getSettings(),
   ]);
-  const showInr = settings.usdToInrRate != null;
 
   const now = new Date();
   const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -110,27 +108,21 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
             <div>
               <p className="text-sm font-medium text-zinc-500">Revenue</p>
               <p className="mt-1 text-2xl font-semibold text-zinc-100">
-                {showInr
-                  ? formatWithInr(revenue, { showInr: true })
-                  : `$${formatCurrency(revenue)}`}
+                {formatUsdSmart(revenue)}
               </p>
               <p className="text-xs text-zinc-500">(projects created in {monthLabel})</p>
             </div>
             <div>
               <p className="text-sm font-medium text-zinc-500">Payouts</p>
               <p className="mt-1 text-2xl font-semibold text-zinc-100">
-                {showInr
-                  ? formatWithInr(payouts, { showInr: true })
-                  : `$${formatCurrency(payouts)}`}
+                {formatUsdSmart(payouts)}
               </p>
               <p className="text-xs text-zinc-500">(payments in {monthLabel})</p>
             </div>
             <div>
               <p className="text-sm font-medium text-zinc-500">Profit</p>
               <p className="mt-1 text-2xl font-semibold text-zinc-100">
-                {showInr
-                  ? formatWithInr(profit, { showInr: true })
-                  : `$${formatCurrency(profit)}`}
+                {formatUsdSmart(profit)}
               </p>
             </div>
           </section>
@@ -193,7 +185,6 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                     <th className="px-3 py-2">Invoice</th>
                     <th className="px-3 py-2">Fielder</th>
                     <th className="px-3 py-2">Amount</th>
-                    <th className="px-3 py-2">Currency</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -212,13 +203,12 @@ export default async function MonthlySummaryPage({ searchParams }: PageProps) {
                       </td>
                       <td className="px-3 py-2">{p.project.invoiceNumber?.trim() ?? "—"}</td>
                       <td className="px-3 py-2">{p.assignment.fielderName}</td>
-                      <td className="px-3 py-2">{formatCurrency(Number(p.amount))}</td>
-                      <td className="px-3 py-2">{p.currency}</td>
+                      <td className="px-3 py-2">{formatUsdSmart(Number(p.amount))}</td>
                     </tr>
                   ))}
                   {paymentsWithDetailsInMonth.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-3 py-2 text-zinc-500">
+                      <td colSpan={5} className="px-3 py-2 text-zinc-500">
                         None
                       </td>
                     </tr>

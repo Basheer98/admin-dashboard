@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { AddProjectForm } from "./AddProjectForm";
 import type { FielderAssignmentRow, ProjectRow } from "@/lib/db";
@@ -19,13 +19,11 @@ export function AddProjectSection({
   uniqueClientNames,
   defaultOpen = false,
 }: AddProjectSectionProps) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash === "#add-project") {
-      setOpen(true);
-    }
-  }, []);
+  const [open, setOpen] = useState(
+    () =>
+      defaultOpen ||
+      (typeof window !== "undefined" && window.location.hash === "#add-project"),
+  );
 
   return (
     <section id="add-project" className="card p-6 no-print">

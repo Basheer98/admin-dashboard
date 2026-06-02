@@ -3,12 +3,11 @@ import {
   getAllAssignments,
   getAllPayments,
   getAssignmentsWithDetails,
-  getSettings,
   getTripExpensesWithTrip,
 } from "@/lib/db";
 import { getDueDateStatus, getProjectEcdStatus } from "@/lib/dueDate";
 import { getProjectStatusLabel, PROJECT_STATUS_VALUES } from "@/lib/projectStatus";
-import { formatWithInr, formatUsdSmart } from "@/lib/currency";
+import { formatUsdSmart } from "@/lib/currency";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import Link from "next/link";
 import { RevenueVsPayoutsChart } from "@/app/components/charts/RevenueVsPayoutsChart";
@@ -112,12 +111,11 @@ export default async function Home({ searchParams }: PageProps) {
   const hasStatusFilter = Boolean(filterStatus);
   const hasInvoiceFilter = Boolean(filterInvoice);
 
-  const [allProjects, allPayments, assignments, assignmentsWithDetails, settings, tripExpensesWithTrip] = await Promise.all([
+  const [allProjects, allPayments, assignments, assignmentsWithDetails, tripExpensesWithTrip] = await Promise.all([
     getAllProjects(),
     getAllPayments(),
     getAllAssignments(),
     getAssignmentsWithDetails(),
-    getSettings(),
     getTripExpensesWithTrip(),
   ]);
   let projects = hasDateFilter
@@ -432,7 +430,6 @@ export default async function Home({ searchParams }: PageProps) {
     return status === "overdue" || status === "due-soon";
   });
 
-  const showInr = settings.usdToInrRate != null;
   // Payouts-by-fielder chart: use EXPECTED amounts (from assignment rates) so every fielder with work in the filter appears (Basheer, Naveen, Nivas), even before any payment is logged
   const payoutsByFielderMap = new Map<string, number>();
   assignments.forEach((a) => {
@@ -573,7 +570,7 @@ export default async function Home({ searchParams }: PageProps) {
               Total revenue
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-zinc-100">
-              {showInr ? formatWithInr(totalRevenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalRevenue)}
+              {formatUsdSmart(totalRevenue)}
             </p>
           </div>
           <div className="card-highlight p-7">
@@ -581,7 +578,7 @@ export default async function Home({ searchParams }: PageProps) {
               Total payouts (expected from rates)
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-zinc-100">
-              {showInr ? formatWithInr(totalRequiredPayouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalRequiredPayouts)}
+              {formatUsdSmart(totalRequiredPayouts)}
             </p>
             {totalRequiredPayouts > 0 && (
               <div className="mt-3">
@@ -595,7 +592,7 @@ export default async function Home({ searchParams }: PageProps) {
               Company profit
             </p>
             <p className="stat-value mt-4 text-3xl font-bold tracking-tight text-zinc-100">
-              {showInr ? formatWithInr(totalCompanyProfit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalCompanyProfit)}
+              {formatUsdSmart(totalCompanyProfit)}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
@@ -603,7 +600,7 @@ export default async function Home({ searchParams }: PageProps) {
               Manager commissions (net)
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
-              {showInr ? formatWithInr(totalManagerCommissions, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalManagerCommissions)}
+              {formatUsdSmart(totalManagerCommissions)}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
@@ -611,7 +608,7 @@ export default async function Home({ searchParams }: PageProps) {
               Company share from managers
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
-              {showInr ? formatWithInr(totalCompanyShareOfManagerCommissions, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalCompanyShareOfManagerCommissions)}
+              {formatUsdSmart(totalCompanyShareOfManagerCommissions)}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
@@ -619,7 +616,7 @@ export default async function Home({ searchParams }: PageProps) {
               Total paid
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
-              {showInr ? formatWithInr(totalPaid, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalPaid)}
+              {formatUsdSmart(totalPaid)}
             </p>
             <p className="mt-1 text-xs text-zinc-500">From payments you logged (Payments → Log payment)</p>
           </div>
@@ -628,7 +625,7 @@ export default async function Home({ searchParams }: PageProps) {
               Total pending payments
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
-              {showInr ? formatWithInr(totalPending, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalPending)}
+              {formatUsdSmart(totalPending)}
             </p>
           </div>
           <div className="card-highlight p-7 md:col-span-1">
@@ -636,7 +633,7 @@ export default async function Home({ searchParams }: PageProps) {
               Trip expenses
             </p>
             <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
-              {showInr ? formatWithInr(totalTripExpenses, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalTripExpenses)}
+              {formatUsdSmart(totalTripExpenses)}
             </p>
             <p className="mt-1 text-xs text-zinc-500">Car, accommodation, gas, tools and other trip spends</p>
           </div>
@@ -646,7 +643,7 @@ export default async function Home({ searchParams }: PageProps) {
                 Owner / internal work value
               </p>
               <p className="stat-value mt-4 text-2xl font-bold tracking-tight text-zinc-100">
-                {showInr ? formatWithInr(totalInternalWorkValue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(totalInternalWorkValue)}
+                {formatUsdSmart(totalInternalWorkValue)}
               </p>
               <p className="mt-1 text-xs text-zinc-500">
                 Value of owner/internal work (not payouts)
@@ -662,15 +659,15 @@ export default async function Home({ searchParams }: PageProps) {
           <div className="grid gap-6 sm:grid-cols-3">
             <div className="rounded-lg border border-zinc-700 bg-zinc-900/50/50 p-4">
               <p className="text-xs font-medium text-zinc-500">{periodComparison.current.label}</p>
-              <p className="mt-1 text-lg font-semibold text-zinc-100">{showInr ? formatWithInr(periodComparison.current.revenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(periodComparison.current.revenue)} revenue</p>
-              <p className="text-sm text-zinc-400">{showInr ? formatWithInr(periodComparison.current.payouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(periodComparison.current.payouts)} payouts</p>
-              <p className="text-sm font-medium text-zinc-200">{showInr ? formatWithInr(periodComparison.current.profit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(periodComparison.current.profit)} profit</p>
+              <p className="mt-1 text-lg font-semibold text-zinc-100">{formatUsdSmart(periodComparison.current.revenue)} revenue</p>
+              <p className="text-sm text-zinc-400">{formatUsdSmart(periodComparison.current.payouts)} payouts</p>
+              <p className="text-sm font-medium text-zinc-200">{formatUsdSmart(periodComparison.current.profit)} profit</p>
             </div>
             <div className="rounded-lg border border-zinc-700 bg-zinc-900/50/50 p-4">
               <p className="text-xs font-medium text-zinc-500">{periodComparison.prev.label}</p>
-              <p className="mt-1 text-lg font-semibold text-zinc-100">{showInr ? formatWithInr(periodComparison.prev.revenue, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(periodComparison.prev.revenue)} revenue</p>
-              <p className="text-sm text-zinc-400">{showInr ? formatWithInr(periodComparison.prev.payouts, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(periodComparison.prev.payouts)} payouts</p>
-              <p className="text-sm font-medium text-zinc-200">{showInr ? formatWithInr(periodComparison.prev.profit, { showInr: true, usdToInrRate: settings.usdToInrRate }) : formatUsdSmart(periodComparison.prev.profit)} profit</p>
+              <p className="mt-1 text-lg font-semibold text-zinc-100">{formatUsdSmart(periodComparison.prev.revenue)} revenue</p>
+              <p className="text-sm text-zinc-400">{formatUsdSmart(periodComparison.prev.payouts)} payouts</p>
+              <p className="text-sm font-medium text-zinc-200">{formatUsdSmart(periodComparison.prev.profit)} profit</p>
             </div>
             <div className="rounded-lg border border-indigo-200 bg-indigo-50/30 p-4">
               <p className="text-xs font-medium text-zinc-500">Change vs previous</p>
