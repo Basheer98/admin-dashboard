@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getInvoiceWithLines, getSettings } from "@/lib/db";
+import { getInvoiceWithLines, getSettings, getInvoiceLogo } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/auth";
 import { buildInvoiceRecordPdfBuffer } from "@/lib/invoicePdf";
 import { mergeInvoiceIssuerSettings } from "@/lib/invoicePdfDefaults";
@@ -28,8 +28,8 @@ export async function GET(
   }
 
   try {
-    const settings = await getSettings();
-    const issuer = mergeInvoiceIssuerSettings(settings);
+    const [settings, logo] = await Promise.all([getSettings(), getInvoiceLogo()]);
+    const issuer = mergeInvoiceIssuerSettings(settings, logo);
     const buffer = await buildInvoiceRecordPdfBuffer({ ...data, issuer });
     const filename = `invoice-${data.invoice.invoiceNumber.replace(/\s+/g, "-")}.pdf`;
     return new NextResponse(new Uint8Array(buffer), {

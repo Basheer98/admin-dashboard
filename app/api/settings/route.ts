@@ -23,22 +23,10 @@ export async function POST(request: Request) {
     const v = String(formData.get(key) ?? "").trim();
     return v === "" ? null : v;
   };
-  const numOrNull = (key: string) => {
-    const v = String(formData.get(key) ?? "").trim();
-    return v === "" ? null : Number(v);
-  };
 
   if (hasInvoicePdf) {
     payload.invoiceIssuerName = strOrNull("invoiceIssuerName");
     payload.invoiceIssuerAddress = strOrNull("invoiceIssuerAddress");
-    payload.invoiceIssuerGstin = strOrNull("invoiceIssuerGstin");
-    payload.invoiceIssuerLut = strOrNull("invoiceIssuerLut");
-    payload.invoiceIssuerServiceDescription = strOrNull("invoiceIssuerServiceDescription");
-    payload.invoiceIssuerSacLine = strOrNull("invoiceIssuerSacLine");
-    payload.invoiceIssuerBankDetails = strOrNull("invoiceIssuerBankDetails");
-    payload.invoiceIssuerExportDeclaration = strOrNull("invoiceIssuerExportDeclaration");
-    payload.invoicePlaceOfSupply = strOrNull("invoicePlaceOfSupply");
-    payload.usdToInrRate = numOrNull("usdToInrRate");
   }
 
   if (hasCompanyRate) {

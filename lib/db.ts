@@ -1835,6 +1835,17 @@ export async function getSettings(): Promise<SettingsRow> {
   };
 }
 
+export async function getInvoiceLogo(): Promise<{ data: Buffer | null; mime: string | null }> {
+  const row = await queryOne<{ data: Buffer | null; mime: string | null }>(
+    `SELECT invoice_logo AS data, invoice_logo_mime AS mime FROM settings WHERE id = 1`,
+  );
+  return { data: row?.data ?? null, mime: row?.mime ?? null };
+}
+
+export async function setInvoiceLogo(data: Buffer | null, mime: string | null): Promise<void> {
+  await query(`UPDATE settings SET invoice_logo = $1, invoice_logo_mime = $2 WHERE id = 1`, [data, mime]);
+}
+
 export async function getAllFielderRates(): Promise<FielderRateRow[]> {
   const rows = await query<FielderRateRow>(
     `SELECT fielder_name AS "fielderName", rate_per_sqft AS "ratePerSqft", updated_at::text AS "updatedAt"

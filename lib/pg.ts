@@ -345,6 +345,8 @@ export async function runSchema(): Promise<void> {
     DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_bank_details TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
     DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_issuer_export_declaration TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
     DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_place_of_supply TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_logo BYTEA NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE settings ADD COLUMN invoice_logo_mime TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
   `);
   schemaDone = true;
 }
