@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Settings,
   FileText,
+  Building2,
 } from "lucide-react";
 import { SessionTimeout } from "./SessionTimeout";
 import { GlobalSearch } from "./GlobalSearch";
@@ -30,7 +31,7 @@ type SidebarLayoutProps = {
   subtitle?: string;
   breadcrumbs?: BreadcrumbItem[];
   children: React.ReactNode;
-  current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "invoices" | "additional" | "trips" | "reimbursements" | "tickets" | "email-ingest" | "activity" | "audit" | "settings" | "reports" | "reports-monthly" | "reports-manager-commissions";
+  current: "dashboard" | "projects" | "assignments" | "fielders" | "payments" | "invoices" | "clients" | "additional" | "trips" | "reimbursements" | "tickets" | "email-ingest" | "activity" | "audit" | "settings" | "reports" | "reports-monthly" | "reports-manager-commissions";
   headerAction?: React.ReactNode;
   backLink?: { href: string; label: string };
 };
@@ -163,6 +164,7 @@ export function SidebarLayout({
           <SidebarLink href="/fielders" icon={FileBarChart} label="Fielder reports" active={current === "fielders"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/payments" icon={CreditCard} label="Payments" active={current === "payments"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/invoices" icon={FileText} label="Invoices" active={current === "invoices"} onNavigate={!isLg ? closeMobileMenu : undefined} />
+          <SidebarLink href="/clients" icon={Building2} label="Clients" active={current === "clients"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/additional-work" icon={Briefcase} label="Additional work" active={current === "additional"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/trips" icon={Plane} label="Trips & expenses" active={current === "trips"} onNavigate={!isLg ? closeMobileMenu : undefined} />
           <SidebarLink href="/reimbursements" icon={CreditCard} label="Reimbursements" active={current === "reimbursements"} onNavigate={!isLg ? closeMobileMenu : undefined} />

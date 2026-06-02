@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, X } from "lucide-react";
+import { ClientSelectField, type ClientOption } from "./ClientSelectField";
 
 type Step = "upload" | "map" | "review" | "done";
 
@@ -194,10 +195,12 @@ export function InvoiceImportWizard({
   suggestedInvoiceNumber,
   defaultCompanyRate,
   fielderRatesNote,
+  clients,
 }: {
   suggestedInvoiceNumber: string;
   defaultCompanyRate: number | null;
   fielderRatesNote: string;
+  clients: ClientOption[];
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("upload");
@@ -210,6 +213,7 @@ export function InvoiceImportWizard({
   const [modal, setModal] = useState<ModalState>(null);
 
   const [invoiceNumber, setInvoiceNumber] = useState(suggestedInvoiceNumber);
+  const [clientId, setClientId] = useState("");
   const [defaultClientName, setDefaultClientName] = useState("");
   const [ratesHint, setRatesHint] = useState(fielderRatesNote);
   const defaultLocation = "";
@@ -279,9 +283,11 @@ export function InvoiceImportWizard({
   }
 
   function buildOptions() {
+    const selected = clients.find((c) => String(c.id) === clientId);
     return {
       invoiceNumber: invoiceNumber.trim(),
-      defaultClientName: defaultClientName.trim() || "Unknown",
+      clientId: clientId ? Number(clientId) : null,
+      defaultClientName: (selected?.name ?? defaultClientName.trim()) || "Unknown",
       defaultCompanyRate: defaultCompanyRate ?? 0,
       defaultLocation: defaultLocation.trim(),
       defaultStatus: defaultStatus.trim() || "COMPLETED",
@@ -487,9 +493,22 @@ export function InvoiceImportWizard({
               <label className="label">Invoice number</label>
               <input className="input h-11 w-full" value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
             </div>
+            <ClientSelectField
+              clients={clients}
+              clientId={clientId}
+              onClientIdChange={setClientId}
+              onClientSelected={(c) => {
+                if (c) setDefaultClientName(c.name);
+              }}
+            />
             <div className="space-y-1">
-              <label className="label">Default client (if column missing)</label>
-              <input className="input h-11 w-full" value={defaultClientName} onChange={(e) => setDefaultClientName(e.target.value)} />
+              <label className="label">Fallback client name (if no column / not selected)</label>
+              <input
+                className="input h-11 w-full"
+                value={defaultClientName}
+                onChange={(e) => setDefaultClientName(e.target.value)}
+                disabled={!!clientId}
+              />
             </div>
             <div className="space-y-1 sm:col-span-2">
               <p className="text-sm text-zinc-400">

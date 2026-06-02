@@ -18,6 +18,9 @@ export default async function InvoicesPage() {
             Client invoices (project #, SQFT, rate, total) for payment. Import CSV to sync your Project Tracker into the dashboard; rates come from Settings.
           </p>
           <div className="flex flex-wrap gap-2">
+            <Link href="/clients" className="btn-secondary inline-flex items-center gap-2 px-4 py-2.5">
+              Clients
+            </Link>
             <Link href="/invoices/import" className="btn-secondary inline-flex items-center gap-2 px-4 py-2.5">
               <Upload className="h-4 w-4" aria-hidden />
               Import CSV

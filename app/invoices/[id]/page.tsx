@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
+import { InvoicePdfDownload } from "@/app/components/InvoicePdfDownload";
 import { getInvoiceWithLines, invoiceLineRevenue } from "@/lib/db";
 import { formatCurrency, formatRate } from "@/lib/currency";
 
@@ -34,13 +35,7 @@ export default async function InvoiceDetailPage({ params, searchParams }: PagePr
         { label: invoice.invoiceNumber },
       ]}
       headerAction={
-        <a
-          href={`/api/invoice-records/${invoice.id}/pdf`}
-          className="btn-primary inline-flex items-center px-4 py-2"
-          download
-        >
-          Download PDF
-        </a>
+        <InvoicePdfDownload invoiceId={invoice.id} invoiceNumber={invoice.invoiceNumber} />
       }
     >
       <div className="flex flex-1 flex-col gap-6">
@@ -61,6 +56,9 @@ export default async function InvoiceDetailPage({ params, searchParams }: PagePr
             <div>
               <h1 className="font-display text-2xl font-bold text-zinc-100">{invoice.invoiceNumber}</h1>
               <p className="mt-1 text-zinc-400">Bill to: {invoice.clientName}</p>
+              {invoice.billToAddress?.trim() && (
+                <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-500">{invoice.billToAddress}</p>
+              )}
               <p className="mt-1 text-xs text-zinc-500">Client invoice — project #, SQFT, rate, and line total only.</p>
               <p className="text-sm text-zinc-500">
                 Issued {invoice.issueDate}

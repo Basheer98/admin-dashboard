@@ -177,6 +177,17 @@ export const ticketPatchSchema = z.object({
   resolutionNote: z.string().nullable(),
 });
 
+// --- Clients ---
+export const clientPostSchema = z.object({
+  name: z.string().min(1),
+  address: z.string().nullable().optional(),
+});
+
+export const clientPatchSchema = z.object({
+  name: z.string().min(1).optional(),
+  address: z.string().nullable().optional(),
+});
+
 // --- Invoices ---
 export const invoiceLineSchema = z.object({
   projectCode: z.string().min(1),
@@ -187,7 +198,9 @@ export const invoiceLineSchema = z.object({
 
 export const invoicePostSchema = z.object({
   invoiceNumber: z.string().min(1),
+  clientId: z.number().int().positive().nullable().optional(),
   clientName: z.string().min(1),
+  billToAddress: z.string().nullable().optional(),
   issueDate: z.string().min(1),
   dueDate: z.string().nullable(),
   notes: z.string().nullable(),
@@ -201,6 +214,7 @@ export const invoiceImportPreviewSchema = z.object({
   mapping: z.record(z.string(), z.string()),
   options: z.object({
     invoiceNumber: z.string().min(1),
+    clientId: z.number().int().positive().nullable().optional(),
     defaultClientName: z.string(),
     defaultCompanyRate: z.number().nonnegative(),
     defaultLocation: z.string(),

@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { SidebarLayout } from "@/app/components/SidebarLayout";
 import { InvoiceForm } from "../components/InvoiceForm";
-import { getSettings, suggestNextInvoiceNumber } from "@/lib/db";
+import { getAllClients, getSettings, suggestNextInvoiceNumber } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewInvoicePage() {
-  const [suggested, settings] = await Promise.all([
+  const [suggested, settings, clients] = await Promise.all([
     suggestNextInvoiceNumber(),
     getSettings(),
+    getAllClients(),
   ]);
   const today = new Date().toISOString().slice(0, 10);
 
@@ -33,6 +34,7 @@ export default async function NewInvoicePage() {
             suggestedInvoiceNumber={suggested}
             defaultIssueDate={today}
             defaultCompanyRate={settings.companyRatePerSqft}
+            clients={clients.map((c) => ({ id: c.id, name: c.name, address: c.address }))}
           />
         </section>
       </div>

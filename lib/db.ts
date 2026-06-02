@@ -2728,10 +2728,20 @@ export async function resetSequences(): Promise<void> {
 
 // --- Invoices (billing records) ---
 
+export type ClientRow = {
+  id: number;
+  name: string;
+  address: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type InvoiceRow = {
   id: number;
   invoiceNumber: string;
+  clientId: number | null;
   clientName: string;
+  billToAddress: string | null;
   issueDate: string;
   dueDate: string | null;
   notes: string | null;
@@ -2754,10 +2764,15 @@ export type InvoiceLineItemRow = {
 };
 
 const invoiceCols = `
-  id, invoice_number AS "invoiceNumber", client_name AS "clientName",
+  id, invoice_number AS "invoiceNumber", client_id AS "clientId",
+  client_name AS "clientName", bill_to_address AS "billToAddress",
   issue_date AS "issueDate", due_date AS "dueDate", notes, status, source,
   import_filename AS "importFilename",
   created_at::text AS "createdAt", updated_at::text AS "updatedAt"
+`;
+
+const clientCols = `
+  id, name, address, created_at::text AS "createdAt", updated_at::text AS "updatedAt"
 `;
 
 const invoiceLineCols = `
@@ -2768,6 +2783,72 @@ const invoiceLineCols = `
 
 export function invoiceLineRevenue(line: Pick<InvoiceLineItemRow, "totalSqft" | "ratePerSqft">): number {
   return line.totalSqft * Number(line.ratePerSqft);
+}
+
+export async function getAllClients(): Promise<ClientRow[]> {
+  const rows = await query<ClientRow>(
+    `SELECT ${clientCols} FROM clients ORDER BY name ASC`,
+  );
+  return rows as ClientRow[];
+}
+
+export async function getClientById(id: number): Promise<ClientRow | undefined> {
+  const row = await queryOne<ClientRow>(`SELECT ${clientCols} FROM clients WHERE id = $1`, [id]);
+  return row as ClientRow | undefined;
+}
+
+export async function insertClient(input: { name: string; address?: string | null }): Promise<ClientRow> {
+  const row = await queryOneRow<ClientRow>(
+    `INSERT INTO clients (name, address) VALUES ($1, $2)
+     RETURNING ${clientCols}`,
+    [input.name.trim(), input.address?.trim() || null],
+  );
+  if (!row) throw new Error("insertClient failed");
+  return row as ClientRow;
+}
+
+export async function updateClient(
+  id: number,
+  input: { name?: string; address?: string | null },
+): Promise<ClientRow | undefined> {
+  const current = await getClientById(id);
+  if (!current) return undefined;
+  const name = input.name !== undefined ? input.name.trim() : current.name;
+  const address = input.address !== undefined ? input.address?.trim() || null : current.address;
+  const row = await queryOneRow<ClientRow>(
+    `UPDATE clients SET name = $1, address = $2, updated_at = NOW() WHERE id = $3 RETURNING ${clientCols}`,
+    [name, address, id],
+  );
+  return row as ClientRow | undefined;
+}
+
+export async function deleteClient(id: number): Promise<boolean> {
+  const result = await query(`DELETE FROM clients WHERE id = $1 RETURNING id`, [id]);
+  return result.length > 0;
+}
+
+export async function resolveClientBillTo(input: {
+  clientId?: number | null;
+  clientName?: string;
+  billToAddress?: string | null;
+}): Promise<{ clientId: number | null; clientName: string; billToAddress: string | null }> {
+  if (input.clientId != null && input.clientId > 0) {
+    const client = await getClientById(input.clientId);
+    if (client) {
+      return {
+        clientId: client.id,
+        clientName: client.name,
+        billToAddress: client.address,
+      };
+    }
+  }
+  const name = (input.clientName ?? "").trim();
+  if (!name) throw new Error("Client name is required");
+  return {
+    clientId: input.clientId ?? null,
+    clientName: name,
+    billToAddress: input.billToAddress?.trim() || null,
+  };
 }
 
 export async function getAllInvoices(): Promise<InvoiceRow[]> {
@@ -2784,7 +2865,8 @@ export type InvoiceSummary = InvoiceRow & {
 
 export async function getAllInvoiceSummaries(): Promise<InvoiceSummary[]> {
   const rows = await query<InvoiceSummary & { lineCount: string; totalRevenue: string }>(
-    `SELECT i.id, i.invoice_number AS "invoiceNumber", i.client_name AS "clientName",
+    `SELECT i.id, i.invoice_number AS "invoiceNumber", i.client_id AS "clientId",
+            i.client_name AS "clientName", i.bill_to_address AS "billToAddress",
             i.issue_date AS "issueDate", i.due_date AS "dueDate", i.notes, i.status, i.source,
             i.import_filename AS "importFilename",
             i.created_at::text AS "createdAt", i.updated_at::text AS "updatedAt",
@@ -2849,7 +2931,9 @@ export async function suggestNextInvoiceNumber(): Promise<string> {
 
 export async function createInvoiceWithLines(input: {
   invoiceNumber: string;
+  clientId?: number | null;
   clientName: string;
+  billToAddress?: string | null;
   issueDate: string;
   dueDate?: string | null;
   notes?: string | null;
@@ -2865,12 +2949,14 @@ export async function createInvoiceWithLines(input: {
   }>;
 }): Promise<{ invoice: InvoiceRow; lines: InvoiceLineItemRow[] }> {
   const invoiceRow = await queryOneRow<InvoiceRow>(
-    `INSERT INTO invoices (invoice_number, client_name, issue_date, due_date, notes, status, source, import_filename)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO invoices (invoice_number, client_id, client_name, bill_to_address, issue_date, due_date, notes, status, source, import_filename)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      RETURNING ${invoiceCols}`,
     [
       input.invoiceNumber.trim(),
+      input.clientId ?? null,
       input.clientName.trim(),
+      input.billToAddress?.trim() || null,
       input.issueDate,
       input.dueDate ?? null,
       input.notes ?? null,

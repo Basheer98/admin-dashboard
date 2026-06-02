@@ -5,6 +5,7 @@ import {
   getProjectByCode,
   insertAuditLog,
   insertProject,
+  resolveClientBillTo,
   updateProject,
 } from "@/lib/db";
 import { getAuditActor, getSessionFromRequest } from "@/lib/auth";
@@ -67,9 +68,17 @@ export async function POST(request: Request) {
       }
     }
 
+    const billTo = await resolveClientBillTo({
+      clientId: parsed.data.clientId ?? null,
+      clientName: parsed.data.clientName,
+      billToAddress: parsed.data.billToAddress ?? null,
+    });
+
     const { invoice } = await createInvoiceWithLines({
       invoiceNumber: parsed.data.invoiceNumber,
-      clientName: parsed.data.clientName,
+      clientId: billTo.clientId,
+      clientName: billTo.clientName,
+      billToAddress: billTo.billToAddress,
       issueDate: parsed.data.issueDate,
       dueDate: parsed.data.dueDate,
       notes: parsed.data.notes,

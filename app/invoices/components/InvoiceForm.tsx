@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ClientSelectField, type ClientOption } from "./ClientSelectField";
 
 type LineState = {
   projectCode: string;
@@ -14,6 +15,7 @@ type InvoiceFormProps = {
   suggestedInvoiceNumber: string;
   defaultIssueDate: string;
   defaultCompanyRate: number | null;
+  clients: ClientOption[];
 };
 
 function emptyLine(defaultRate: string): LineState {
@@ -28,13 +30,16 @@ export function InvoiceForm({
   suggestedInvoiceNumber,
   defaultIssueDate,
   defaultCompanyRate,
+  clients,
 }: InvoiceFormProps) {
   const router = useRouter();
   const defaultRateStr =
     defaultCompanyRate != null && defaultCompanyRate > 0 ? String(defaultCompanyRate) : "";
 
   const [invoiceNumber, setInvoiceNumber] = useState(suggestedInvoiceNumber);
+  const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
+  const [billToAddress, setBillToAddress] = useState("");
   const [issueDate, setIssueDate] = useState(defaultIssueDate);
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
@@ -108,7 +113,9 @@ export function InvoiceForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           invoiceNumber: invoiceNumber.trim(),
+          clientId: clientId ? Number(clientId) : null,
           clientName: clientName.trim(),
+          billToAddress: billToAddress.trim() || null,
           issueDate,
           dueDate: dueDate.trim() || null,
           notes: notes.trim() || null,
@@ -162,6 +169,17 @@ export function InvoiceForm({
             required
           />
         </div>
+        <ClientSelectField
+          clients={clients}
+          clientId={clientId}
+          onClientIdChange={setClientId}
+          onClientSelected={(c) => {
+            if (c) {
+              setClientName(c.name);
+              setBillToAddress(c.address ?? "");
+            }
+          }}
+        />
         <div className="space-y-1">
           <label className="label">Bill to (client name)</label>
           <input
@@ -169,6 +187,15 @@ export function InvoiceForm({
             value={clientName}
             onChange={(e) => setClientName(e.target.value)}
             required
+          />
+        </div>
+        <div className="space-y-1 md:col-span-2">
+          <label className="label">Bill to address (optional)</label>
+          <textarea
+            className="input min-h-[72px] w-full py-2.5"
+            value={billToAddress}
+            onChange={(e) => setBillToAddress(e.target.value)}
+            placeholder="Shown on PDF under Bill to"
           />
         </div>
         <div className="space-y-1">

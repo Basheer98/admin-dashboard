@@ -324,6 +324,17 @@ export async function runSchema(): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS invoice_line_items_invoice_id_idx ON invoice_line_items (invoice_id);
   `);
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS clients (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      address TEXT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    DO $$ BEGIN ALTER TABLE invoices ADD COLUMN client_id INTEGER NULL REFERENCES clients(id) ON DELETE SET NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+    DO $$ BEGIN ALTER TABLE invoices ADD COLUMN bill_to_address TEXT NULL; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+  `);
   schemaDone = true;
 }
 

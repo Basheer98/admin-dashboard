@@ -7,6 +7,7 @@ import {
   updateProject,
   insertAssignment,
   createInvoiceWithLines,
+  resolveClientBillTo,
   type ProjectRow,
 } from "./db";
 
@@ -29,6 +30,7 @@ export type ColumnMapping = Partial<Record<CsvColumnRole, string>>;
 
 export type ImportOptions = {
   invoiceNumber: string;
+  clientId?: number | null;
   defaultClientName: string;
   defaultCompanyRate: number;
   defaultLocation: string;
@@ -472,14 +474,21 @@ export async function applyImportPreview(
     }
   }
 
-  const clientName =
+  const fallbackName =
     options.defaultClientName ||
     preview[0]?.group.clientName ||
     "Various clients";
 
+  const billTo = await resolveClientBillTo({
+    clientId: options.clientId ?? null,
+    clientName: fallbackName,
+  });
+
   const { invoice } = await createInvoiceWithLines({
     invoiceNumber: options.invoiceNumber,
-    clientName,
+    clientId: billTo.clientId,
+    clientName: billTo.clientName,
+    billToAddress: billTo.billToAddress,
     issueDate: options.issueDate,
     dueDate: options.dueDate,
     notes: options.notes,
